@@ -8,6 +8,6 @@ data class FarmEntity(
     @PrimaryKey
     val id: String,
     val name: String,
-    val location: String,
+    val location: String?,
     val active: Boolean
 )
