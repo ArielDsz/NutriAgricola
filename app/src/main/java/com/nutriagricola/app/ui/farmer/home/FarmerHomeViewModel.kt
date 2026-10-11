@@ -1,4 +1,4 @@
-package com.nutriagricola.app.ui.theme.farner.home
+package com.nutriagricola.app.ui.farmer.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
