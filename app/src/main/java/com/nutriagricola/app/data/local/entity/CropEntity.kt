@@ -24,5 +24,6 @@ data class CropEntity(
     val name: String,
     val variety: String?,
     val areaHectares: Double?,
-    val active: Boolean
+    val active: Boolean,
+    val imagePath: String? = null
 )

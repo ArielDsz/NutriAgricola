@@ -40,7 +40,8 @@ import com.nutriagricola.app.R
 
 @Composable
 fun LoginScreen(
-    onLoginClick: () -> Unit
+    onFarmerLogin: () -> Unit,
+    onAdvisorLogin: () -> Unit
 ){
     var email by remember { mutableStateOf("")}
     var password by remember { mutableStateOf("") }
@@ -133,7 +134,12 @@ fun LoginScreen(
                         )
 
                         Button(
-                            onClick = onLoginClick,
+                            onClick = {
+                                when (email.trim().lowercase()) {
+                                    "farmer@test.cl" -> onFarmerLogin()
+                                    "advisor@test.cl" -> onAdvisorLogin()
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),

@@ -8,5 +8,6 @@ data class Crop(
     val name: String,
     val variety: String? = null,
     val areaHectares: Double? = null,
-    val active: Boolean = true
+    val active: Boolean = true,
+    val imagePath: String? = null
 )

@@ -9,5 +9,6 @@ data class FarmEntity(
     val id: String,
     val name: String,
     val location: String?,
-    val active: Boolean
+    val active: Boolean,
+    val imagePath: String? = null
 )

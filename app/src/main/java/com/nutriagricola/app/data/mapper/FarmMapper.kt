@@ -8,7 +8,8 @@ fun FarmEntity.toDomain(): Farm {
         id = id,
         name = name,
         location = location,
-        active = active
+        active = active,
+        imagePath = imagePath
     )
 }
 
@@ -17,6 +18,7 @@ fun Farm.toEntity(): FarmEntity {
         id = id,
         name = name,
         location = location,
-        active = active
+        active = active,
+        imagePath = imagePath
     )
 }
