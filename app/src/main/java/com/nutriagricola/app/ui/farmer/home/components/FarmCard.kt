@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.farm.Farm
 
@@ -39,14 +40,25 @@ fun FarmCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Image(
-                painter = painterResource(R.drawable.default_crop),
-                contentDescription = "Imagen del predio",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(66.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
+            if (!farm.imagePath.isNullOrBlank()) {
+                AsyncImage(
+                    model = farm.imagePath,
+                    contentDescription = "Imagen del predio",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(66.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.default_crop),
+                    contentDescription = "Imagen del predio",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(66.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+            }
 
             Spacer(
                 modifier = Modifier.width(12.dp)

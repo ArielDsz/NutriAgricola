@@ -59,4 +59,5 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
 }

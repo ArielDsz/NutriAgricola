@@ -21,6 +21,7 @@ import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.seedDatabase
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
+import com.nutriagricola.app.ui.farmer.home.components.CropsSection
 import com.nutriagricola.app.ui.farmer.home.components.EmptyFarmCard
 import com.nutriagricola.app.ui.farmer.home.components.FarmCard
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
@@ -116,6 +117,16 @@ fun FarmerHomeScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            CropsSection(
+                crops = crops,
+                onAddClick = {
+                    // Después abriremos agregar cultivo
+                },
+                onCropClick = { crop ->
+                    // Después abriremos el detalle de este cultivo
+                }
             )
         }
     }

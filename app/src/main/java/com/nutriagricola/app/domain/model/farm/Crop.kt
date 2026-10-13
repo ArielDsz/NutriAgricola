@@ -9,5 +9,6 @@ data class Crop(
     val variety: String? = null,
     val areaHectares: Double? = null,
     val active: Boolean = true,
-    val imagePath: String? = null
+    val imagePath: String? = null,
+    val phenologicalStage: String? = null
 )

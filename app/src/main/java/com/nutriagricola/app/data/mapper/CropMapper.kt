@@ -11,7 +11,8 @@ fun CropEntity.toDomain(): Crop {
         variety = variety,
         areaHectares = areaHectares,
         active = active,
-        imagePath = imagePath
+        imagePath = imagePath,
+        phenologicalStage = phenologicalStage
     )
 }
 
@@ -23,6 +24,7 @@ fun Crop.toEntity(): CropEntity {
         variety = variety,
         areaHectares = areaHectares,
         active = active,
-        imagePath = imagePath
+        imagePath = imagePath,
+        phenologicalStage = phenologicalStage
     )
 }

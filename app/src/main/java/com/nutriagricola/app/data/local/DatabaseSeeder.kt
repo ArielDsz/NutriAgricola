@@ -36,6 +36,7 @@ suspend fun seedDatabase(database: AppDatabase) {
                 name = "Palto",
                 variety = "Hass",
                 areaHectares = 2.5,
+                phenologicalStage = "Floración",
                 imagePath = null,
                 active = true
             )
@@ -46,8 +47,9 @@ suspend fun seedDatabase(database: AppDatabase) {
                 id = UUID.randomUUID().toString(),
                 farmId = farm.id,
                 name = "Limonero",
-                variety = null,
+                variety = "Eureka",
                 areaHectares = 1.2,
+                phenologicalStage = "Maduración",
                 imagePath = null,
                 active = true
             )
