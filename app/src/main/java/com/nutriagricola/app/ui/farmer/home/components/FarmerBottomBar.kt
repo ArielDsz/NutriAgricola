@@ -1,8 +1,10 @@
 package com.nutriagricola.app.ui.farmer.home.components
 
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
@@ -23,10 +25,17 @@ fun FarmerBottomBar(
     onProgramClick: () -> Unit,
     onFarmsClick: () -> Unit
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
         NavigationBarItem(
             selected = selectedItem == FarmerBottomItem.HOME,
             onClick = onHomeClick,
+            colors = NavigationBarItemDefaults.colors(
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.primary
+            ),
             icon = {
                 Icon(
                     painter = painterResource(R.drawable.ic_home),
