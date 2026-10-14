@@ -1,129 +1,71 @@
 package com.nutriagricola.app.ui.farmer.record.soil
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import com.nutriagricola.app.ui.farmer.record.components.RecordForm
+import com.nutriagricola.app.ui.farmer.record.components.RecordNumericField
+import com.nutriagricola.app.ui.farmer.record.components.RecordTextField
 
 @Composable
 fun SoilRecordScreen(
     viewModel: SoilRecordViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onSaved: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
+    val enabled = !state.isSaving && !state.isSaved
 
-    Scaffold { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            TextButton(onClick = onBackClick) {
-                Text("← Volver")
-            }
-
-            Text(
-                text = "Análisis de suelo",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            if (uiState.isLoading) {
-                CircularProgressIndicator()
-            }
-
-            uiState.error?.let { error ->
-                Text(text = error, color = MaterialTheme.colorScheme.error)
-            }
-
-            uiState.crop?.let { crop ->
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text("Cultivo", style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            text = if (crop.variety.isNullOrBlank()) crop.name
-                            else "${crop.name} - ${crop.variety}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-
-                SoilNumericField("pH", uiState.ph, viewModel::updatePh)
-                SoilNumericField(
-                    "Conductividad eléctrica (CE)",
-                    uiState.electricalConductivity,
-                    viewModel::updateElectricalConductivity
-                )
-                SoilNumericField("Nitrógeno (N)", uiState.nitrogen, viewModel::updateNitrogen)
-                SoilNumericField("Fósforo (P)", uiState.phosphorus, viewModel::updatePhosphorus)
-                SoilNumericField("Potasio (K)", uiState.potassium, viewModel::updatePotassium)
-                SoilNumericField("Calcio (Ca)", uiState.calcium, viewModel::updateCalcium)
-                SoilNumericField("Magnesio (Mg)", uiState.magnesium, viewModel::updateMagnesium)
-                SoilNumericField(
-                    "Materia orgánica",
-                    uiState.organicMatter,
-                    viewModel::updateOrganicMatter
-                )
-
-                OutlinedTextField(
-                    value = uiState.observations,
-                    onValueChange = viewModel::updateObservations,
-                    label = { Text("Observaciones") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
-        }
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) onSaved()
     }
-}
 
-@Composable
-private fun SoilNumericField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Next
-        ),
-        shape = RoundedCornerShape(12.dp)
-    )
+    RecordForm(
+        title = "Análisis de suelo",
+        crop = state.crop,
+        isLoading = state.isLoading,
+        error = state.error,
+        isSaving = state.isSaving,
+        isSaved = state.isSaved,
+        onBackClick = onBackClick,
+        onSaveClick = viewModel::save
+    ) {
+        RecordNumericField(
+            "pH", state.ph, viewModel::updatePh,
+            error = state.fieldErrors["ph"], enabled = enabled
+        )
+        RecordNumericField(
+            "Conductividad eléctrica (CE)", state.electricalConductivity, viewModel::updateElectricalConductivity,
+            error = state.fieldErrors["electricalConductivity"], enabled = enabled
+        )
+        RecordNumericField(
+            "Nitrógeno (N)", state.nitrogen, viewModel::updateNitrogen,
+            error = state.fieldErrors["nitrogen"], enabled = enabled
+        )
+        RecordNumericField(
+            "Fósforo (P)", state.phosphorus, viewModel::updatePhosphorus,
+            error = state.fieldErrors["phosphorus"], enabled = enabled
+        )
+        RecordNumericField(
+            "Potasio (K)", state.potassium, viewModel::updatePotassium,
+            error = state.fieldErrors["potassium"], enabled = enabled
+        )
+        RecordNumericField(
+            "Calcio (Ca)", state.calcium, viewModel::updateCalcium,
+            error = state.fieldErrors["calcium"], enabled = enabled
+        )
+        RecordNumericField(
+            "Magnesio (Mg)", state.magnesium, viewModel::updateMagnesium,
+            error = state.fieldErrors["magnesium"], enabled = enabled
+        )
+        RecordNumericField(
+            "Materia orgánica", state.organicMatter, viewModel::updateOrganicMatter,
+            error = state.fieldErrors["organicMatter"], enabled = enabled
+        )
+        RecordTextField(
+            "Observaciones", state.observations, viewModel::updateObservations,
+            enabled = enabled, minLines = 3
+        )
+    }
 }

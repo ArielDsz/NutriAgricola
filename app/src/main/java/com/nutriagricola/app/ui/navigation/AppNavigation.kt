@@ -38,6 +38,12 @@ import com.nutriagricola.app.ui.farmer.record.NewRecordScreen
 import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordScreen
 import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordViewModel
 import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordViewModelFactory
+import com.nutriagricola.app.ui.farmer.record.water.WaterRecordScreen
+import com.nutriagricola.app.ui.farmer.record.water.WaterRecordViewModel
+import com.nutriagricola.app.ui.farmer.record.water.WaterRecordViewModelFactory
+import com.nutriagricola.app.ui.farmer.record.foliar.FoliarRecordScreen
+import com.nutriagricola.app.ui.farmer.record.foliar.FoliarRecordViewModel
+import com.nutriagricola.app.ui.farmer.record.foliar.FoliarRecordViewModelFactory
 import com.nutriagricola.app.ui.login.LoginScreen
 import com.nutriagricola.app.ui.login.LoginViewModel
 import com.nutriagricola.app.ui.login.LoginViewModelFactory
@@ -45,6 +51,7 @@ import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.seedDatabase
 import com.nutriagricola.app.data.repository.AuthRepository
 import com.nutriagricola.app.data.repository.CropRepository
+import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.SessionRepository
 import com.nutriagricola.app.data.repository.UserRepository
 import com.nutriagricola.app.domain.model.user.UserRole
@@ -116,6 +123,8 @@ fun AppNavigation() {
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val cropRepository = remember(database) { CropRepository(database.cropDao()) }
+    val recordRepository = remember(database) { RecordRepository(database) }
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(sessionState.error) {
         sessionState.error?.let { error ->
@@ -129,6 +138,12 @@ fun AppNavigation() {
         // A different session gets a fresh controller, discarding the previous back stack.
         key(currentUser?.id) {
             val navController = rememberNavController()
+            val onRecordSaved: () -> Unit = {
+                navController.popBackStack("farmer_home", inclusive = false)
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Registro guardado")
+                }
+            }
             val startDestination = when (currentUser?.role) {
                 UserRole.FARMER -> "farmer_home"
                 UserRole.ADVISOR -> "advisor_home"
@@ -174,15 +189,12 @@ fun AppNavigation() {
                             farmName = farmName,
                             onBackClick = { navController.popBackStack() },
                             onContinueClick = { cropId, type ->
-                                if (type == RecordType.SOIL) {
-                                    navController.navigate("soil_record/${Uri.encode(cropId)}")
-                                } else {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            "El formulario seleccionado aún no está disponible"
-                                        )
-                                    }
+                                val route = when (type) {
+                                    RecordType.SOIL -> "soil_record"
+                                    RecordType.WATER -> "water_record"
+                                    RecordType.FOLIAR -> "foliar_record"
                                 }
+                                navController.navigate("$route/${Uri.encode(cropId)}")
                             }
                         )
                     }
@@ -190,17 +202,60 @@ fun AppNavigation() {
                     composable("soil_record/{cropId}") { backStackEntry ->
                         val cropId = backStackEntry.arguments?.getString("cropId")
                             ?: return@composable
-                        val soilFactory = remember(cropId, database) {
+                        val soilFactory = remember(cropId, cropRepository, recordRepository, sessionViewModel) {
                             SoilRecordViewModelFactory(
                                 cropId = cropId,
-                                cropRepository = CropRepository(database.cropDao())
+                                cropRepository = cropRepository,
+                                recordRepository = recordRepository,
+                                getCurrentUser = { sessionViewModel.uiState.value.currentUser }
                             )
                         }
                         val soilViewModel: SoilRecordViewModel = viewModel(factory = soilFactory)
 
                         SoilRecordScreen(
                             viewModel = soilViewModel,
-                            onBackClick = { navController.popBackStack() }
+                            onBackClick = { navController.popBackStack() },
+                            onSaved = onRecordSaved
+                        )
+                    }
+
+                    composable("water_record/{cropId}") { backStackEntry ->
+                        val cropId = backStackEntry.arguments?.getString("cropId")
+                            ?: return@composable
+                        val waterFactory = remember(cropId, cropRepository, recordRepository, sessionViewModel) {
+                            WaterRecordViewModelFactory(
+                                cropId = cropId,
+                                cropRepository = cropRepository,
+                                recordRepository = recordRepository,
+                                getCurrentUser = { sessionViewModel.uiState.value.currentUser }
+                            )
+                        }
+                        val waterViewModel: WaterRecordViewModel = viewModel(factory = waterFactory)
+
+                        WaterRecordScreen(
+                            viewModel = waterViewModel,
+                            onBackClick = { navController.popBackStack() },
+                            onSaved = onRecordSaved
+                        )
+                    }
+
+                    composable("foliar_record/{cropId}") { backStackEntry ->
+                        val cropId = backStackEntry.arguments?.getString("cropId")
+                            ?: return@composable
+                        val foliarFactory = remember(cropId, cropRepository, recordRepository, sessionViewModel) {
+                            FoliarRecordViewModelFactory(
+                                cropId = cropId,
+                                cropRepository = cropRepository,
+                                recordRepository = recordRepository,
+                                getCurrentUser = { sessionViewModel.uiState.value.currentUser }
+                            )
+                        }
+                        val foliarViewModel: FoliarRecordViewModel = viewModel(factory = foliarFactory)
+
+                        FoliarRecordScreen(
+                            viewModel = foliarViewModel,
+                            onBackClick = { navController.popBackStack() },
+                            onSaved = onRecordSaved
                         )
                     }
                 }

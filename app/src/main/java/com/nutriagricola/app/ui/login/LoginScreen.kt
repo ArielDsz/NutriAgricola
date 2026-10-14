@@ -1,8 +1,6 @@
 package com.nutriagricola.app.ui.login
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.user.User
+import com.nutriagricola.app.ui.components.dismissKeyboardOnBackgroundTap
 
 @Composable
 fun LoginScreen(
@@ -62,7 +61,7 @@ fun LoginScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().dismissKeyboardOnBackgroundTap()
     ){
         Image(
             painter = painterResource(R.drawable.login_background),
@@ -75,12 +74,6 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ){
-                    focusManager.clearFocus()
-                }
         ) {
             Column(
                 modifier = Modifier
