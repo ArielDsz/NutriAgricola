@@ -43,6 +43,7 @@ fun FarmerHomeScreen(
     onLogoutClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onRecordClick: (String) -> Unit,
+    onCropClick: (String) -> Unit,
     onNewRecordClick: (String, String) -> Unit
 ) {
     val initials = remember(user.firstName, user.lastName) {
@@ -106,7 +107,7 @@ fun FarmerHomeScreen(
             CropsSection(
                 crops = state.crops,
                 onAddClick = {},
-                onCropClick = {}
+                onCropClick = { onCropClick(it.id) }
             )
 
             Button(

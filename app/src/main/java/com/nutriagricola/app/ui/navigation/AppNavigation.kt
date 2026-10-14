@@ -45,6 +45,9 @@ import com.nutriagricola.app.ui.farmer.home.FarmerHomeViewModel
 import com.nutriagricola.app.ui.farmer.home.FarmerHomeViewModelFactory
 import com.nutriagricola.app.ui.farmer.home.FarmerHomeScreen
 import com.nutriagricola.app.ui.farmer.record.NewRecordScreen
+import com.nutriagricola.app.ui.farmer.crop.detail.CropDetailScreen
+import com.nutriagricola.app.ui.farmer.crop.detail.CropDetailViewModel
+import com.nutriagricola.app.ui.farmer.crop.detail.CropDetailViewModelFactory
 import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailScreen
 import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailViewModel
 import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailViewModelFactory
@@ -210,6 +213,11 @@ fun AppNavigation() {
                                 viewModel = homeViewModel,
                                 contextState = contextState,
                                 onLogoutClick = { sessionViewModel.logout() },
+                                onCropClick = { cropId ->
+                                    navController.navigate("crop_detail/${Uri.encode(cropId)}") {
+                                        launchSingleTop = true
+                                    }
+                                },
                                 onRecordClick = onRecordClick,
                                 onHistoryClick = {
                                     navController.navigate("farmer_history") {
@@ -246,6 +254,34 @@ fun AppNavigation() {
                                 onHomeClick = {
                                     navController.popBackStack("farmer_home", inclusive = false)
                                 }
+                            )
+                        }
+
+                        composable("crop_detail/{cropId}") { backStackEntry ->
+                            val cropId = backStackEntry.arguments?.getString("cropId")
+                                ?: return@composable
+                            val farmerContext = farmerContextViewModel(
+                                navController, backStackEntry, farmerContextFactory
+                            )
+                            val contextState by farmerContext.uiState.collectAsState()
+                            val cropDetailFactory = remember(
+                                cropId, currentUser.id, farmerContext, cropRepository, recordRepository
+                            ) {
+                                CropDetailViewModelFactory(
+                                    cropId = cropId,
+                                    userId = currentUser.id,
+                                    selectedFarm = farmerContext.selectedFarm,
+                                    cropRepository = cropRepository,
+                                    recordRepository = recordRepository
+                                )
+                            }
+                            val cropDetailViewModel: CropDetailViewModel = viewModel(factory = cropDetailFactory)
+
+                            CropDetailScreen(
+                                viewModel = cropDetailViewModel,
+                                contextState = contextState,
+                                onBackClick = { navController.popBackStack() },
+                                onRecordClick = onRecordClick
                             )
                         }
 
