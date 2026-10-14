@@ -38,7 +38,8 @@ import com.nutriagricola.app.ui.farmer.record.components.historyLabel
 fun FarmerHistoryScreen(
     viewModel: FarmerHistoryViewModel,
     contextState: FarmerContextUiState,
-    onHomeClick: () -> Unit
+    onHomeClick: () -> Unit,
+    onRecordClick: (String) -> Unit
 ) {
     val loadedState by viewModel.uiState.collectAsState()
     val farm = contextState.selectedFarm
@@ -140,7 +141,8 @@ fun FarmerHistoryScreen(
                 else -> items(state.records, key = { it.id }) { record ->
                     RecordHistoryCard(
                         record = record,
-                        cropName = state.crops.find { it.id == record.cropId }?.name ?: "Cultivo"
+                        cropName = state.crops.find { it.id == record.cropId }?.name ?: "Cultivo",
+                        onClick = { onRecordClick(record.id) }
                     )
                 }
             }

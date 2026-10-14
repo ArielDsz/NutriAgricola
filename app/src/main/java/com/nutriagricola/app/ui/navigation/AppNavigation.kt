@@ -45,6 +45,9 @@ import com.nutriagricola.app.ui.farmer.home.FarmerHomeViewModel
 import com.nutriagricola.app.ui.farmer.home.FarmerHomeViewModelFactory
 import com.nutriagricola.app.ui.farmer.home.FarmerHomeScreen
 import com.nutriagricola.app.ui.farmer.record.NewRecordScreen
+import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailScreen
+import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailViewModel
+import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailViewModelFactory
 import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordScreen
 import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordViewModel
 import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordViewModelFactory
@@ -152,6 +155,11 @@ fun AppNavigation() {
         // A different session gets a fresh controller, discarding the previous back stack.
         key(currentUser?.id) {
             val navController = rememberNavController()
+            val onRecordClick: (String) -> Unit = { recordId ->
+                navController.navigate("record_detail/${Uri.encode(recordId)}") {
+                    launchSingleTop = true
+                }
+            }
             val onRecordSaved: () -> Unit = {
                 navController.popBackStack("farmer_home", inclusive = false)
                 coroutineScope.launch {
@@ -202,6 +210,7 @@ fun AppNavigation() {
                                 viewModel = homeViewModel,
                                 contextState = contextState,
                                 onLogoutClick = { sessionViewModel.logout() },
+                                onRecordClick = onRecordClick,
                                 onHistoryClick = {
                                     navController.navigate("farmer_history") {
                                         launchSingleTop = true
@@ -233,9 +242,37 @@ fun AppNavigation() {
                             FarmerHistoryScreen(
                                 viewModel = historyViewModel,
                                 contextState = contextState,
+                                onRecordClick = onRecordClick,
                                 onHomeClick = {
                                     navController.popBackStack("farmer_home", inclusive = false)
                                 }
+                            )
+                        }
+
+                        composable("record_detail/{recordId}") { backStackEntry ->
+                            val recordId = backStackEntry.arguments?.getString("recordId")
+                                ?: return@composable
+                            val farmerContext = farmerContextViewModel(
+                                navController, backStackEntry, farmerContextFactory
+                            )
+                            val contextState by farmerContext.uiState.collectAsState()
+                            val detailFactory = remember(
+                                recordId, recordRepository, cropRepository, sessionViewModel, farmerContext
+                            ) {
+                                RecordDetailViewModelFactory(
+                                    recordId = recordId,
+                                    recordRepository = recordRepository,
+                                    cropRepository = cropRepository,
+                                    getCurrentUser = { sessionViewModel.uiState.value.currentUser },
+                                    selectedFarm = farmerContext.selectedFarm
+                                )
+                            }
+                            val detailViewModel: RecordDetailViewModel = viewModel(factory = detailFactory)
+
+                            RecordDetailScreen(
+                                viewModel = detailViewModel,
+                                contextState = contextState,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
 

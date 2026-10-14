@@ -42,6 +42,7 @@ fun FarmerHomeScreen(
     contextState: FarmerContextUiState,
     onLogoutClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onRecordClick: (String) -> Unit,
     onNewRecordClick: (String, String) -> Unit
 ) {
     val initials = remember(user.firstName, user.lastName) {
@@ -142,7 +143,8 @@ fun FarmerHomeScreen(
                     else -> state.recentRecords.forEach { record ->
                         RecordHistoryCard(
                             record = record,
-                            cropName = state.crops.find { it.id == record.cropId }?.name ?: "Cultivo"
+                            cropName = state.crops.find { it.id == record.cropId }?.name ?: "Cultivo",
+                            onClick = { onRecordClick(record.id) }
                         )
                     }
                 }

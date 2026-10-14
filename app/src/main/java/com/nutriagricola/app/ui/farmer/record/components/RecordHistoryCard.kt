@@ -18,8 +18,9 @@ import com.nutriagricola.app.domain.model.record.RecordType
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun RecordHistoryCard(record: Record, cropName: String) {
+fun RecordHistoryCard(record: Record, cropName: String, onClick: () -> Unit) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -49,7 +50,7 @@ fun RecordType.historyLabel(): String = when (this) {
     RecordType.FOLIAR -> "Foliar"
 }
 
-private fun RecordStatus.historyLabel(): String = when (this) {
+fun RecordStatus.historyLabel(): String = when (this) {
     RecordStatus.DRAFT -> "Borrador"
     RecordStatus.PENDING -> "Pendiente"
     RecordStatus.VIEWED -> "Visto"
