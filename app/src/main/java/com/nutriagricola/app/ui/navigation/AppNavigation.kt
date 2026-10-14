@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,19 +35,25 @@ import androidx.navigation.compose.rememberNavController
 import com.nutriagricola.app.ui.advisor.home.AdvisorHomeScreen
 import com.nutriagricola.app.ui.farmer.home.FarmerHomeScreen
 import com.nutriagricola.app.ui.farmer.record.NewRecordScreen
+import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordScreen
+import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordViewModel
+import com.nutriagricola.app.ui.farmer.record.soil.SoilRecordViewModelFactory
 import com.nutriagricola.app.ui.login.LoginScreen
 import com.nutriagricola.app.ui.login.LoginViewModel
 import com.nutriagricola.app.ui.login.LoginViewModelFactory
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.seedDatabase
 import com.nutriagricola.app.data.repository.AuthRepository
+import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.SessionRepository
 import com.nutriagricola.app.data.repository.UserRepository
 import com.nutriagricola.app.domain.model.user.UserRole
+import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.ui.session.SessionViewModel
 import com.nutriagricola.app.ui.session.SessionViewModelFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -109,6 +116,7 @@ fun AppNavigation() {
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(sessionState.error) {
         sessionState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
@@ -165,9 +173,34 @@ fun AppNavigation() {
                             farmId = farmId,
                             farmName = farmName,
                             onBackClick = { navController.popBackStack() },
-                            onContinueClick = {
-                                // después navegaremos al formulario correspondiente
+                            onContinueClick = { cropId, type ->
+                                if (type == RecordType.SOIL) {
+                                    navController.navigate("soil_record/${Uri.encode(cropId)}")
+                                } else {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            "El formulario seleccionado aún no está disponible"
+                                        )
+                                    }
+                                }
                             }
+                        )
+                    }
+
+                    composable("soil_record/{cropId}") { backStackEntry ->
+                        val cropId = backStackEntry.arguments?.getString("cropId")
+                            ?: return@composable
+                        val soilFactory = remember(cropId, database) {
+                            SoilRecordViewModelFactory(
+                                cropId = cropId,
+                                cropRepository = CropRepository(database.cropDao())
+                            )
+                        }
+                        val soilViewModel: SoilRecordViewModel = viewModel(factory = soilFactory)
+
+                        SoilRecordScreen(
+                            viewModel = soilViewModel,
+                            onBackClick = { navController.popBackStack() }
                         )
                     }
                 }

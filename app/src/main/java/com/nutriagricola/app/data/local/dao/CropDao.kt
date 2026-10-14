@@ -19,6 +19,9 @@ interface CropDao {
     @Query("SELECT * FROM crops WHERE farmId = :farmId")
     suspend fun getByFarmId(farmId: String): List<CropEntity>
 
+    @Query("SELECT * FROM crops WHERE id = :id")
+    suspend fun getById(id: String): CropEntity?
+
     @Update
     suspend fun update(crop: CropEntity)
 

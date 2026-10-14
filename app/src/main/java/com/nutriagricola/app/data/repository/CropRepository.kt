@@ -13,6 +13,10 @@ class CropRepository(
         return cropDao.getByFarmId(farmId).map { it.toDomain() }
     }
 
+    suspend fun getById(id: String): Crop? {
+        return cropDao.getById(id)?.toDomain()
+    }
+
     suspend fun insert(crop: Crop) {
         cropDao.insert(crop.toEntity())
     }

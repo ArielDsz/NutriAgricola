@@ -40,7 +40,7 @@ fun NewRecordScreen(
     farmId: String,
     farmName: String,
     onBackClick: () -> Unit,
-    onContinueClick: (RecordType) -> Unit
+    onContinueClick: (String, RecordType) -> Unit
 ) {
 
     val context = LocalContext.current
@@ -213,8 +213,10 @@ fun NewRecordScreen(
             }
             Button(
                 onClick = {
-                    selectedType?.let { type ->
-                        onContinueClick(type)
+                    selectedCrop?.let { crop ->
+                        selectedType?.let { type ->
+                            onContinueClick(crop.id, type)
+                        }
                     }
                 },
                 enabled = selectedCrop != null && selectedType != null,
