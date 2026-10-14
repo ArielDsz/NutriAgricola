@@ -3,6 +3,7 @@ package com.nutriagricola.app.data.local
 import androidx.room.withTransaction
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.entity.*
+import com.nutriagricola.app.domain.model.user.UserRole
 import java.time.LocalDate
 import java.util.UUID
 
@@ -11,6 +12,7 @@ suspend fun seedDatabase(database: AppDatabase) {
     database.withTransaction {
 
         val userDao = database.userDao()
+        val userCredentialDao = database.userCredentialDao()
         val farmDao = database.farmDao()
         val cropDao = database.cropDao()
         val recordDao = database.recordDao()
@@ -27,7 +29,7 @@ suspend fun seedDatabase(database: AppDatabase) {
                 firstName = "Angel",
                 lastName = "Muñoz",
                 email = "farmer@test.cl",
-                role = "FARMER",
+                role = UserRole.FARMER.name,
                 active = true
             ).also {
                 userDao.insert(it)
@@ -39,11 +41,34 @@ suspend fun seedDatabase(database: AppDatabase) {
                 firstName = "María",
                 lastName = "González",
                 email = "advisor@test.cl",
-                role = "ADVISOR",
+                role = UserRole.ADVISOR.name,
                 active = true
             ).also {
                 userDao.insert(it)
             }
+
+        // Precomputed PBKDF2-HMAC-SHA256 credentials for the demo accounts.
+        if (userCredentialDao.getByUserId(farmer.id) == null) {
+            userCredentialDao.insert(
+                UserCredentialEntity(
+                    userId = farmer.id,
+                    passwordHash = "LDNO9DFzuciuvjJ6St1t/LF8Z2F264KO8iH4qWW128s=",
+                    salt = "QnTS/ORJYI4do4xhYwiClQ==",
+                    iterations = 600_000
+                )
+            )
+        }
+
+        if (userCredentialDao.getByUserId(advisor.id) == null) {
+            userCredentialDao.insert(
+                UserCredentialEntity(
+                    userId = advisor.id,
+                    passwordHash = "LBpwUbrB77Hwfqz4EXiz2xa/rpDo4crcTZTrdv8J7a4=",
+                    salt = "8T5woAkl+JZGcwCnkASY5A==",
+                    iterations = 600_000
+                )
+            )
+        }
 
         // PREDIO
         var farms = farmDao.getAll()

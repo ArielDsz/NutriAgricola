@@ -10,6 +10,7 @@ import com.nutriagricola.app.data.local.entity.*
 @Database(
     entities = [
         UserEntity::class,
+        UserCredentialEntity::class,
         FarmEntity::class,
         CropEntity::class,
         RecordEntity::class,
@@ -24,6 +25,7 @@ import com.nutriagricola.app.data.local.entity.*
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
+    abstract fun userCredentialDao(): UserCredentialDao
     abstract fun farmDao(): FarmDao
     abstract fun cropDao(): CropDao
     abstract fun recordDao(): RecordDao
