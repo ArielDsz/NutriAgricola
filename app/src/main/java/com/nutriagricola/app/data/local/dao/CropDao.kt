@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.nutriagricola.app.data.local.entity.CropEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CropDao {
@@ -18,6 +19,9 @@ interface CropDao {
 
     @Query("SELECT * FROM crops WHERE farmId = :farmId")
     suspend fun getByFarmId(farmId: String): List<CropEntity>
+
+    @Query("SELECT * FROM crops WHERE farmId = :farmId ORDER BY name COLLATE NOCASE, id")
+    fun observeByFarmId(farmId: String): Flow<List<CropEntity>>
 
     @Query("SELECT * FROM crops WHERE id = :id")
     suspend fun getById(id: String): CropEntity?

@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.nutriagricola.app.data.local.entity.RecordEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RecordDao {
@@ -21,6 +22,14 @@ interface RecordDao {
 
     @Query("SELECT * FROM records WHERE cropId = :cropId")
     suspend fun getByCropId(cropId: String): List<RecordEntity>
+
+    @Query("""
+        SELECT r.* FROM records AS r
+        INNER JOIN crops AS c ON c.id = r.cropId
+        WHERE r.userId = :userId AND c.farmId = :farmId
+        ORDER BY r.date DESC, r.rowid DESC
+    """)
+    fun observeByUserAndFarm(userId: String, farmId: String): Flow<List<RecordEntity>>
 
     @Query("SELECT * FROM records WHERE status = :status")
     suspend fun getByStatus(status: String): List<RecordEntity>

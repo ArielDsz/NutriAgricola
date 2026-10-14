@@ -13,6 +13,8 @@ import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.domain.model.record.SoilData
 import com.nutriagricola.app.domain.model.record.WaterData
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class RecordRepository(
     private val database: AppDatabase
@@ -38,6 +40,14 @@ class RecordRepository(
     suspend fun getByCropId(cropId: String): List<Record> {
         return recordDao.getByCropId(cropId).mapNotNull {
             getCompleteRecord(it)
+        }
+    }
+
+    fun observeByUserAndFarm(userId: String, farmId: String): Flow<List<Record>> {
+        return recordDao.observeByUserAndFarm(userId, farmId).map { records ->
+            database.withTransaction {
+                records.mapNotNull { getCompleteRecord(it) }
+            }
         }
     }
 

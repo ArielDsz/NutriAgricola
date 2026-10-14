@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.nutriagricola.app.data.local.entity.FarmEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FarmDao {
@@ -15,6 +16,9 @@ interface FarmDao {
 
     @Query("SELECT * FROM farms")
     suspend fun getAll(): List<FarmEntity>
+
+    @Query("SELECT * FROM farms ORDER BY name COLLATE NOCASE, id")
+    fun observeAll(): Flow<List<FarmEntity>>
 
     @Update
     suspend fun update(farm: FarmEntity)
