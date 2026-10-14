@@ -11,9 +11,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -24,8 +30,11 @@ import com.nutriagricola.app.R
 
 @Composable
 fun HomeHeader(
+    initials: String,
+    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ){
+    var accountMenuExpanded by remember { mutableStateOf(false) }
     Box(
         modifier = modifier.fillMaxWidth()
     ){
@@ -63,21 +72,32 @@ fun HomeHeader(
                 )
             }
 
-            Surface(
-                onClick = {
-                    // Más adelante abriremos el menú de cuenta
-                },
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
+            Box {
+                Surface(
+                    onClick = { accountMenuExpanded = true },
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Text(
-                        text = "AM",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.SemiBold
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = initials,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = accountMenuExpanded,
+                    onDismissRequest = { accountMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Cerrar sesión") },
+                        onClick = {
+                            accountMenuExpanded = false
+                            onLogoutClick()
+                        }
                     )
                 }
             }

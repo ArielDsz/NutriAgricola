@@ -19,10 +19,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,16 +40,26 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
+import com.nutriagricola.app.domain.model.user.User
 
 @Composable
 fun LoginScreen(
-    onFarmerLogin: () -> Unit,
-    onAdvisorLogin: () -> Unit
+    viewModel: LoginViewModel,
+    onLoginSuccess: (User) -> Unit
 ){
     var email by remember { mutableStateOf("")}
     var password by remember { mutableStateOf("") }
 
     val focusManager = LocalFocusManager.current
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.authenticatedUser) {
+        uiState.authenticatedUser?.let { user ->
+            password = ""
+            viewModel.onNavigationHandled()
+            onLoginSuccess(user)
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -113,6 +126,7 @@ fun LoginScreen(
 
                         OutlinedTextField(
                             value = email,
+                            enabled = !uiState.isLoading,
                             onValueChange = { email = it },
                             label = { Text("Correo") },
                             modifier = Modifier.fillMaxWidth(),
@@ -125,6 +139,7 @@ fun LoginScreen(
 
                         OutlinedTextField(
                             value = password,
+                            enabled = !uiState.isLoading,
                             onValueChange = { password = it },
                             label = { Text("Contraseña") },
                             modifier = Modifier.fillMaxWidth(),
@@ -133,22 +148,36 @@ fun LoginScreen(
                             shape = RoundedCornerShape(16.dp)
                         )
 
+                        uiState.error?.let { error ->
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
                         Button(
                             onClick = {
-                                when (email.trim().lowercase()) {
-                                    "farmer@test.cl" -> onFarmerLogin()
-                                    "advisor@test.cl" -> onAdvisorLogin()
-                                }
+                                focusManager.clearFocus()
+                                viewModel.login(email, password)
                             },
+                            enabled = !uiState.isLoading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(
-                                text = "Iniciar sesión",
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text(
+                                    text = "Iniciar sesión",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
                         }
                     }
                 }

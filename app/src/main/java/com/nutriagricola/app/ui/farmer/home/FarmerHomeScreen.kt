@@ -25,6 +25,7 @@ import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.seedDatabase
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
+import com.nutriagricola.app.domain.model.user.User
 import com.nutriagricola.app.ui.farmer.home.components.CropsSection
 import com.nutriagricola.app.ui.farmer.home.components.EmptyFarmCard
 import com.nutriagricola.app.ui.farmer.home.components.FarmCard
@@ -35,8 +36,17 @@ import com.nutriagricola.app.ui.farmer.home.components.SyncStatus
 
 @Composable
 fun FarmerHomeScreen(
+    user: User,
+    onLogoutClick: () -> Unit,
     onNewRecordClick: (String, String) -> Unit
 ) {
+
+    val initials = remember(user.firstName, user.lastName) {
+        listOf(user.firstName, user.lastName)
+            .mapNotNull { it.trim().firstOrNull()?.toString() }
+            .joinToString("")
+            .uppercase()
+    }
 
     val context = LocalContext.current
 
@@ -95,6 +105,8 @@ fun FarmerHomeScreen(
             ) {
 
                 HomeHeader(
+                    initials = initials,
+                    onLogoutClick = onLogoutClick,
                     modifier = Modifier.height(150.dp)
                 )
 
