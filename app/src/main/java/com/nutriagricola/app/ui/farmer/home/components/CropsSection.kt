@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +23,6 @@ import com.nutriagricola.app.domain.model.farm.Crop
 @Composable
 fun CropsSection(
     crops: List<Crop>,
-    onAddClick: () -> Unit,
     onCropClick: (Crop) -> Unit,
     modifier: Modifier = Modifier
 ){
@@ -44,12 +42,6 @@ fun CropsSection(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-
-            TextButton(
-                onClick = onAddClick
-            ) {
-                Text("Agregar")
-            }
         }
         LazyRow(
             state = listState,
@@ -57,7 +49,7 @@ fun CropsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 16.dp)
         ) {
-            items(crops) { crop ->
+            items(crops, key = { it.id }) { crop ->
                 CropCard(
                     crop = crop,
                     onClick = {

@@ -1,7 +1,6 @@
 package com.nutriagricola.app.ui.farmer.home.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,25 +47,18 @@ fun CropCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            if (!crop.imagePath.isNullOrBlank()) {
-                AsyncImage(
-                    model = crop.imagePath,
-                    contentDescription = "Imagen de ${crop.name}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            } else {
-                Image(
-                    painter = painterResource(R.drawable.default_crop),
-                    contentDescription = "Imagen por defecto",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
+            val fallback = painterResource(R.drawable.default_crop)
+            AsyncImage(
+                model = crop.imagePath?.takeIf { it.isNotBlank() },
+                contentDescription = "Imagen de ${crop.name}",
+                placeholder = fallback,
+                fallback = fallback,
+                error = fallback,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 

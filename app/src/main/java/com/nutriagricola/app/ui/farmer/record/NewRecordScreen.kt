@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,6 +29,7 @@ import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.ui.farmer.record.components.RecordTypeCard
+import com.nutriagricola.app.ui.farmer.record.components.CropSelectorBottomSheet
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -64,7 +63,7 @@ fun NewRecordScreen(
     val crops by viewModel.crops.collectAsState()
     val selectedCrop by viewModel.selectedCrop.collectAsState()
 
-    var cropMenuExpanded by remember {
+    var showCropSelector by remember(farmId) {
         mutableStateOf(false)
     }
 
@@ -72,6 +71,18 @@ fun NewRecordScreen(
 
     LaunchedEffect(farmId) {
         viewModel.loadCrops(farmId)
+    }
+
+    if (showCropSelector) {
+        CropSelectorBottomSheet(
+            crops = crops,
+            selectedCropId = selectedCrop?.id,
+            onDismiss = { showCropSelector = false },
+            onCropSelected = { crop ->
+                viewModel.selectCrop(crop)
+                showCropSelector = false
+            }
+        )
     }
 
     Scaffold { innerPadding ->
@@ -132,7 +143,7 @@ fun NewRecordScreen(
 
                 Card(
                     onClick = {
-                        cropMenuExpanded = true
+                        showCropSelector = true
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -143,30 +154,6 @@ fun NewRecordScreen(
                     )
                 }
 
-                DropdownMenu(
-                    expanded = cropMenuExpanded,
-                    onDismissRequest = {
-                        cropMenuExpanded = false
-                    }
-                ) {
-                    crops.forEach { crop ->
-
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = if (crop.variety.isNullOrBlank())
-                                        crop.name
-                                    else
-                                        "${crop.name} - ${crop.variety}"
-                                )
-                            },
-                            onClick = {
-                                viewModel.selectCrop(crop)
-                                cropMenuExpanded = false
-                            }
-                        )
-                    }
-                }
                 if (selectedCrop != null) {
 
                     Column(

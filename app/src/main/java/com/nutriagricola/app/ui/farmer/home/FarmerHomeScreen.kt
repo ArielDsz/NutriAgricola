@@ -20,7 +20,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,6 +33,7 @@ import com.nutriagricola.app.ui.farmer.FarmerContextUiState
 import com.nutriagricola.app.ui.farmer.home.components.CropsSection
 import com.nutriagricola.app.ui.farmer.home.components.EmptyFarmCard
 import com.nutriagricola.app.ui.farmer.home.components.FarmCard
+import com.nutriagricola.app.ui.farmer.home.components.FarmSelectorBottomSheet
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 import com.nutriagricola.app.ui.farmer.home.components.HomeHeader
@@ -41,6 +46,7 @@ fun FarmerHomeScreen(
     viewModel: FarmerHomeViewModel,
     contextState: FarmerContextUiState,
     onLogoutClick: () -> Unit,
+    onFarmSelected: (String) -> Unit,
     onHistoryClick: () -> Unit,
     onRecordClick: (String) -> Unit,
     onCropClick: (String) -> Unit,
@@ -57,6 +63,19 @@ fun FarmerHomeScreen(
     val state = if (loadedState.farmId == farm?.id) loadedState
     else FarmerHomeUiState(farmId = farm?.id, isLoading = true)
     val error = contextState.error ?: state.error
+    var showFarmSelector by rememberSaveable { mutableStateOf(false) }
+
+    if (showFarmSelector) {
+        FarmSelectorBottomSheet(
+            farms = contextState.farms,
+            selectedFarmId = farm?.id,
+            onDismiss = { showFarmSelector = false },
+            onFarmSelected = { farmId ->
+                onFarmSelected(farmId)
+                showFarmSelector = false
+            }
+        )
+    }
 
     Scaffold(
         bottomBar = {
@@ -88,7 +107,7 @@ fun FarmerHomeScreen(
                     farm != null -> FarmCard(
                         farm = farm,
                         cropCount = state.crops.size,
-                        onClick = {},
+                        onClick = { showFarmSelector = true },
                         modifier = Modifier.align(Alignment.BottomCenter)
                             .fillMaxWidth().padding(horizontal = 16.dp)
                     )
@@ -104,11 +123,12 @@ fun FarmerHomeScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            CropsSection(
-                crops = state.crops,
-                onAddClick = {},
-                onCropClick = { onCropClick(it.id) }
-            )
+            key(farm?.id) {
+                CropsSection(
+                    crops = state.crops,
+                    onCropClick = { onCropClick(it.id) }
+                )
+            }
 
             Button(
                 onClick = {

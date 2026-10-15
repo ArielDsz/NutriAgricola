@@ -1,13 +1,15 @@
 package com.nutriagricola.app.data.local
 
+import android.content.Context
 import androidx.room.withTransaction
+import com.nutriagricola.app.R
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.entity.*
 import com.nutriagricola.app.domain.model.user.UserRole
 import java.time.LocalDate
 import java.util.UUID
 
-suspend fun seedDatabase(database: AppDatabase) {
+suspend fun seedDatabase(database: AppDatabase, context: Context) {
 
     database.withTransaction {
 
@@ -70,50 +72,58 @@ suspend fun seedDatabase(database: AppDatabase) {
             )
         }
 
-        // PREDIO
-        var farms = farmDao.getAll()
+        fun resourceUri(resourceId: Int): String =
+            "android.resource://${context.packageName}/$resourceId"
 
-        val farm = farms.find { it.name == "Los Aromos" }
-            ?: FarmEntity(
-                id = UUID.randomUUID().toString(),
-                name = "Los Aromos",
-                location = "Quillota",
-                imagePath = null,
-                active = true
-            ).also {
-                farmDao.insert(it)
+        // Refresh demo image URIs on startup: resource IDs can change between builds.
+        // Existing entities retain their IDs and other stored information.
+        suspend fun ensureFarm(name: String, location: String, imageId: Int): FarmEntity {
+            val existing = farmDao.getAll().find { it.name == name }
+            val imagePath = resourceUri(imageId)
+            if (existing != null) {
+                val updated = existing.copy(imagePath = imagePath)
+                if (updated != existing) farmDao.update(updated)
+                return updated
             }
+            return FarmEntity(
+                id = UUID.randomUUID().toString(), name = name, location = location,
+                active = true, imagePath = imagePath
+            ).also { farmDao.insert(it) }
+        }
 
-        // CULTIVOS
-        var crops = cropDao.getByFarmId(farm.id)
-
-        val avocado = crops.find { it.name == "Palto" }
-            ?: CropEntity(
-                id = UUID.randomUUID().toString(),
-                farmId = farm.id,
-                name = "Palto",
-                variety = "Hass",
-                areaHectares = 2.5,
-                phenologicalStage = "Floración",
-                imagePath = null,
-                active = true
-            ).also {
-                cropDao.insert(it)
+        suspend fun ensureCrop(
+            farmId: String, name: String, variety: String,
+            areaHectares: Double, stage: String, imageId: Int
+        ): CropEntity {
+            val existing = cropDao.getByFarmId(farmId).find { it.name == name }
+            val imagePath = resourceUri(imageId)
+            if (existing != null) {
+                val updated = existing.copy(imagePath = imagePath)
+                if (updated != existing) cropDao.update(updated)
+                return updated
             }
+            return CropEntity(
+                id = UUID.randomUUID().toString(), farmId = farmId, name = name,
+                variety = variety, areaHectares = areaHectares, phenologicalStage = stage,
+                active = true, imagePath = imagePath
+            ).also { cropDao.insert(it) }
+        }
 
-        val lemon = crops.find { it.name == "Limonero" }
-            ?: CropEntity(
-                id = UUID.randomUUID().toString(),
-                farmId = farm.id,
-                name = "Limonero",
-                variety = "Eureka",
-                areaHectares = 1.2,
-                phenologicalStage = "Maduración",
-                imagePath = null,
-                active = true
-            ).also {
-                cropDao.insert(it)
-            }
+        val farm = ensureFarm("Los Aromos", "Quillota", R.drawable.farm_los_aromos)
+        val maiten = ensureFarm("El Maitén", "Limache", R.drawable.farm_el_maiten)
+        val santaElena = ensureFarm("Santa Elena", "La Cruz", R.drawable.farm_santa_elena)
+
+        val avocado = ensureCrop(
+            farm.id, "Palto", "Hass", 2.5, "Floración", R.drawable.crop_avocado
+        )
+        val lemon = ensureCrop(
+            farm.id, "Limonero", "Eureka", 1.2, "Maduración", R.drawable.crop_lemon
+        )
+        ensureCrop(farm.id, "Tomate", "Roma", 0.8, "Fructificación", R.drawable.crop_tomato)
+        ensureCrop(maiten.id, "Palto", "Hass", 3.0, "Desarrollo del fruto", R.drawable.crop_avocado)
+        ensureCrop(maiten.id, "Tomate", "Cherry", 0.5, "Floración", R.drawable.crop_tomato)
+        ensureCrop(santaElena.id, "Limonero", "Fino", 1.8, "Floración", R.drawable.crop_lemon)
+        ensureCrop(santaElena.id, "Tomate", "Roma", 1.0, "Maduración", R.drawable.crop_tomato)
 
         // REGISTROS PALTO
         if (recordDao.getByCropId(avocado.id).isEmpty()) {

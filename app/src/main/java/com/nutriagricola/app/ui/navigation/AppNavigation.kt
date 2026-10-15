@@ -99,7 +99,7 @@ fun AppNavigation() {
     LaunchedEffect(database) {
         try {
             withContext(Dispatchers.IO) {
-                seedDatabase(database)
+                seedDatabase(database, context.applicationContext)
             }
             isDatabaseReady = true
             sessionViewModel.restoreSession()
@@ -213,6 +213,7 @@ fun AppNavigation() {
                                 viewModel = homeViewModel,
                                 contextState = contextState,
                                 onLogoutClick = { sessionViewModel.logout() },
+                                onFarmSelected = { farmerContext.selectFarm(it) },
                                 onCropClick = { cropId ->
                                     navController.navigate("crop_detail/${Uri.encode(cropId)}") {
                                         launchSingleTop = true

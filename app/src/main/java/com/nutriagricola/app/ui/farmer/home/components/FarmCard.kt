@@ -1,6 +1,5 @@
 package com.nutriagricola.app.ui.farmer.home.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,25 +43,18 @@ fun FarmCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            if (!farm.imagePath.isNullOrBlank()) {
-                AsyncImage(
-                    model = farm.imagePath,
-                    contentDescription = "Imagen del predio",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(66.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            } else {
-                Image(
-                    painter = painterResource(R.drawable.default_crop),
-                    contentDescription = "Imagen del predio",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(66.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
+            val fallback = painterResource(R.drawable.default_crop)
+            AsyncImage(
+                model = farm.imagePath?.takeIf { it.isNotBlank() },
+                contentDescription = "Imagen del predio ${farm.name}",
+                placeholder = fallback,
+                fallback = fallback,
+                error = fallback,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(66.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
 
             Spacer(
                 modifier = Modifier.width(12.dp)
