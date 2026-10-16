@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.domain.model.farm.Crop
 
@@ -33,21 +32,20 @@ fun CropsSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 8.dp, top = 16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Cultivos",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.bodyLarge
             )
         }
         LazyRow(
             state = listState,
             flingBehavior = rememberSnapFlingBehavior(listState),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 4.dp)
         ) {
             items(crops, key = { it.id }) { crop ->
                 CropCard(
@@ -56,7 +54,7 @@ fun CropsSection(
                         onCropClick(crop)
                     },
                     modifier = Modifier
-                        .fillParentMaxWidth(0.9f)
+                        .fillParentMaxWidth(0.44f)
                         .heightIn(min = 120.dp)
                 )
             }

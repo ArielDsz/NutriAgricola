@@ -4,12 +4,12 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -24,11 +24,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
+import com.nutriagricola.app.ui.theme.OfflineBackground
 
 
 @Composable
@@ -81,62 +82,40 @@ fun SyncStatus(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
-        color = if (isOnline)
-            Color(0xFFE8F5E9)
-        else
-            Color(0xFFFFF8E1),
-        border = BorderStroke(
-            1.dp,
-            if (isOnline)
-                Color(0xFF2E7D32).copy(alpha = 0.15f)
-            else
-                MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-        )
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(
-                horizontal = 12.dp,
-                vertical = 8.dp
-            ),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.background(Brush.horizontalGradient(listOf(
+                if (isOnline) MaterialTheme.colorScheme.primaryContainer else OfflineBackground,
+                MaterialTheme.colorScheme.surface
+            ))).padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Text(
-                text = if (isOnline)
-                    "● En línea"
-                else
-                    "● Sin conexión",
-                color = if (isOnline)
-                    Color(0xFF2E7D32)
-                else
-                    Color(0xFFC09A23)
-            )
-
             Surface(
-                onClick = { },
                 shape = CircleShape,
-                color = if (isOnline)
-                    Color(0xFFE8F5E9)
-                else
-                    Color(0xFFFFF8E1),
-                modifier = Modifier.size(36.dp)
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(40.dp)
             ) {
                 Box(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_sync),
-                        contentDescription = "Sincronizar",
-                        tint = if (isOnline)
-                            Color(0xFF2E7D32)
-                        else
-                            Color(0xFFC09A23),
-                        modifier = Modifier.size(20.dp)
+                        painter = painterResource(if (isOnline) R.drawable.ic_wifi else R.drawable.ic_wifi_off),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
+            Text(
+                text = if (isOnline) "En línea" else "Sin conexión",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

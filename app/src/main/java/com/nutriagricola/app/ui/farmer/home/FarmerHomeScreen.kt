@@ -1,19 +1,25 @@
 package com.nutriagricola.app.ui.farmer.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,7 +33,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
+import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.user.User
 import com.nutriagricola.app.ui.farmer.FarmerContextUiState
 import com.nutriagricola.app.ui.farmer.home.components.CropsSection
@@ -93,29 +103,28 @@ fun FarmerHomeScreen(
                 .padding(bottom = innerPadding.calculateBottomPadding())
                 .verticalScroll(rememberScrollState())
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 HomeHeader(
                     initials = initials,
                     onLogoutClick = onLogoutClick,
-                    modifier = Modifier.height(150.dp)
+                    modifier = Modifier.fillMaxWidth().height(192.dp)
                 )
-
+                Column(modifier = Modifier.fillMaxWidth().padding(top = 144.dp)) {
                 when {
                     contextState.isLoading -> CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.BottomCenter)
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     farm != null -> FarmCard(
                         farm = farm,
                         cropCount = state.crops.size,
                         onClick = { showFarmSelector = true },
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                            .fillMaxWidth().padding(horizontal = 16.dp)
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     )
                     else -> EmptyFarmCard(
                         onClick = {},
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                            .fillMaxWidth().padding(horizontal = 16.dp)
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     )
+                }
                 }
             }
 
@@ -136,23 +145,45 @@ fun FarmerHomeScreen(
                 },
                 enabled = farm != null && !contextState.isLoading,
                 modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp).height(56.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues(0.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp, pressedElevation = 1.dp)
             ) {
-                Text("Nuevo registro", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Brush.verticalGradient(
+                            if (farm != null && !contextState.isLoading) listOf(
+                                lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary, 0.3f),
+                                MaterialTheme.colorScheme.primary
+                            ) else listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.surfaceVariant)
+                        ))
+                        .heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                Icon(painterResource(R.drawable.ic_add_circle), contentDescription = null,
+                    modifier = Modifier.padding(end = 10.dp).size(26.dp))
+                Text("Nuevo registro", style = MaterialTheme.typography.bodyLarge)
+                }
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Historial reciente", style = MaterialTheme.typography.titleMedium)
-                    TextButton(onClick = onHistoryClick) { Text("Ver todos") }
+                    Text("Historial reciente", style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f))
+                    TextButton(onClick = onHistoryClick) {
+                        Text("Ver todos", style = MaterialTheme.typography.bodySmall)
+                        Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null,
+                            modifier = Modifier.size(20.dp))
+                    }
                 }
 
                 when {
