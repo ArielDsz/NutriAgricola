@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record.water
 
+import com.nutriagricola.app.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,6 +24,7 @@ fun WaterRecordScreen(
 
     RecordForm(
         title = "Análisis de agua",
+        subtitle = "Registra los resultados del análisis de agua para tu cultivo.",
         crop = state.crop,
         isLoading = state.isLoading,
         error = state.error,
@@ -33,39 +35,39 @@ fun WaterRecordScreen(
     ) {
         RecordNumericField(
             "pH", state.ph, viewModel::updatePh,
-            error = state.fieldErrors["ph"], enabled = enabled
+            error = state.fieldErrors["ph"], enabled = enabled, iconRes = R.drawable.ic_ph
         )
         RecordNumericField(
             "Conductividad eléctrica (CE)", state.electricalConductivity, viewModel::updateElectricalConductivity,
-            error = state.fieldErrors["electricalConductivity"], enabled = enabled
+            error = state.fieldErrors["electricalConductivity"], enabled = enabled, iconRes = R.drawable.ic_conductivity
         )
         RecordNumericField(
             "Nitrógeno (N)", state.nitrogen, viewModel::updateNitrogen,
-            error = state.fieldErrors["nitrogen"], enabled = enabled
+            error = state.fieldErrors["nitrogen"], enabled = enabled, iconRes = R.drawable.ic_nitrogen
         )
         RecordNumericField(
             "Fósforo (P)", state.phosphorus, viewModel::updatePhosphorus,
-            error = state.fieldErrors["phosphorus"], enabled = enabled
+            error = state.fieldErrors["phosphorus"], enabled = enabled, iconRes = R.drawable.ic_phosphorus
         )
         RecordNumericField(
             "Potasio (K)", state.potassium, viewModel::updatePotassium,
-            error = state.fieldErrors["potassium"], enabled = enabled
+            error = state.fieldErrors["potassium"], enabled = enabled, iconRes = R.drawable.ic_potassium
         )
         RecordNumericField(
             "Calcio (Ca)", state.calcium, viewModel::updateCalcium,
-            error = state.fieldErrors["calcium"], enabled = enabled
+            error = state.fieldErrors["calcium"], enabled = enabled, iconRes = R.drawable.ic_calcium
         )
         RecordNumericField(
             "Magnesio (Mg)", state.magnesium, viewModel::updateMagnesium,
-            error = state.fieldErrors["magnesium"], enabled = enabled
+            error = state.fieldErrors["magnesium"], enabled = enabled, iconRes = R.drawable.ic_magnesium
         )
         RecordTextField(
             "Fuente de agua", state.waterSource, viewModel::updateWaterSource,
-            enabled = enabled
+            enabled = enabled, iconRes = R.drawable.ic_water_source
         )
         RecordTextField(
             "Observaciones", state.observations, viewModel::updateObservations,
-            enabled = enabled, minLines = 3
+            enabled = enabled, iconRes = R.drawable.ic_observations, minLines = 3
         )
     }
 }

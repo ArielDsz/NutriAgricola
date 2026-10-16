@@ -196,7 +196,8 @@ fun FarmerHomeScreen(
                         RecordHistoryCard(
                             record = record,
                             cropName = state.crops.find { it.id == record.cropId }?.name ?: "Cultivo",
-                            onClick = { onRecordClick(record.id) }
+                            onClick = { onRecordClick(record.id) },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp)
                         )
                     }
                 }

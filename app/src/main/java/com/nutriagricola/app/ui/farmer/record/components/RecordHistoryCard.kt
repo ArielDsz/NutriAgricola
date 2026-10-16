@@ -3,6 +3,7 @@ package com.nutriagricola.app.ui.farmer.record.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,7 +28,12 @@ import com.nutriagricola.app.domain.model.record.RecordType
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun RecordHistoryCard(record: Record, cropName: String, onClick: () -> Unit) {
+fun RecordHistoryCard(
+    record: Record,
+    cropName: String,
+    onClick: () -> Unit,
+    contentPadding: PaddingValues = PaddingValues(10.dp)
+) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -36,7 +42,7 @@ fun RecordHistoryCard(record: Record, cropName: String, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(contentPadding),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
