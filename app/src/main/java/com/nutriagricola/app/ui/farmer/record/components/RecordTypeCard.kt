@@ -3,6 +3,7 @@ package com.nutriagricola.app.ui.farmer.record.components
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -24,9 +25,10 @@ fun RecordTypeCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.fillMaxWidth().selectable(
+            selected = selected, role = Role.RadioButton, onClick = onClick
+        ),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (selected)
                 MaterialTheme.colorScheme.primaryContainer
@@ -34,39 +36,40 @@ fun RecordTypeCard(
                 MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
-            1.dp,
+            if (selected) 1.5.dp else 0.5.dp,
             if (selected)
                 MaterialTheme.colorScheme.primary
             else
-                MaterialTheme.colorScheme.outlineVariant
+                MaterialTheme.colorScheme.outline
         )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.heightIn(min = 104.dp).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
             Image(
                 painter = painterResource(imageRes),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(64.dp)
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(60.dp)
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.bodyLarge
                 )
 
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

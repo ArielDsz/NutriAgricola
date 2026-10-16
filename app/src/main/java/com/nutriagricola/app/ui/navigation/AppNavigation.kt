@@ -323,10 +323,15 @@ fun AppNavigation() {
                             val farmId = backStackEntry.arguments?.getString("farmId")
                                 ?: return@composable
                             val farmName = backStackEntry.arguments?.getString("farmName") ?: ""
+                            val farmerContext = farmerContextViewModel(
+                                navController, backStackEntry, farmerContextFactory
+                            )
+                            val contextState by farmerContext.uiState.collectAsState()
 
                             NewRecordScreen(
                                 farmId = farmId,
                                 farmName = farmName,
+                                farmImagePath = contextState.farms.find { it.id == farmId }?.imagePath,
                                 onBackClick = { navController.popBackStack() },
                                 onContinueClick = { cropId, type ->
                                     val route = when (type) {
