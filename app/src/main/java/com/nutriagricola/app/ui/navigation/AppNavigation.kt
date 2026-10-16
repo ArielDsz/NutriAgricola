@@ -65,6 +65,7 @@ import com.nutriagricola.app.ui.login.LoginViewModel
 import com.nutriagricola.app.ui.login.LoginViewModelFactory
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.seedDatabase
+import com.nutriagricola.app.data.local.FoliarPhotoStorage
 import com.nutriagricola.app.data.repository.AuthRepository
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
@@ -142,6 +143,11 @@ fun AppNavigation() {
     val snackbarHostState = remember { SnackbarHostState() }
     val cropRepository = remember(database) { CropRepository(database.cropDao()) }
     val recordRepository = remember(database) { RecordRepository(database) }
+    val foliarPhotoStorage = remember(recordRepository, context.applicationContext) {
+        FoliarPhotoStorage(context.applicationContext) { recordId ->
+            recordRepository.getById(recordId) != null
+        }
+    }
     val farmerContextFactory = remember(database) {
         FarmerContextViewModelFactory(FarmRepository(database.farmDao()))
     }
@@ -376,12 +382,13 @@ fun AppNavigation() {
                         composable("foliar_record/{cropId}") { backStackEntry ->
                             val cropId = backStackEntry.arguments?.getString("cropId")
                                 ?: return@composable
-                            val foliarFactory = remember(cropId, cropRepository, recordRepository, sessionViewModel) {
+                            val foliarFactory = remember(cropId, cropRepository, recordRepository, sessionViewModel, foliarPhotoStorage) {
                                 FoliarRecordViewModelFactory(
                                     cropId = cropId,
                                     cropRepository = cropRepository,
                                     recordRepository = recordRepository,
-                                    getCurrentUser = { sessionViewModel.uiState.value.currentUser }
+                                    getCurrentUser = { sessionViewModel.uiState.value.currentUser },
+                                    photoStorage = foliarPhotoStorage
                                 )
                             }
                             val foliarViewModel: FoliarRecordViewModel = viewModel(factory = foliarFactory)

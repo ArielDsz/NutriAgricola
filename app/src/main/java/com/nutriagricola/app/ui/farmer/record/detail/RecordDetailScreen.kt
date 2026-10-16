@@ -21,6 +21,7 @@ import com.nutriagricola.app.domain.model.record.SoilData
 import com.nutriagricola.app.domain.model.record.WaterData
 import com.nutriagricola.app.ui.farmer.FarmerContextUiState
 import com.nutriagricola.app.ui.farmer.record.components.historyLabel
+import com.nutriagricola.app.ui.farmer.record.components.FoliarPhotoGallery
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -84,6 +85,7 @@ fun RecordDetailScreen(
                                 DetailField("Calcio (Ca)", data.calcium?.toString())
                                 DetailField("Magnesio (Mg)", data.magnesium?.toString())
                                 DetailField("Síntomas", data.symptoms)
+                                FoliarPhotoGallery(photos = data.photos)
                             }
                         }
                         DetailField("Observaciones", record.observations)

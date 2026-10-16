@@ -34,8 +34,12 @@ object RecordFormValidator {
 
     fun optionalText(value: String): String? = value.trim().takeIf { it.isNotEmpty() }
 
-    fun validateMinimumData(measurements: Collection<Double?>, text: String? = null): String? {
-        return if (measurements.any { it != null } || !text.isNullOrBlank()) null
+    fun validateMinimumData(
+        measurements: Collection<Double?>,
+        text: String? = null,
+        hasPhotos: Boolean = false
+    ): String? {
+        return if (measurements.any { it != null } || !text.isNullOrBlank() || hasPhotos) null
         else "Ingresa al menos un dato antes de guardar"
     }
 }
