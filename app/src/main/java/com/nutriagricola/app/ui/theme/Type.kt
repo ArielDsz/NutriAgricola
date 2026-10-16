@@ -69,3 +69,13 @@ val Typography = DefaultTypography.copy(
     ),
     labelSmall = DefaultTypography.labelSmall.copy(fontFamily = AppFontFamily, fontWeight = FontWeight.SemiBold)
 )
+
+val CompactTypography = Typography.copy(
+    headlineLarge = Typography.headlineLarge.copy(fontSize = 30.sp, lineHeight = 38.sp),
+    headlineSmall = Typography.headlineSmall.copy(fontSize = 28.sp, lineHeight = 34.sp),
+    titleLarge = Typography.titleLarge.copy(fontSize = 21.sp, lineHeight = 27.sp),
+    titleMedium = Typography.titleMedium.copy(fontSize = 19.sp, lineHeight = 25.sp),
+    bodyLarge = Typography.bodyLarge.copy(fontSize = 17.sp, lineHeight = 23.sp),
+    bodyMedium = Typography.bodyMedium.copy(fontSize = 15.sp, lineHeight = 21.sp),
+    bodySmall = Typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 18.sp)
+)

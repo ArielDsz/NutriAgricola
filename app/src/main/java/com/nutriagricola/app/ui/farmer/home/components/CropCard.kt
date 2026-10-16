@@ -55,7 +55,7 @@ fun CropCard(
                 error = fallback,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxWidth().height(88.dp)
+                    .fillMaxWidth().height(84.dp)
                     .clip(RoundedCornerShape(8.dp))
             )
 

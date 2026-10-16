@@ -1,6 +1,7 @@
 package com.nutriagricola.app.ui.farmer.home.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +43,8 @@ fun FarmCard(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
+        BoxWithConstraints {
+        val imageWidth = (maxWidth * 0.27f).coerceIn(72.dp, 100.dp)
         Row(
             modifier = Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -56,7 +59,7 @@ fun FarmCard(
                 error = fallback,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(124.dp).height(92.dp)
+                    .width(imageWidth).height(imageWidth * 0.82f)
                     .clip(RoundedCornerShape(10.dp))
             )
 
@@ -96,6 +99,7 @@ fun FarmCard(
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
+        }
         }
     }
 }

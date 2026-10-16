@@ -97,7 +97,7 @@ fun NewRecordScreen(
             Box(modifier = Modifier.fillMaxWidth()) {
                 NewRecordHeader(onBackClick)
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 136.dp),
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 120.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -107,7 +107,7 @@ fun NewRecordScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        RecordSelectionImage(farmImagePath, "Imagen del predio $farmName", Modifier.size(64.dp))
+                        RecordSelectionImage(farmImagePath, "Imagen del predio $farmName", Modifier.size(56.dp))
                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Predio actual", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -119,7 +119,7 @@ fun NewRecordScreen(
 
             Column(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Cultivo", style = MaterialTheme.typography.bodyLarge)
@@ -180,7 +180,7 @@ fun NewRecordScreen(
                                     MaterialTheme.colorScheme.primary
                                 ) else listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.surfaceVariant)
                             ))
-                            .heightIn(min = 60.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+                            .heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -196,7 +196,7 @@ fun NewRecordScreen(
 
 @Composable
 private fun NewRecordHeader(onBackClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().height(176.dp)
+    Box(modifier = Modifier.fillMaxWidth().height(160.dp)
         .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))) {
         Image(
             painterResource(R.drawable.header_background), contentDescription = null,
@@ -238,7 +238,7 @@ private fun CropSelectionCard(crop: Crop?, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (crop != null) {
-                RecordSelectionImage(crop.imagePath, "Imagen de ${crop.name}", Modifier.size(80.dp))
+                RecordSelectionImage(crop.imagePath, "Imagen de ${crop.name}", Modifier.size(64.dp))
             } else {
                 Image(painterResource(R.drawable.analysis_foliar), null, modifier = Modifier.size(48.dp))
             }

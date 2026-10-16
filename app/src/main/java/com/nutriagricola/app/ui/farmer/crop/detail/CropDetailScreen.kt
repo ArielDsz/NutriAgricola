@@ -156,7 +156,7 @@ private fun CropDetailHeader(crop: Crop, onBackClick: () -> Unit) {
         Image(
             painterResource(R.drawable.header_background), contentDescription = null,
             contentScale = ContentScale.Crop, alignment = Alignment.TopCenter,
-            modifier = Modifier.fillMaxWidth().height(176.dp)
+            modifier = Modifier.fillMaxWidth().height(160.dp)
                 .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
         )
         Row(
@@ -169,7 +169,7 @@ private fun CropDetailHeader(crop: Crop, onBackClick: () -> Unit) {
                 modifier = Modifier.weight(1f))
         }
         Card(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 136.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 120.dp),
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
@@ -181,7 +181,7 @@ private fun CropDetailHeader(crop: Crop, onBackClick: () -> Unit) {
                     contentDescription = "Imagen de ${crop.name}",
                     placeholder = fallback, fallback = fallback, error = fallback,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxWidth().height(168.dp).clip(RoundedCornerShape(12.dp))
+                    modifier = Modifier.fillMaxWidth().height(144.dp).clip(RoundedCornerShape(12.dp))
                 )
                 Text(crop.name, style = MaterialTheme.typography.titleLarge)
                 if (LocalDensity.current.fontScale > 1.2f) {
@@ -265,7 +265,7 @@ private fun LatestCropRecordCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 168.dp).padding(horizontal = 8.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp).padding(horizontal = 8.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

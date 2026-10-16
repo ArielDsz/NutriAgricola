@@ -44,7 +44,7 @@ fun RecordTypeCard(
         )
     ) {
         Row(
-            modifier = Modifier.heightIn(min = 104.dp).padding(16.dp),
+            modifier = Modifier.heightIn(min = 88.dp).padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -52,7 +52,7 @@ fun RecordTypeCard(
                 painter = painterResource(imageRes),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.size(60.dp)
+                modifier = Modifier.size(48.dp)
             )
 
             Spacer(modifier = Modifier.width(12.dp))

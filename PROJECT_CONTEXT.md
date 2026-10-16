@@ -262,6 +262,12 @@ Debe mostrar el predio actualmente seleccionado.
 
 El predio debe provenir de Room.
 
+La última selección de predio se conserva en DataStore Preferences mediante su
+`farmId`, asociado al `User.id` autenticado. Al abrir el flujo Farmer se restaura
+esa selección si el predio sigue disponible; de lo contrario se utiliza el
+primer predio disponible. `FarmerContextViewModel` mantiene la única fuente del
+predio seleccionado durante el flujo.
+
 En la implementación actual puede existir un predio inicial seleccionado, pero
 la arquitectura debe permitir cambiarlo posteriormente.
 

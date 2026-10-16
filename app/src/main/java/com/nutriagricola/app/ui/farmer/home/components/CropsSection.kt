@@ -16,7 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nutriagricola.app.domain.model.farm.Crop
 
 @Composable
@@ -38,7 +40,9 @@ fun CropsSection(
         ) {
             Text(
                 text = "Cultivos",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.ExtraBold
             )
         }
         LazyRow(

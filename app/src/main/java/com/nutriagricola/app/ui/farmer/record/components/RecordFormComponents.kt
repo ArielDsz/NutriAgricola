@@ -7,12 +7,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +52,13 @@ fun RecordForm(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val errorRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(error) {
+        if (error != null && crop != null) {
+            withFrameNanos { }
+            errorRequester.bringIntoView()
+        }
+    }
     BackHandler(enabled = isSaving) { }
 
     Scaffold(modifier = Modifier.dismissKeyboardOnBackgroundTap()) { innerPadding ->
@@ -61,7 +73,9 @@ fun RecordForm(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (isLoading) CircularProgressIndicator()
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                if (crop == null) {
+                    error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                }
 
                 if (crop != null) {
                     Surface(
@@ -80,7 +94,7 @@ fun RecordForm(
                                 contentDescription = "Imagen de ${crop.name}",
                                 placeholder = fallback, fallback = fallback, error = fallback,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                                modifier = Modifier.size(56.dp).clip(RoundedCornerShape(10.dp))
                             )
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("Cultivo", style = MaterialTheme.typography.bodySmall,
@@ -96,6 +110,14 @@ fun RecordForm(
 
                     content()
 
+                    error?.let {
+                        Text(
+                            it,
+                            modifier = Modifier.fillMaxWidth().bringIntoViewRequester(errorRequester),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                     val canSave = !isLoading && !isSaving && !isSaved
                     Button(
                         onClick = {
@@ -265,8 +287,8 @@ private fun RecordFieldContainer(
 @Composable
 private fun RecordFieldIcon(@DrawableRes iconRes: Int) {
     Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primaryContainer) {
-        Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-            Image(painterResource(iconRes), null, modifier = Modifier.requiredSize(64.dp))
+        Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+            Image(painterResource(iconRes), null, modifier = Modifier.requiredSize(52.dp))
         }
     }
 }

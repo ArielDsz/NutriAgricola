@@ -35,7 +35,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.user.User
@@ -107,9 +109,9 @@ fun FarmerHomeScreen(
                 HomeHeader(
                     initials = initials,
                     onLogoutClick = onLogoutClick,
-                    modifier = Modifier.fillMaxWidth().height(192.dp)
+                    modifier = Modifier.fillMaxWidth().height(164.dp)
                 )
-                Column(modifier = Modifier.fillMaxWidth().padding(top = 144.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(top = 116.dp)) {
                 when {
                     contextState.isLoading -> CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -178,6 +180,7 @@ fun FarmerHomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Historial reciente", style = MaterialTheme.typography.bodyLarge,
+                        fontSize = 19.sp, fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier.weight(1f))
                     TextButton(onClick = onHistoryClick) {
                         Text("Ver todos", style = MaterialTheme.typography.bodySmall)
@@ -193,11 +196,15 @@ fun FarmerHomeScreen(
                     farm == null -> Text("No hay un predio seleccionado")
                     state.recentRecords.isEmpty() -> Text("No hay registros recientes")
                     else -> state.recentRecords.forEach { record ->
+                        val crop = state.crops.find { it.id == record.cropId }
                         RecordHistoryCard(
                             record = record,
-                            cropName = state.crops.find { it.id == record.cropId }?.name ?: "Cultivo",
+                            cropName = crop?.name ?: "Cultivo",
                             onClick = { onRecordClick(record.id) },
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp)
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
+                            cropImagePath = crop?.imagePath,
+                            showCropThumbnail = true,
+                            cropThumbnailScale = 1.15f
                         )
                     }
                 }

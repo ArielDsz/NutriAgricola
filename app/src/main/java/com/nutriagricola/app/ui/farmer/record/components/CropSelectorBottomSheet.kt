@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,7 +37,8 @@ fun CropSelectorBottomSheet(
     crops: List<Crop>,
     selectedCropId: String?,
     onDismiss: () -> Unit,
-    onCropSelected: (Crop) -> Unit
+    onCropSelected: (Crop) -> Unit,
+    onAllCropsSelected: (() -> Unit)? = null
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Text(
@@ -48,6 +50,27 @@ fun CropSelectorBottomSheet(
             modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).selectableGroup(),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
+            if (onAllCropsSelected != null) {
+                item {
+                    val selected = selectedCropId == null
+                    Row(
+                        modifier = Modifier.fillMaxWidth().selectable(
+                            selected = selected,
+                            role = Role.RadioButton,
+                            onClick = onAllCropsSelected
+                        ).padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        RadioButton(selected = selected, onClick = null)
+                        Image(painterResource(R.drawable.analysis_foliar), null, modifier = Modifier.size(56.dp))
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Todos los cultivos", style = MaterialTheme.typography.titleMedium)
+                            if (selected) Text("Seleccionado", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+            }
             if (crops.isEmpty()) {
                 item {
                     Text("No hay cultivos disponibles en este predio", modifier = Modifier.padding(16.dp))

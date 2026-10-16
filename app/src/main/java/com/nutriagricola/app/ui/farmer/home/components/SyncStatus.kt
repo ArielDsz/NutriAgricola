@@ -85,7 +85,7 @@ fun SyncStatus(
         shadowElevation = 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -93,7 +93,7 @@ fun SyncStatus(
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(28.dp)
             ) {
                 Box(
                     contentAlignment = Alignment.Center
@@ -102,7 +102,7 @@ fun SyncStatus(
                         painter = painterResource(if (isOnline) R.drawable.ic_wifi else R.drawable.ic_wifi_off),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

@@ -64,7 +64,7 @@ fun HomeHeader(
                     Image(
                         painter = painterResource(R.drawable.logo),
                         contentDescription = "Logo NutriAgrícola",
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(48.dp)
                     )
 
                     Column {
@@ -81,28 +81,31 @@ fun HomeHeader(
                     }
                 }
 
-                Box {
+                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                     Surface(
                         onClick = { accountMenuExpanded = true },
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = initials,
                                 color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.bodyLarge
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.85f
+                                )
                             )
                         }
                     }
 
                     DropdownMenu(
                         expanded = accountMenuExpanded,
-                        onDismissRequest = { accountMenuExpanded = false }
+                        onDismissRequest = { accountMenuExpanded = false },
+                        containerColor = MaterialTheme.colorScheme.surface
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Cerrar sesión") },
+                            text = { Text("Cerrar sesión", color = MaterialTheme.colorScheme.primary) },
                             onClick = {
                                 accountMenuExpanded = false
                                 onLogoutClick()

@@ -1,6 +1,9 @@
 package com.nutriagricola.app.ui.navigation
 
 import android.net.Uri
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -148,8 +151,14 @@ fun AppNavigation() {
             recordRepository.getById(recordId) != null
         }
     }
-    val farmerContextFactory = remember(database) {
-        FarmerContextViewModelFactory(FarmRepository(database.farmDao()))
+    val currentUser = sessionState.currentUser
+    val farmerPreferences = remember(context.applicationContext) {
+        com.nutriagricola.app.data.repository.FarmerPreferencesRepository(context.applicationContext)
+    }
+    val farmerContextFactory = remember(database, farmerPreferences, currentUser?.id) {
+        FarmerContextViewModelFactory(
+            FarmRepository(database.farmDao()), farmerPreferences, currentUser?.id.orEmpty()
+        )
     }
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(sessionState.error) {
@@ -159,7 +168,10 @@ fun AppNavigation() {
         }
     }
 
-    val currentUser = sessionState.currentUser
+    MaterialTheme(
+        typography = if (currentUser?.role == UserRole.ADVISOR) MaterialTheme.typography
+            else com.nutriagricola.app.ui.theme.CompactTypography
+    ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // A different session gets a fresh controller, discarding the previous back stack.
         key(currentUser?.id) {
@@ -183,7 +195,11 @@ fun AppNavigation() {
 
             NavHost(
                 navController = navController,
-                startDestination = startDestination
+                startDestination = startDestination,
+                popEnterTransition = { fadeIn(tween(180)) },
+                popExitTransition = { fadeOut(tween(180)) },
+                predictivePopEnterTransition = { _ -> fadeIn(tween(180)) },
+                predictivePopExitTransition = { _ -> fadeOut(tween(180)) }
             ) {
                 if (currentUser == null) {
                     composable("login") {
@@ -429,6 +445,7 @@ fun AppNavigation() {
                 }
             }
         }
+    }
     }
 }
 
