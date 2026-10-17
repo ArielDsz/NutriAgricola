@@ -14,5 +14,5 @@ val White = Color(0xFFFFFFFF)
 // Connection status colors.
 val OnlineGreen = Color(0xFF2E7D32)
 val OnlineBackground = Color(0xFFE8F5E9)
-val OfflineYellow = Color(0xFFF9A825)
+val OfflineYellow = Color(0xFF94712C)
 val OfflineBackground = Color(0xFFFFF8E1)
