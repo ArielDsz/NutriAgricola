@@ -6,8 +6,11 @@ import com.nutriagricola.app.R
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.entity.*
 import com.nutriagricola.app.domain.model.user.UserRole
+import com.nutriagricola.app.domain.model.record.RecordStatus
+import com.nutriagricola.app.domain.model.record.RecordType
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.math.round
 
 suspend fun seedDatabase(database: AppDatabase, context: Context) {
 
@@ -119,11 +122,30 @@ suspend fun seedDatabase(database: AppDatabase, context: Context) {
         val lemon = ensureCrop(
             farm.id, "Limonero", "Eureka", 1.2, "Maduración", R.drawable.crop_lemon
         )
-        ensureCrop(farm.id, "Tomate", "Roma", 0.8, "Fructificación", R.drawable.crop_tomato)
-        ensureCrop(maiten.id, "Palto", "Hass", 3.0, "Desarrollo del fruto", R.drawable.crop_avocado)
-        ensureCrop(maiten.id, "Tomate", "Cherry", 0.5, "Floración", R.drawable.crop_tomato)
-        ensureCrop(santaElena.id, "Limonero", "Fino", 1.8, "Floración", R.drawable.crop_lemon)
-        ensureCrop(santaElena.id, "Tomate", "Roma", 1.0, "Maduración", R.drawable.crop_tomato)
+        val tomato = ensureCrop(farm.id, "Tomate", "Roma", 0.8, "Fructificación", R.drawable.crop_tomato)
+        val orange = ensureCrop(
+            farm.id, "Naranjo", "Navel", 1.6, "Desarrollo del fruto", R.drawable.crop_orange
+        )
+        val mandarin = ensureCrop(
+            farm.id, "Mandarino", "Clemenules", 1.1, "Floración", R.drawable.crop_mandarin
+        )
+        val maitenAvocado = ensureCrop(
+            maiten.id, "Palto", "Hass", 3.0, "Desarrollo del fruto", R.drawable.crop_avocado
+        )
+        val maitenTomato = ensureCrop(maiten.id, "Tomate", "Cherry", 0.5, "Floración", R.drawable.crop_tomato)
+        val maitenLemon = ensureCrop(maiten.id, "Limonero", "Eureka", 1.4, "Maduración", R.drawable.crop_lemon)
+        val grape = ensureCrop(
+            maiten.id, "Vid", "Thompson Seedless", 2.2, "Brotación", R.drawable.crop_grape
+        )
+        val santaElenaLemon = ensureCrop(
+            santaElena.id, "Limonero", "Fino", 1.8, "Floración", R.drawable.crop_lemon
+        )
+        val santaElenaTomato = ensureCrop(
+            santaElena.id, "Tomate", "Roma", 1.0, "Maduración", R.drawable.crop_tomato
+        )
+        val santaElenaAvocado = ensureCrop(
+            santaElena.id, "Palto", "Hass", 2.0, "Floración", R.drawable.crop_avocado
+        )
 
         // REGISTROS PALTO
         if (recordDao.getByCropId(avocado.id).isEmpty()) {
@@ -213,6 +235,84 @@ suspend fun seedDatabase(database: AppDatabase, context: Context) {
                     waterSource = "Pozo"
                 )
             )
+        }
+
+        // Synthetic examples for UI testing, not agronomic recommendations or real reviews.
+        val demoCrops = listOf(
+            avocado, lemon, tomato, orange, mandarin,
+            maitenAvocado, maitenTomato, maitenLemon, grape,
+            santaElenaLemon, santaElenaTomato, santaElenaAvocado
+        )
+        val today = LocalDate.now()
+        demoCrops.forEachIndexed { cropIndex, crop ->
+            repeat(4) { sampleIndex ->
+                val recordId = UUID.nameUUIDFromBytes(
+                    "expanded_demo:${crop.id}:$sampleIndex".toByteArray(Charsets.UTF_8)
+                ).toString()
+                // Existing demo rows and user-created records are never overwritten or re-dated.
+                if (recordDao.getById(recordId) == null) {
+                    val type = RecordType.entries[(cropIndex + sampleIndex) % RecordType.entries.size]
+                    val status = if (sampleIndex % 2 == 0) RecordStatus.PENDING else RecordStatus.VALIDATED
+                    val daysAgo = sampleIndex * 10L + (cropIndex % 5) * 2L + cropIndex / 5 + 1L
+                    val partial = sampleIndex == 3
+                    val variation = (cropIndex % 4) * 0.1 + sampleIndex * 0.05
+                    fun variedValue(base: Double) = round((base + variation) * 100) / 100
+                    recordDao.insert(
+                        RecordEntity(
+                            id = recordId,
+                            cropId = crop.id,
+                            userId = farmer.id,
+                            date = today.minusDays(daysAgo).toString(),
+                            type = type.name,
+                            status = status.name,
+                            observations = if (sampleIndex == 1) null else
+                                "Datos ficticios de demostración. Seguimiento de ${crop.name}, " +
+                                    "variedad ${crop.variety}, muestra ${sampleIndex + 1} del sector de riego."
+                        )
+                    )
+                    when (type) {
+                        RecordType.SOIL -> soilDataDao.insert(
+                            SoilDataEntity(
+                                recordId = recordId,
+                                ph = variedValue(6.2),
+                                electricalConductivity = variedValue(0.9),
+                                nitrogen = if (partial) null else 28.0 + cropIndex + sampleIndex,
+                                phosphorus = if (partial) null else 14.0 + cropIndex,
+                                potassium = if (partial) null else 145.0 + cropIndex * 4,
+                                calcium = if (partial) null else 920.0 + cropIndex * 25,
+                                magnesium = if (partial) null else 110.0 + cropIndex * 3,
+                                organicMatter = if (partial) null else variedValue(2.4)
+                            )
+                        )
+                        RecordType.WATER -> waterDataDao.insert(
+                            WaterDataEntity(
+                                recordId = recordId,
+                                ph = if (partial) null else variedValue(7.0),
+                                electricalConductivity = if (partial) null else variedValue(0.6),
+                                nitrogen = if (partial) null else if (cropIndex % 3 == 0) 0.0 else 4.0 + cropIndex,
+                                phosphorus = if (partial) null else variedValue(1.0),
+                                potassium = if (partial) null else 8.0 + cropIndex,
+                                calcium = if (partial) null else 55.0 + cropIndex * 2,
+                                magnesium = if (partial) null else 15.0 + cropIndex,
+                                waterSource = listOf("Pozo profundo", "Canal de riego", "Estanque de acumulación")[cropIndex % 3]
+                            )
+                        )
+                        RecordType.FOLIAR -> foliarDataDao.insert(
+                            FoliarDataEntity(
+                                recordId = recordId,
+                                nitrogen = if (partial) null else variedValue(1.8),
+                                phosphorus = if (partial) null else variedValue(0.18),
+                                potassium = if (partial) null else variedValue(1.2),
+                                calcium = if (partial) null else variedValue(1.4),
+                                magnesium = if (partial) null else variedValue(0.30),
+                                symptoms = if (cropIndex % 2 == 0)
+                                    "Amarillamiento leve en hojas del sector norte; muestra de demostración."
+                                else "Hojas con bordes secos en una parte del sector; muestra de demostración."
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 }

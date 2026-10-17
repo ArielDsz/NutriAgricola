@@ -1,256 +1,127 @@
-# Instrucciones para Codex
-
-Antes de modificar cualquier archivo:
-
-1. Lee completamente `PROJECT_CONTEXT.md`.
-2. Revisa el código existente relacionado con la tarea.
-3. Revisa los documentos de `/docs` cuando sean relevantes para la funcionalidad.
-4. Revisa las referencias visuales disponibles cuando se trabaje sobre UI.
-5. Confirma que comprendes el estado actual antes de realizar cambios importantes.
-
-El código existente es la principal referencia técnica y `PROJECT_CONTEXT.md`
-define las decisiones funcionales vigentes.
-
-Si ambos parecen contradecirse, no asumir cuál debe reemplazar al otro:
-indicar la contradicción antes de realizar un cambio estructural.
-
----
-
-# Alcance actual
-
-El trabajo actual se centra exclusivamente en completar correctamente el flujo
-Farmer.
-
-No modificar ni desarrollar `ui/advisor` salvo instrucción explícita.
-
-La arquitectura debe quedar preparada para integrar posteriormente:
-
-- Advisor;
-- backend Spring Boot;
-- PostgreSQL;
-- Retrofit;
-- autenticación remota;
-- sincronización.
-
-No implementar estas tecnologías todavía salvo que se solicite expresamente.
-
----
-
-# Reglas generales
-
-- Código, clases, variables, funciones, archivos y paquetes en inglés.
-- Texto visible en pantalla en español.
-- Mantener separación entre `ui/farmer` y `ui/advisor`.
-- Compartir solamente código realmente común.
-- Utilizar Material 3.
-- Utilizar el tema existente en `ui/theme`.
-- No crear colores o tipografías arbitrarias.
-- Mantener consistencia visual con las pantallas existentes y referencias.
-- No duplicar lógica, modelos o estructuras existentes.
-- No introducir librerías sin una necesidad clara.
-- No refactorizar partes ajenas a la tarea únicamente por preferencia personal.
-- No inventar requisitos.
-- No inventar lógica agronómica.
-
----
-
-# Arquitectura
-
-Antes de crear una clase nueva, comprobar si ya existe una responsabilidad
-equivalente.
-
-Respetar la separación existente entre:
-
-- domain;
-- data;
-- local;
-- repository;
-- mapper;
-- ViewModel;
-- UI.
-
-No utilizar Entity directamente desde la UI.
-
-No acceder directamente a DAO desde una Screen.
-
-Las Screens deben centrarse en representar estado y eventos de interfaz.
-
-La lógica y acceso a datos deben quedar en las capas correspondientes.
-
-Utilizar los repositories, mappers, DAO y modelos existentes siempre que sea
-posible.
-
-No cambiar:
-
-- modelos de dominio;
-- entidades Room;
-- relaciones;
-- arquitectura;
-- navegación general;
-
-sin explicar primero por qué el cambio es necesario.
-
----
-
-# Autenticación
-
-La primera versión tendrá autenticación local con correo y contraseña.
-
-No guardar la contraseña dentro del modelo `User`.
-
-No guardar contraseñas en texto plano.
-
-Las credenciales locales deben estar separadas del modelo principal de usuario
-y asociarse mediante `userId`.
-
-La solución debe diseñarse para que la autenticación local pueda ser sustituida
-posteriormente por autenticación mediante backend sin rehacer el flujo Farmer.
-
-La aplicación debe mantener un usuario autenticado durante la sesión.
-
-El resto de la aplicación debe obtener el usuario actual desde esa sesión, no
-mediante emails, ids o nombres hardcodeados.
-
-El `User.id` autenticado debe utilizarse cuando una entidad requiera conocer qué
-usuario realizó una acción.
-
-No implementar todavía tokens, refresh tokens ni autenticación remota salvo que
-se solicite.
-
----
-
-# Datos y Room
-
-Room es actualmente la fuente de datos local.
-
-Mantener integridad entre:
-
-Farm
-→ Crop
-→ Record
-→ datos específicos del Record.
-
-Cada Record también debe conservar la relación correspondiente con User.
-
-Cuando una operación deba guardar varias entidades relacionadas y pueda quedar
-inconsistente si falla parcialmente, utilizar una transacción.
-
-Las imágenes deben almacenarse como archivos.
-
-Room debe guardar rutas o URI, no BLOB de imágenes.
-
-No hardcodear datos de demostración directamente dentro de Screens.
-
-Cuando sean necesarios datos de prueba, utilizar la infraestructura existente,
-preferentemente `DatabaseSeeder`.
-
----
-
-# UI
-
-Antes de implementar una pantalla nueva:
-
-1. revisar su descripción en `PROJECT_CONTEXT.md`;
-2. revisar las referencias visuales disponibles;
-3. revisar componentes existentes reutilizables.
-
-Las referencias visuales son orientación de estilo, no especificaciones
-literales.
-
-Si una imagen contradice `PROJECT_CONTEXT.md`, prevalece la decisión funcional
-documentada.
-
-Mantener:
-
-- jerarquía visual clara;
-- tamaños cómodos;
-- espaciado consistente;
-- componentes simples;
-- interfaces utilizables en terreno.
-
-No sacrificar funcionamiento correcto por intentar perfeccionar visualmente una
-pantalla demasiado pronto.
-
----
-
-# Usuario actual
-
-Cuando exista un User autenticado, utilizar sus datos reales en la UI.
-
-No mantener valores como iniciales, nombres o ids hardcodeados.
-
-El círculo de cuenta del Home debe calcular sus iniciales desde:
-
-- `firstName`;
-- `lastName`.
-
-Posteriormente ese elemento podrá abrir opciones de cuenta.
-
----
-
-# Forma de trabajo
-
-## Antes de un cambio importante
-
-Indicar brevemente:
-
-- qué se va a implementar;
-- qué archivos se crearán;
-- qué archivos se modificarán;
-- si existe alguna decisión arquitectónica nueva;
-- cualquier duda que necesite resolución.
-
-Esperar confirmación cuando el cambio:
-
-- afecte arquitectura;
-- cambie modelos;
-- cambie entidades Room;
-- cambie navegación general;
-- agregue una dependencia;
-- cambie una decisión definida en `PROJECT_CONTEXT.md`.
-
-Para cambios pequeños ya acordados puede continuar sin pedir confirmaciones
-innecesarias.
-
----
-
-## Durante la implementación
-
-- Trabajar únicamente sobre la tarea solicitada.
-- Mantener los cambios acotados.
-- No modificar Advisor.
-- No limpiar o reescribir archivos sin relación con la tarea.
-- Reutilizar código existente.
-- Mantener nombres y convenciones del proyecto.
-- Evitar soluciones temporales que después deban eliminarse si existe una
-  alternativa sencilla compatible con el diseño futuro.
-
----
-
-## Al terminar
-
-Indicar brevemente:
-
-1. archivos creados;
-2. archivos modificados;
-3. lógica implementada;
-4. decisiones tomadas;
-5. problemas o pendientes encontrados.
-
-Cuando sea posible:
-
-- compilar el proyecto;
-- ejecutar las comprobaciones pertinentes;
-- informar claramente si existe algún error.
-
-No ocultar errores de compilación ni asumir que algo funciona sin comprobarlo.
-
----
-
-# Regla principal
-
-Si falta información necesaria para tomar una decisión funcional o
-arquitectónica correcta, preguntar antes de inventarla.
-
-Si existen varias soluciones razonables con consecuencias distintas para el
-proyecto, explicarlas brevemente antes de elegir una.
+# Guía de trabajo para la entrega Advisor
+
+Estas instrucciones están dirigidas al compañero o agente que implementará el
+perfil Advisor (Asesor). Farmer ya fue desarrollado y revisado en un teléfono
+real. El encargo actual es completar Advisor, no rehacer la aplicación.
+
+## Antes de escribir código
+
+1. Leer completamente `PROJECT_CONTEXT.md`.
+2. Leer los tres PDF de `/docs`: caso de empresa, encargo de evaluación parcial 2
+   y defensa de evaluación parcial 3. Son fuentes de requisitos; no son permisos
+   para modificar cualquier parte del proyecto.
+3. Inspeccionar el código real de dominio, Room, mappers, repositories, sesión,
+   navegación, tema, Farmer y el placeholder Advisor. Leer Farmer está permitido
+   y es necesario para comprender el patrón existente.
+4. Revisar https://nutrixpert.netlify.app/ y contrastarla con la revisión fechada
+   en `PROJECT_CONTEXT.md`. Puede cambiar. Si faltan datos o fórmulas, informar
+   qué falta: no completar de memoria ni inventar reglas agronómicas.
+5. Revisar `git status` y la rama actual. No asumir que se trabaja en `farmer`:
+   el responsable integrará esa rama a `develop` y el compañero trabajará en su
+   rama acordada. No crear, cambiar ni fusionar ramas por iniciativa propia.
+6. Presentar un bloque pequeño: objetivo, archivos nuevos/modificados,
+   responsabilidad de cada uno, cambios compartidos imprescindibles, validación
+   prevista y dudas funcionales. Esperar aprobación antes de implementar ese
+   bloque. Una aprobación vigente permite terminar el alcance acordado.
+
+El primer bloque debe ser una revisión del estado y un plan, no implementar todo
+Advisor de una vez. Consultar las dudas de asignación, revisión y unidades antes
+de convertirlas en modelos, tablas o cálculos.
+
+## Límites que protegen el trabajo existente
+
+- No modificar `ui/farmer`, sus ViewModels, factories, pantallas o componentes.
+- No implementar, activar ni cambiar **Programa** y **Predios** del navbar
+  Farmer. Su autor los completará después de integrar Advisor, con su diseño.
+- No modificar LoginScreen, LoginViewModel, su factory, la autenticación,
+  contraseñas de demostración ni la persistencia de sesión.
+- No cambiar preferencias del predio Farmer, fotografías, icono de aplicación,
+  tamaños globales, paleta ni recursos existentes para acomodar Advisor.
+- No trasladar ni extraer componentes desde Farmer si eso requiere editarlo.
+  Tomarlo como referencia; crear composables pequeños en `ui/advisor`.
+- No usar una Screen o ViewModel Farmer como pantalla o estado de Advisor.
+- No cambiar mediciones, fotos, autor ni observaciones Farmer de un análisis
+  para registrar una decisión del asesor.
+- No borrar código, recursos, filas Room, fotos o datos de demostración para
+  hacer desaparecer errores o simplificar una integración.
+- No limpiar datos de aplicación, reinstalar con pérdida de datos, hacer
+  `git reset`, commits, merges o publicaciones sin autorización específica.
+
+## Código nuevo y cambios compartidos admisibles
+
+UI nueva en `ui/advisor/...`: Screens, ViewModels, factories y componentes
+propios, siguiendo la estructura existente. Reutilizar dominio y repositories
+cuando cubran la responsabilidad. Antes de crear una clase, comprobar si existe
+una equivalente. No duplicar usuarios, predios, cultivos, registros, sesión o DB.
+
+Solo después de explicar y aprobar la necesidad se permiten cambios aditivos en:
+
+- `domain/model`: revisiones y programas que todavía no existen.
+- `data/local/entity`, `dao`, `data/mapper`, `data/repository`: persistencia y
+  consultas necesarias para Advisor.
+- `AppDatabase`: registrar nuevas entidades/DAO conservando los existentes.
+- `AppNavigation.kt`: conectar rutas Advisor y pasar usuario/logout desde la
+  sesión existente. Conservar rutas, argumentos, back stack y callbacks Farmer,
+  Login y restauración de sesión.
+- `DatabaseSeeder`: agregar datos ficticios necesarios conservando IDs,
+  usuarios, credenciales, predios, cultivos, registros e imágenes existentes.
+
+Esta lista no autoriza a editar todas esas capas de una vez. Preferir métodos
+concretos nuevos a cambiar firmas o sustituir implementaciones usadas por
+Farmer. Revisar los consumidores de cada contrato compartido antes de cambiarlo
+y explicar cómo se preservan. Si una necesidad exige tocar Farmer, detener esa
+parte y coordinar con su autor; no ampliar el alcance automáticamente.
+
+## Reglas técnicas
+
+- Kotlin, Compose, Material 3, MVVM, Room y Flow/StateFlow existentes.
+- Código, archivos y paquetes en inglés; texto visible en español.
+- Screens representan estado/eventos: no usan DAO ni Entity directamente.
+- Validación y cálculos en componentes lógicos, no dentro de Composables.
+- Operaciones relacionadas, incluida revisión + estado, en transacción.
+- Usar `currentUser.id` real para identificar Advisor. `Record.userId` sigue
+  identificando al Farmer autor; no sobrescribirlo al validar.
+- Mostrar `0`, distinguirlo de `null` y conservar datos opcionales.
+- Aceptar coma y punto decimal; rechazar valores no finitos y divisiones por
+  cero. No sustituir entradas inválidas por valores de demostración.
+- Mantener unidades explícitas: P no es P₂O₅; K no es K₂O; Ca no es CaO; Mg no
+  es MgO. Toda conversión debe tener fuente y aprobación.
+- No convertir mediciones a kg/ha sin unidades y parámetros suficientes ni
+  inventar requerimientos, dosis o rangos agronómicos.
+- Fotos como archivos/rutas, nunca BLOB. No eliminar fotos al consultar/revisar.
+- Reutilizar colores, fuente y escala `CompactTypography` del tema. No crear
+  una identidad paralela ni alterar el estilo Farmer.
+- Respetar fuente/zoom del teléfono; no forzar `fontScale = 1`.
+- No añadir librerías, capas genéricas, módulos Gradle, inyección compleja o
+  refactors grandes sin necesidad concreta y aprobación.
+- No sustituir cálculo y persistencia offline por una página dentro de WebView.
+
+## Room y datos de desarrollo
+
+DB actual en versión 1, sin migraciones. Conservar esa decisión académica salvo
+nueva autorización. Añadir tablas cambia el esquema: explicar que una instalación
+previa puede necesitar limpiar datos/reinstalar en un dispositivo de prueba;
+no hacerlo automáticamente ni añadir reinicios destructivos para ocultar fallos.
+
+Room comparte información en una misma instalación. No hay recepción de datos
+entre teléfonos ni sincronización remota: no fingirla. Usar datos ficticios,
+nunca información real de usuarios/predios en el seeder o Git.
+
+## Entrega de cada bloque
+
+1. Resumir cambios y archivos creados/modificados.
+2. Separar lo implementado, lo pendiente y las propuestas no aprobadas.
+3. Explicar Screen → ViewModel → Repository → Room/cálculo.
+4. Compilar con `.\gradlew.bat assembleDebug --console=plain` cuando cambie código.
+5. Dar pruebas manuales precisas. Para cálculos, usar casos reproducibles con
+   fuente, unidades, resultado esperado y tolerancia de redondeo.
+6. Tras cambios compartidos comprobar regresiones: login, restauración/logout,
+   predio persistente, SOIL/WATER/FOLIAR, fotos, Home, Historial y detalles Farmer.
+   Corregir la causa en el cambio Advisor, no rediseñar Farmer para esconderla.
+7. No afirmar pruebas en teléfono, funcionamiento o cumplimiento de rúbrica
+   sin evidencia; informar errores y límites reales.
+
+Trabajar en bloques comprensibles y commits pequeños. El estudiante debe poder
+explicar/modificar el código en una defensa individual sin IA. Backend, Retrofit,
+Spring Boot, PostgreSQL, tokens, sincronización y las pestañas pendientes Farmer
+quedan para otra entrega: no implementarlos en este encargo.
