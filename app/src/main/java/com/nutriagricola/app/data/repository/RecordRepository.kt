@@ -9,6 +9,7 @@ import com.nutriagricola.app.data.mapper.toEntity
 import com.nutriagricola.app.domain.model.record.FoliarData
 import com.nutriagricola.app.domain.model.record.Record
 import com.nutriagricola.app.domain.model.record.RecordData
+import com.nutriagricola.app.domain.model.record.RecordStatus
 import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.domain.model.record.SoilData
 import com.nutriagricola.app.domain.model.record.WaterData
@@ -41,6 +42,17 @@ class RecordRepository(
         return recordDao.getByCropId(cropId).mapNotNull {
             getCompleteRecord(it)
         }
+    }
+
+    suspend fun getByStatus(status: RecordStatus): List<Record> {
+        return recordDao.getByStatus(status.name).mapNotNull {
+            getCompleteRecord(it)
+        }
+    }
+
+    suspend fun updateStatus(id: String, status: RecordStatus) {
+        val entity = recordDao.getById(id) ?: return
+        recordDao.update(entity.copy(status = status.name))
     }
 
     fun observeByUserAndFarm(userId: String, farmId: String): Flow<List<Record>> {

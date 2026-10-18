@@ -39,6 +39,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nutriagricola.app.ui.advisor.home.AdvisorHomeScreen
+import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModel
+import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModelFactory
+import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsScreen
+import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModel
+import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModelFactory
+import com.nutriagricola.app.ui.advisor.detail.AdvisorRecordDetailScreen
+import com.nutriagricola.app.ui.advisor.detail.AdvisorRecordDetailViewModel
+import com.nutriagricola.app.ui.advisor.detail.AdvisorRecordDetailViewModelFactory
+import com.nutriagricola.app.ui.advisor.all_records.AdvisorAllRecordsScreen
+import com.nutriagricola.app.ui.advisor.all_records.AdvisorAllRecordsViewModel
+import com.nutriagricola.app.ui.advisor.all_records.AdvisorAllRecordsViewModelFactory
 import com.nutriagricola.app.ui.farmer.FarmerContextViewModel
 import com.nutriagricola.app.ui.farmer.FarmerContextViewModelFactory
 import com.nutriagricola.app.ui.farmer.history.FarmerHistoryScreen
@@ -73,6 +84,7 @@ import com.nutriagricola.app.data.repository.AuthRepository
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
 import com.nutriagricola.app.data.repository.RecordRepository
+import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.data.repository.SessionRepository
 import com.nutriagricola.app.data.repository.UserRepository
 import com.nutriagricola.app.domain.model.user.UserRole
@@ -109,8 +121,9 @@ fun AppNavigation() {
             sessionViewModel.restoreSession()
         } catch (exception: CancellationException) {
             throw exception
-        } catch (_: Exception) {
-            initializationError = "No se pudieron preparar los datos locales. Reinicia la aplicación."
+        } catch (e: Exception) {
+            e.printStackTrace()
+            initializationError = "No se pudieron preparar los datos locales (${e.localizedMessage ?: e.message ?: "Error desconocido"})."
         }
     }
 
@@ -146,6 +159,9 @@ fun AppNavigation() {
     val snackbarHostState = remember { SnackbarHostState() }
     val cropRepository = remember(database) { CropRepository(database.cropDao()) }
     val recordRepository = remember(database) { RecordRepository(database) }
+    val farmRepository = remember(database) { FarmRepository(database.farmDao()) }
+    val userRepository = remember(database) { UserRepository(database.userDao()) }
+    val recordReviewRepository = remember(database) { RecordReviewRepository(database) }
     val foliarPhotoStorage = remember(recordRepository, context.applicationContext) {
         FoliarPhotoStorage(context.applicationContext) { recordId ->
             recordRepository.getById(recordId) != null
@@ -157,7 +173,7 @@ fun AppNavigation() {
     }
     val farmerContextFactory = remember(database, farmerPreferences, currentUser?.id) {
         FarmerContextViewModelFactory(
-            FarmRepository(database.farmDao()), farmerPreferences, currentUser?.id.orEmpty()
+            farmRepository, farmerPreferences, currentUser?.id.orEmpty()
         )
     }
     val coroutineScope = rememberCoroutineScope()
@@ -211,7 +227,82 @@ fun AppNavigation() {
                     }
                 } else if (currentUser.role == UserRole.ADVISOR) {
                     composable("advisor_home") {
-                        AdvisorHomeScreen()
+                        val advisorHomeFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
+                            AdvisorHomeViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        }
+                        val advisorHomeViewModel: AdvisorHomeViewModel = viewModel(factory = advisorHomeFactory)
+
+                        AdvisorHomeScreen(
+                            user = currentUser,
+                            viewModel = advisorHomeViewModel,
+                            onLogoutClick = { sessionViewModel.logout() },
+                            onPendingClick = { navController.navigate("advisor_pending") },
+                            onAllRecordsClick = { navController.navigate("advisor_all_records") },
+                            onRecordClick = { recordId ->
+                                navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
+                            }
+                        )
+                    }
+
+                    composable("advisor_pending") {
+                        val pendingFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
+                            AdvisorPendingRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        }
+                        val pendingViewModel: AdvisorPendingRecordsViewModel = viewModel(factory = pendingFactory)
+
+                        AdvisorPendingRecordsScreen(
+                            viewModel = pendingViewModel,
+                            onBackClick = { navController.popBackStack() },
+                            onAllRecordsClick = {
+                                navController.navigate("advisor_all_records") {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onRecordClick = { recordId ->
+                                navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
+                            }
+                        )
+                    }
+
+                    composable("advisor_all_records") {
+                        val allRecordsFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
+                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        }
+                        val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
+
+                        AdvisorAllRecordsScreen(
+                            viewModel = allRecordsViewModel,
+                            onBackClick = { navController.popBackStack() },
+                            onPendingClick = {
+                                navController.navigate("advisor_pending") {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onRecordClick = { recordId ->
+                                navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
+                            }
+                        )
+                    }
+
+                    composable("advisor_record_detail/{recordId}") { backStackEntry ->
+                        val recordId = backStackEntry.arguments?.getString("recordId") ?: return@composable
+                        val detailFactory = remember(recordId, recordRepository, recordReviewRepository, farmRepository, cropRepository, userRepository) {
+                            AdvisorRecordDetailViewModelFactory(
+                                recordId = recordId,
+                                getCurrentUser = { sessionViewModel.uiState.value.currentUser },
+                                recordRepository = recordRepository,
+                                recordReviewRepository = recordReviewRepository,
+                                farmRepository = farmRepository,
+                                cropRepository = cropRepository,
+                                userRepository = userRepository
+                            )
+                        }
+                        val detailViewModel: AdvisorRecordDetailViewModel = viewModel(factory = detailFactory)
+
+                        AdvisorRecordDetailScreen(
+                            viewModel = detailViewModel,
+                            onBackClick = { navController.popBackStack() }
+                        )
                     }
                 } else {
                     navigation(startDestination = "farmer_home", route = "farmer") {
