@@ -1,8 +1,52 @@
 # NutriAgrícola: contexto para implementar Advisor
 
-Actualizado: 17 de octubre de 2026. Guía para el siguiente trabajo del compañero
+Actualizado: 19 de octubre de 2026. Guía para el siguiente trabajo del compañero
 y su asistente de IA. No describe un Advisor terminado ni da por implementadas
 sus propuestas. Leer también `AGENTS.md`.
+
+## 0. Correcciones autorizadas en la rama asesor (19-10-2026)
+
+Advisor ya tiene Home, pendientes, consulta general y detalle de revisión.
+Programas/cálculos siguen pendientes; se mantiene su botón. El rediseño del Home
+se pospone: no eliminar todavía sus secciones ni modificar Farmer/Login.
+
+- Room versión 3, con migraciones 1 → 2 → 3, sin borrado automático. La primera
+  añade revisiones y la segunda corrige las observaciones guardadas por la versión
+  inicial Advisor. No recuperan datos que una instalación anterior ya haya borrado.
+- ReviewResult (OBSERVED / VALIDATED) es independiente de RecordStatus. Observar
+  requiere comentario y mantiene PENDING; validar establece VALIDATED. Revisión
+  y estado se guardan en transacción, comprobando asesor activo y registro válido.
+- Se conservan mediciones, autor, notas y rutas de fotos originales. El detalle
+  muestra también fuente de agua, síntomas y revisiones anteriores con fecha/autor.
+- Listas Advisor recargan al volver del detalle; pendientes prioriza los más
+  antiguos. Filtro de observados usa la revisión más reciente y el estado pendiente.
+  El total excluye DRAFT/DELETED, igual que la lista general; filtros por predio
+  comparan IDs, no nombres. Navegación de pestañas conserva Home sin apilarlas.
+- Las dependencias visuales existentes hacia componentes Farmer se conservan
+  durante este bloque; reconsiderarlas al rediseñar Advisor, sin editar Farmer.
+- Se quitaron dos task.artifact.md duplicados y se ignora .kotlin/ como caché.
+
+Pruebas de persistencia aisladas (no usan la base real del usuario):
+`AdvisorPersistenceTest` valida migraciones 1/2 → 3 con Room, datos/fotos/cero,
+historial, guardado transaccional y rechazo de revisiones inválidas.
+Comandos: `.\gradlew.bat assembleDebug --console=plain` y
+`.\gradlew.bat connectedDebugAndroidTest --console=plain` con un emulador de prueba.
+La compilación no prueba por sí sola la navegación ni el aspecto en teléfono.
+
+Verificación realizada el 19-10-2026: assembleDebug correcto y cuatro pruebas
+instrumentadas correctas en Pixel 7 (tres de AdvisorPersistenceTest y la prueba
+de contexto existente). Incluyen una falla forzada en el UPDATE para comprobar
+rollback de la revisión. No se afirma prueba manual completa en teléfono.
+
+Comprobación manual pendiente: entrar Farmer y confirmar predio/restauración;
+crear SOIL/WATER/FOLIAR (incluidos fuente de agua, síntomas y fotos); cambiar a
+Advisor, observar y luego validar; volver a listas y comprobar estado/recuento;
+abrir revisiones anteriores; volver a Farmer y verificar medidas/notas/fotos;
+alternar pestañas e Inicio; cerrar/reabrir y salir de sesión.
+
+
+Las secciones siguientes conservan la planificación empresarial original; las
+referencias a un Advisor todavía inexistente quedan actualizadas por esta sección.
 
 ## 1. Encargo y límites confirmados
 
@@ -57,17 +101,16 @@ sin IA ni recursos de apoyo; el compañero debe entender el código que entregue
 - Código bajo `app/src/main/java/com/nutriagricola/app/`.
 - `domain/model`, `data/local` (entity/dao/database), `data/mapper`,
   `data/repository`, `ui/login`, `ui/session`, `ui/farmer`, `ui/advisor` y `ui/theme`.
-- Room es la fuente local: versión **1**, sin migraciones ni reinicio destructivo
-  automático. AppDatabase está en `data/local/database/AppDataBase.kt`;
+- Room es la fuente local: versión **3**, con migraciones conservadoras y sin
+  reinicio destructivo automático. AppDatabase está en `data/local/database/AppDataBase.kt`;
   respetar el nombre real del archivo.
 - Colores y fuente comunes en `ui/theme`; `CompactTypography` se aplica a Login
-  y Farmer desde AppNavigation. Advisor todavía conserva la escala anterior:
-  adoptar la escala compacta en su flujo sin cambiar los tamaños Farmer.
+  y Farmer desde AppNavigation. Advisor también utiliza ahora CompactTypography,
+  sin alterar los tamaños Farmer.
 
-Advisor tiene hoy solo `ui/advisor/home/AdvisorHomeScreen.kt`, un placeholder
-con el texto Home asesor. AppNavigation ya dirige el rol ADVISOR a `advisor_home`.
-Completar ese punto de entrada y sus nuevas rutas internas sin reemplazar el
-grafo Farmer ni modificar la autenticación.
+Advisor ya tiene rutas de Home, pendientes, consulta general y detalle.
+AppNavigation dirige ADVISOR a `advisor_home`. Conservar el grafo Farmer y
+la autenticación al completar los programas pendientes.
 
 ### Login y sesión terminados
 
@@ -147,7 +190,8 @@ REJECTED, APPROVED ni metadatos de autor/fecha de revisión.
 RecordRepository ofrece `getById()` completo, `getAll()`, `getByCropId()` y
 `observeByUserAndFarm()`. RecordDao tiene `getByStatus()`, pero una Screen nunca
 debe llamarlo directamente. Ampliar consultas concretas de Advisor sin romper
-las de Farmer. No hay actualmente modelos de revisión o programas.
+las de Farmer. Las revisiones usan RecordReview/ReviewResult y su repository;
+los programas siguen sin implementar.
 
 ### Revisión propuesta: aprobar contrato antes de crear tablas
 
@@ -212,7 +256,8 @@ y/o demandas ingresadas; no exige un Record Android.
 - Elegir el vínculo opcional más sencillo que cubra el bloque; no diseñar
   relaciones genéricas ni un motor de versiones sin necesidad demostrada.
 
-Los modelos de programa, partidas, catálogo y revisiones aún no existen.
+Los modelos de programa, partidas y catálogo aún no existen; las revisiones
+ya tienen modelo y persistencia propios.
 Proponer el agregado mínimo persistente antes de cambiar Room. No guardar la
 receta dentro de las observaciones de Record ni como preferencias DataStore.
 

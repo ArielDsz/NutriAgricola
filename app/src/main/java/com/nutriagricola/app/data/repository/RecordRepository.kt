@@ -50,11 +50,6 @@ class RecordRepository(
         }
     }
 
-    suspend fun updateStatus(id: String, status: RecordStatus) {
-        val entity = recordDao.getById(id) ?: return
-        recordDao.update(entity.copy(status = status.name))
-    }
-
     fun observeByUserAndFarm(userId: String, farmId: String): Flow<List<Record>> {
         return recordDao.observeByUserAndFarm(userId, farmId).map { records ->
             database.withTransaction {

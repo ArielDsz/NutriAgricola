@@ -2,7 +2,7 @@ package com.nutriagricola.app.data.mapper
 
 import com.nutriagricola.app.data.local.entity.RecordReviewEntity
 import com.nutriagricola.app.domain.model.advisor.RecordReview
-import com.nutriagricola.app.domain.model.record.RecordStatus
+import com.nutriagricola.app.domain.model.advisor.ReviewResult
 import java.time.LocalDateTime
 
 fun RecordReviewEntity.toDomain(): RecordReview {
@@ -12,7 +12,7 @@ fun RecordReviewEntity.toDomain(): RecordReview {
         advisorId = advisorId,
         advisorName = advisorName,
         date = LocalDateTime.parse(date),
-        result = RecordStatus.valueOf(result),
+        result = ReviewResult.valueOf(result),
         comment = comment
     )
 }

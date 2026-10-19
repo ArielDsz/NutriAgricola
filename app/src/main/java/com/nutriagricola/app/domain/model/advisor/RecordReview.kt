@@ -1,6 +1,5 @@
 package com.nutriagricola.app.domain.model.advisor
 
-import com.nutriagricola.app.domain.model.record.RecordStatus
 import java.time.LocalDateTime
 
 data class RecordReview(
@@ -9,6 +8,6 @@ data class RecordReview(
     val advisorId: String,
     val advisorName: String,
     val date: LocalDateTime,
-    val result: RecordStatus,
+    val result: ReviewResult,
     val comment: String
 )

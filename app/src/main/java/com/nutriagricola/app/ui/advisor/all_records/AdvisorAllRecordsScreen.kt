@@ -8,16 +8,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import com.nutriagricola.app.ui.advisor.components.AdvisorRefreshOnResume
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.record.RecordStatus
+import com.nutriagricola.app.domain.model.advisor.ReviewResult
 import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomBar
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
@@ -31,12 +33,13 @@ import com.nutriagricola.app.ui.theme.OfflineBackground
 fun AdvisorAllRecordsScreen(
     viewModel: AdvisorAllRecordsViewModel,
     onBackClick: () -> Unit,
+    onHomeClick: () -> Unit,
     onPendingClick: () -> Unit,
     onRecordClick: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
+    AdvisorRefreshOnResume {
         viewModel.loadData()
     }
 
@@ -49,7 +52,7 @@ fun AdvisorAllRecordsScreen(
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_right),
                             contentDescription = "Volver",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp).rotate(180f)
                         )
                     }
                 },
@@ -61,7 +64,7 @@ fun AdvisorAllRecordsScreen(
         bottomBar = {
             AdvisorBottomBar(
                 selectedItem = AdvisorBottomItem.ALL_RECORDS,
-                onHomeClick = onBackClick,
+                onHomeClick = onHomeClick,
                 onPendingClick = onPendingClick,
                 onAllRecordsClick = {},
                 onProgramClick = {}
@@ -118,7 +121,7 @@ fun AdvisorAllRecordsScreen(
                 ) {
                     item {
                         FilterChip(
-                            selected = state.selectedStatusFilter == null,
+                            selected = state.selectedStatusFilter == null && !state.observedOnly,
                             onClick = { viewModel.setStatusFilter(null) },
                             label = { Text("Todos (${state.allRecords.size})") }
                         )
@@ -132,8 +135,8 @@ fun AdvisorAllRecordsScreen(
                     }
                     item {
                         FilterChip(
-                            selected = state.selectedStatusFilter == RecordStatus.VIEWED,
-                            onClick = { viewModel.setStatusFilter(RecordStatus.VIEWED) },
+                            selected = state.observedOnly,
+                            onClick = { viewModel.setObservedFilter() },
                             label = { Text("Observados") }
                         )
                     }
@@ -213,8 +216,10 @@ private fun AllRecordsItemCard(
     }
 
     val (statusLabel, statusBgColor, statusTextColor) = when (item.record.status) {
-        RecordStatus.PENDING -> Triple("Pendiente", MaterialTheme.colorScheme.primaryContainer, ForestGreen)
-        RecordStatus.VIEWED -> Triple("Observado", OfflineBackground, ForestGreen)
+        RecordStatus.PENDING -> if (item.reviewResult == ReviewResult.OBSERVED)
+            Triple("Con observaciones", OfflineBackground, ForestGreen)
+        else Triple("Pendiente", MaterialTheme.colorScheme.primaryContainer, ForestGreen)
+        RecordStatus.VIEWED -> Triple("Visto", MaterialTheme.colorScheme.surfaceVariant, ForestGreen)
         RecordStatus.VALIDATED -> Triple("Validado", LeafGreen.copy(alpha = 0.2f), ForestGreen)
         else -> Triple(item.record.status.name, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
     }

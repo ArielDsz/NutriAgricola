@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import com.nutriagricola.app.ui.advisor.components.AdvisorRefreshOnResume
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,7 +45,7 @@ fun AdvisorHomeScreen(
     }
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
+    AdvisorRefreshOnResume {
         viewModel.loadData()
     }
 
@@ -148,6 +148,16 @@ fun AdvisorHomeScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             )
 
+            if (state.isLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+            }
+            state.error?.let { error ->
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Text(error, color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = viewModel::loadData) { Text("Reintentar") }
+                }
+            }
+
             // Main Actions Section
             Column(
                 modifier = Modifier
@@ -174,7 +184,7 @@ fun AdvisorHomeScreen(
                 // Action 2: All Records & Farms
                 AdvisorActionCard(
                     title = "Predios y Análisis Totales",
-                    subtitle = "${state.totalFarmsCount} predios • ${state.pendingCount + state.reviewedCount} registros en total",
+                    subtitle = "${state.totalFarmsCount} predios • ${state.totalRecordsCount} registros en total",
                     iconRes = R.drawable.ic_farms,
                     badgeText = null,
                     onClick = onAllRecordsClick

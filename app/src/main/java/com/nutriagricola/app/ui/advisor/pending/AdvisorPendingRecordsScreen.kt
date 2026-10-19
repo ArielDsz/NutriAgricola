@@ -8,16 +8,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import com.nutriagricola.app.ui.advisor.components.AdvisorRefreshOnResume
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.record.RecordType
+import com.nutriagricola.app.domain.model.advisor.ReviewResult
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomBar
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
 import com.nutriagricola.app.ui.advisor.model.AdvisorRecordItem
@@ -29,12 +31,13 @@ import com.nutriagricola.app.ui.theme.LeafGreen
 fun AdvisorPendingRecordsScreen(
     viewModel: AdvisorPendingRecordsViewModel,
     onBackClick: () -> Unit,
+    onHomeClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
     onRecordClick: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
+    AdvisorRefreshOnResume {
         viewModel.loadData()
     }
 
@@ -47,7 +50,7 @@ fun AdvisorPendingRecordsScreen(
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_right),
                             contentDescription = "Volver",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp).rotate(180f)
                         )
                     }
                 },
@@ -59,7 +62,7 @@ fun AdvisorPendingRecordsScreen(
         bottomBar = {
             AdvisorBottomBar(
                 selectedItem = AdvisorBottomItem.PENDING,
-                onHomeClick = onBackClick,
+                onHomeClick = onHomeClick,
                 onPendingClick = {},
                 onAllRecordsClick = onAllRecordsClick,
                 onProgramClick = {}
@@ -221,7 +224,7 @@ private fun PendingRecordCard(
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = "Pendiente",
+                        text = if (item.reviewResult == ReviewResult.OBSERVED) "Con observaciones" else "Pendiente",
                         style = MaterialTheme.typography.labelSmall,
                         color = ForestGreen,
                         fontWeight = FontWeight.Bold,

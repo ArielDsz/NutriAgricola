@@ -98,10 +98,12 @@ parte y coordinar con su autor; no ampliar el alcance automáticamente.
 
 ## Room y datos de desarrollo
 
-DB actual en versión 1, sin migraciones. Conservar esa decisión académica salvo
-nueva autorización. Añadir tablas cambia el esquema: explicar que una instalación
-previa puede necesitar limpiar datos/reinstalar en un dispositivo de prueba;
-no hacerlo automáticamente ni añadir reinicios destructivos para ocultar fallos.
+DB actual en versión 3. El autor autorizó el 19-10-2026 migraciones conservadoras
+para integrar Advisor: 1 → 2 añade record_reviews y 2 → 3 convierte el resultado
+antiguo VIEWED a OBSERVED, conservando revisiones y datos Farmer. No volver a
+versiones anteriores ni añadir fallbackToDestructiveMigration. Los cambios futuros
+deben conservar datos y justificar sus migraciones; nunca limpiar/reinstalar como
+solución automática. Ver DatabaseMigrations.kt y AdvisorPersistenceTest.kt.
 
 Room comparte información en una misma instalación. No hay recepción de datos
 entre teléfonos ni sincronización remota: no fingirla. Usar datos ficticios,

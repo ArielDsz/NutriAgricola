@@ -8,6 +8,9 @@ import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.data.repository.UserRepository
 import com.nutriagricola.app.domain.model.advisor.RecordReview
+import com.nutriagricola.app.domain.model.advisor.ReviewResult
+import com.nutriagricola.app.domain.model.user.UserRole
+import kotlinx.coroutines.CancellationException
 import com.nutriagricola.app.domain.model.farm.Crop
 import com.nutriagricola.app.domain.model.farm.Farm
 import com.nutriagricola.app.domain.model.record.Record
@@ -26,11 +29,12 @@ data class AdvisorRecordDetailUiState(
     val farm: Farm? = null,
     val crop: Crop? = null,
     val farmerUser: User? = null,
-    val review: RecordReview? = null,
+    val reviews: List<RecordReview> = emptyList(),
     val commentInput: String = "",
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val error: String? = null,
+    val loadError: String? = null,
     val successMessage: String? = null
 )
 
@@ -53,17 +57,17 @@ class AdvisorRecordDetailViewModel(
 
     fun loadDetail() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, loadError = null) }
             try {
                 val record = recordRepository.getById(recordId)
                 if (record == null) {
-                    _uiState.update { it.copy(isLoading = false, error = "Análisis no encontrado") }
+                    _uiState.update { it.copy(isLoading = false, loadError = "Análisis no encontrado") }
                     return@launch
                 }
                 val crop = cropRepository.getById(record.cropId)
                 val farm = crop?.let { farmRepository.getAll().find { f -> f.id == it.farmId } }
                 val farmerUser = userRepository.getById(record.userId)
-                val review = recordReviewRepository.getReviewForRecord(recordId)
+                val reviews = recordReviewRepository.getReviewsForRecord(recordId)
 
                 _uiState.update {
                     it.copy(
@@ -71,14 +75,15 @@ class AdvisorRecordDetailViewModel(
                         crop = crop,
                         farm = farm,
                         farmerUser = farmerUser,
-                        review = review,
-                        commentInput = review?.comment ?: "",
+                        reviews = reviews,
                         isLoading = false
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, error = "No se pudieron cargar los detalles del análisis")
+                    it.copy(isLoading = false, loadError = "No se pudieron cargar los detalles del análisis")
                 }
             }
         }
@@ -88,21 +93,22 @@ class AdvisorRecordDetailViewModel(
         _uiState.update { it.copy(commentInput = comment) }
     }
 
-    fun submitReview(result: RecordStatus) {
+    fun submitReview(result: ReviewResult) {
+        if (_uiState.value.isSaving || _uiState.value.isLoading || _uiState.value.record == null) return
         val currentUser = getCurrentUser()
-        if (currentUser == null) {
+        if (currentUser == null || !currentUser.active || currentUser.role != UserRole.ADVISOR) {
             _uiState.update { it.copy(error = "Sesión de asesor no válida") }
             return
         }
 
         val comment = _uiState.value.commentInput.trim()
-        if (result == RecordStatus.VIEWED && comment.isEmpty()) {
+        if (result == ReviewResult.OBSERVED && comment.isEmpty()) {
             _uiState.update { it.copy(error = "Para observar un análisis debes ingresar una observación") }
             return
         }
 
+        _uiState.update { it.copy(isSaving = true, error = null, successMessage = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, error = null) }
             try {
                 val review = RecordReview(
                     id = UUID.randomUUID().toString(),
@@ -114,22 +120,26 @@ class AdvisorRecordDetailViewModel(
                     comment = if (comment.isEmpty()) "Análisis validado formalmente por el asesor." else comment
                 )
 
-                recordReviewRepository.saveReviewAndUpdateStatus(review, result)
+                recordReviewRepository.saveReviewAndUpdateStatus(review)
+                val newStatus = if (result == ReviewResult.VALIDATED) RecordStatus.VALIDATED else RecordStatus.PENDING
 
-                val message = if (result == RecordStatus.VALIDATED) {
+                val message = if (result == ReviewResult.VALIDATED) {
                     "Análisis validado exitosamente"
                 } else {
-                    "Análisis observado y marcado como revisado"
+                    "Observación guardada. El análisis sigue pendiente"
                 }
 
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        review = review,
-                        record = it.record?.copy(status = result),
+                        reviews = listOf(review) + it.reviews,
+                        commentInput = "",
+                        record = it.record?.copy(status = newStatus),
                         successMessage = message
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(isSaving = false, error = "No se pudo guardar la revisión")

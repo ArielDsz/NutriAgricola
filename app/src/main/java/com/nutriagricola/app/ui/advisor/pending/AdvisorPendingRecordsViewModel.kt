@@ -1,11 +1,13 @@
 package com.nutriagricola.app.ui.advisor.pending
 
+import kotlinx.coroutines.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
 import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.UserRepository
+import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.domain.model.record.RecordStatus
 import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.ui.advisor.model.AdvisorRecordItem
@@ -28,27 +30,25 @@ class AdvisorPendingRecordsViewModel(
     private val recordRepository: RecordRepository,
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val recordReviewRepository: RecordReviewRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdvisorPendingRecordsUiState())
     val uiState: StateFlow<AdvisorPendingRecordsUiState> = _uiState.asStateFlow()
-
-    init {
-        loadData()
-    }
 
     fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val pendingRecords = recordRepository.getByStatus(RecordStatus.PENDING)
+                val reviews = recordReviewRepository.getLatestReviews()
                 val farms = farmRepository.getAll()
                 val crops = farms.flatMap { cropRepository.getByFarmId(it.id) }.associateBy { it.id }
                 val users = userRepository.getAll().associateBy { it.id }
                 val farmsMap = farms.associateBy { it.id }
 
-                val items = pendingRecords.map { record ->
+                val items = pendingRecords.sortedBy { it.date }.map { record ->
                     val crop = crops[record.cropId]
                     val farmName = crop?.let { farmsMap[it.farmId]?.name } ?: "Predio"
                     val cropName = crop?.name ?: "Cultivo"
@@ -57,7 +57,9 @@ class AdvisorPendingRecordsViewModel(
                         record = record,
                         farmName = farmName,
                         cropName = cropName,
-                        farmerName = farmerName
+                        farmerName = farmerName,
+                        farmId = crop?.farmId,
+                        reviewResult = reviews[record.id]?.result
                     )
                 }
 
@@ -68,6 +70,8 @@ class AdvisorPendingRecordsViewModel(
                     )
                 }
                 applyFilters()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(

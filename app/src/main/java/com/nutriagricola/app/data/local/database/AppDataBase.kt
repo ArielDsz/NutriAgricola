@@ -20,7 +20,7 @@ import com.nutriagricola.app.data.local.entity.*
         FoliarPhotoEntity::class,
         RecordReviewEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -49,7 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "nutri_agricola_database"
                 )
-                    .fallbackToDestructiveMigration(true)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
 
                 INSTANCE = instance

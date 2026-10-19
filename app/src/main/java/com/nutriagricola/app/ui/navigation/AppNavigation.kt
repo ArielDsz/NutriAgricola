@@ -185,8 +185,7 @@ fun AppNavigation() {
     }
 
     MaterialTheme(
-        typography = if (currentUser?.role == UserRole.ADVISOR) MaterialTheme.typography
-            else com.nutriagricola.app.ui.theme.CompactTypography
+        typography = com.nutriagricola.app.ui.theme.CompactTypography
     ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // A different session gets a fresh controller, discarding the previous back stack.
@@ -236,8 +235,14 @@ fun AppNavigation() {
                             user = currentUser,
                             viewModel = advisorHomeViewModel,
                             onLogoutClick = { sessionViewModel.logout() },
-                            onPendingClick = { navController.navigate("advisor_pending") },
-                            onAllRecordsClick = { navController.navigate("advisor_all_records") },
+                            onPendingClick = { navController.navigate("advisor_pending") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } },
+                            onAllRecordsClick = { navController.navigate("advisor_all_records") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } },
                             onRecordClick = { recordId ->
                                 navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
                             }
@@ -245,16 +250,18 @@ fun AppNavigation() {
                     }
 
                     composable("advisor_pending") {
-                        val pendingFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
-                            AdvisorPendingRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        val pendingFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository) {
+                            AdvisorPendingRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository)
                         }
                         val pendingViewModel: AdvisorPendingRecordsViewModel = viewModel(factory = pendingFactory)
 
                         AdvisorPendingRecordsScreen(
                             viewModel = pendingViewModel,
                             onBackClick = { navController.popBackStack() },
+                            onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
                             onAllRecordsClick = {
                                 navController.navigate("advisor_all_records") {
+                                    popUpTo("advisor_home") { inclusive = false }
                                     launchSingleTop = true
                                 }
                             },
@@ -265,16 +272,18 @@ fun AppNavigation() {
                     }
 
                     composable("advisor_all_records") {
-                        val allRecordsFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
-                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        val allRecordsFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository) {
+                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository)
                         }
                         val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
 
                         AdvisorAllRecordsScreen(
                             viewModel = allRecordsViewModel,
                             onBackClick = { navController.popBackStack() },
+                            onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
                             onPendingClick = {
                                 navController.navigate("advisor_pending") {
+                                    popUpTo("advisor_home") { inclusive = false }
                                     launchSingleTop = true
                                 }
                             },

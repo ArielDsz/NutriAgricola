@@ -9,6 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import com.nutriagricola.app.domain.model.advisor.ReviewResult
+import java.time.format.DateTimeFormatter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,7 +51,7 @@ fun AdvisorRecordDetailScreen(
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_right),
                             contentDescription = "Volver",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp).rotate(180f)
                         )
                     }
                 },
@@ -68,7 +71,7 @@ fun AdvisorRecordDetailScreen(
             ) {
                 CircularProgressIndicator()
             }
-        } else if (state.error != null && state.record == null) {
+        } else if (state.loadError != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -76,7 +79,7 @@ fun AdvisorRecordDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = state.error ?: "Error", color = MaterialTheme.colorScheme.error)
+                    Text(text = state.loadError ?: "Error", color = MaterialTheme.colorScheme.error)
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = { viewModel.loadDetail() }) {
                         Text("Reintentar")
@@ -150,6 +153,19 @@ fun AdvisorRecordDetailScreen(
                     )
 
                     RecordMeasurementsView(record.data)
+                    val additionalData = when (val data = record.data) {
+                        is WaterData -> data.waterSource?.takeIf { it.isNotBlank() }?.let { "Fuente de agua" to it }
+                        is FoliarData -> data.symptoms?.takeIf { it.isNotBlank() }?.let { "Síntomas" to it }
+                        else -> null
+                    }
+                    additionalData?.let { (label, value) ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(label, style = MaterialTheme.typography.labelMedium)
+                                Text(value, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
 
                     // Farmer Observations
                     if (!record.observations.isNullOrBlank()) {
@@ -187,12 +203,19 @@ fun AdvisorRecordDetailScreen(
                     }
 
                     // Existing Review Section
-                    state.review?.let { review ->
+                    var showPreviousReviews by remember(record.id) { mutableStateOf(false) }
+                    if (state.reviews.size > 1) {
+                        TextButton(onClick = { showPreviousReviews = !showPreviousReviews }) {
+                            Text(if (showPreviousReviews) "Ocultar revisiones anteriores" else "Ver revisiones anteriores (${state.reviews.size - 1})")
+                        }
+                    }
+                    val visibleReviews = if (showPreviousReviews) state.reviews else state.reviews.take(1)
+                    visibleReviews.forEachIndexed { index, review ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (review.result == RecordStatus.VALIDATED) LeafGreen.copy(alpha = 0.1f) else OfflineBackground
+                                containerColor = if (review.result == ReviewResult.VALIDATED) LeafGreen.copy(alpha = 0.1f) else OfflineBackground
                             )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -202,27 +225,27 @@ fun AdvisorRecordDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Dictamen del Asesor",
+                                        text = if (index == 0) "Última revisión" else "Revisión anterior",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = ForestGreen
                                     )
                                     Surface(
                                         shape = RoundedCornerShape(8.dp),
-                                        color = if (review.result == RecordStatus.VALIDATED) ForestGreen else OfflineBackground
+                                        color = if (review.result == ReviewResult.VALIDATED) ForestGreen else OfflineBackground
                                     ) {
                                         Text(
-                                            text = if (review.result == RecordStatus.VALIDATED) "VALIDADO" else "REVISADO / OBSERVADO",
+                                            text = if (review.result == ReviewResult.VALIDATED) "VALIDADO" else "OBSERVADO",
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (review.result == RecordStatus.VALIDATED) MaterialTheme.colorScheme.onPrimary else ForestGreen,
+                                            color = if (review.result == ReviewResult.VALIDATED) MaterialTheme.colorScheme.onPrimary else ForestGreen,
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Asesor: ${review.advisorName}",
+                                    text = "Asesor: ${review.advisorName} · ${review.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -260,7 +283,8 @@ fun AdvisorRecordDetailScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 96.dp),
-                                maxLines = 4
+                                maxLines = 4,
+                                enabled = !state.isSaving
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
@@ -268,14 +292,14 @@ fun AdvisorRecordDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = { viewModel.submitReview(RecordStatus.VIEWED) },
+                                    onClick = { viewModel.submitReview(ReviewResult.OBSERVED) },
                                     enabled = !state.isSaving,
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Observar")
                                 }
                                 Button(
-                                    onClick = { viewModel.submitReview(RecordStatus.VALIDATED) },
+                                    onClick = { viewModel.submitReview(ReviewResult.VALIDATED) },
                                     enabled = !state.isSaving,
                                     modifier = Modifier.weight(1f)
                                 ) {
