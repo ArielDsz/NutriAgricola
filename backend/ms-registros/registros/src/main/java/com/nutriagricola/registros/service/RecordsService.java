@@ -7,14 +7,13 @@ import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateResponse;
+import com.nutriagricola.registros.mapper.CropMapper;
+import com.nutriagricola.registros.mapper.FarmMapper;
+import com.nutriagricola.registros.mapper.RecordMapper;
+import com.nutriagricola.registros.mapper.RecordReviewMapper;
 import com.nutriagricola.registros.model.Crop;
-import com.nutriagricola.registros.model.Farm;
-import com.nutriagricola.registros.model.FoliarData;
-import com.nutriagricola.registros.model.FoliarPhoto;
 import com.nutriagricola.registros.model.Record;
 import com.nutriagricola.registros.model.RecordReview;
-import com.nutriagricola.registros.model.SoilData;
-import com.nutriagricola.registros.model.WaterData;
 import com.nutriagricola.registros.repository.CropRepository;
 import com.nutriagricola.registros.repository.FarmRepository;
 import com.nutriagricola.registros.repository.FoliarDataRepository;
@@ -41,11 +40,16 @@ public class RecordsService {
     private final FoliarDataRepository foliarData;
     private final FoliarPhotoRepository foliarPhotos;
     private final RecordReviewRepository reviews;
+    private final FarmMapper farmMapper;
+    private final CropMapper cropMapper;
+    private final RecordMapper recordMapper;
+    private final RecordReviewMapper recordReviewMapper;
 
     public RecordsService(FarmRepository farms, CropRepository crops, RecordRepository records,
                           SoilDataRepository soilData, WaterDataRepository waterData,
                           FoliarDataRepository foliarData, FoliarPhotoRepository foliarPhotos,
-                          RecordReviewRepository reviews) {
+                          RecordReviewRepository reviews, FarmMapper farmMapper, CropMapper cropMapper,
+                          RecordMapper recordMapper, RecordReviewMapper recordReviewMapper) {
         this.farms = farms;
         this.crops = crops;
         this.records = records;
@@ -54,29 +58,26 @@ public class RecordsService {
         this.foliarData = foliarData;
         this.foliarPhotos = foliarPhotos;
         this.reviews = reviews;
+        this.farmMapper = farmMapper;
+        this.cropMapper = cropMapper;
+        this.recordMapper = recordMapper;
+        this.recordReviewMapper = recordReviewMapper;
     }
 
     @Transactional(readOnly = true)
     public List<FarmResponse> getFarms() {
-        return farms.findAll().stream()
-                .map(farm -> new FarmResponse(farm.getId(), farm.getName(), farm.getLocation(),
-                        farm.getImagePath(), farm.getActive()))
-                .toList();
+        return farms.findAll().stream().map(farmMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<CropResponse> getCropsByFarm(String farmId) {
-        return crops.findByFarm_Id(farmId).stream()
-                .map(crop -> new CropResponse(crop.getId(), crop.getFarm().getId(), crop.getName(),
-                        crop.getVariety(), crop.getAreaHectares(), crop.getPhenologicalStage(),
-                        crop.getImagePath(), crop.getActive()))
-                .toList();
+        return crops.findByFarm_Id(farmId).stream().map(cropMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<RecordSummaryResponse> getRecordsByStatus(String status) {
         return records.findByStatus(status.toUpperCase(Locale.ROOT)).stream()
-                .map(this::toSummary)
+                .map(recordMapper::toSummaryResponse)
                 .toList();
     }
 
@@ -88,25 +89,22 @@ public class RecordsService {
         Crop crop = crops.findById(request.cropId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Cultivo no encontrado"));
 
-        Record record = new Record();
-        record.setId(request.id());
-        record.setCrop(crop);
-        record.setUserId(request.userId());
-        record.setDate(request.date());
-        record.setType(type);
-        record.setStatus(request.status().toUpperCase(Locale.ROOT));
-        record.setObservations(request.observations());
+        Record record = recordMapper.toEntity(request, crop, type,
+                request.status().toUpperCase(Locale.ROOT));
         records.save(record);
 
         switch (type) {
-            case "SOIL" -> saveSoilData(record, request.soilData());
-            case "WATER" -> saveWaterData(record, request.waterData());
-            case "FOLIAR" -> saveFoliarData(record, request.foliarData(), request.foliarPhotos());
+            case "SOIL" -> soilData.save(recordMapper.toSoilData(request.soilData(), record));
+            case "WATER" -> waterData.save(recordMapper.toWaterData(request.waterData(), record));
+            case "FOLIAR" -> {
+                foliarData.save(recordMapper.toFoliarData(request.foliarData(), record));
+                foliarPhotos.saveAll(recordMapper.toFoliarPhotos(request.foliarPhotos(), record));
+            }
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "type debe ser SOIL, WATER o FOLIAR");
         }
 
-        return new RecordCreateResponse(record.getId(), record.getStatus());
+        return recordMapper.toCreateResponse(record);
     }
 
     @Transactional
@@ -120,21 +118,12 @@ public class RecordsService {
         Record record = records.findById(request.recordId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Análisis no encontrado"));
 
-        RecordReview review = new RecordReview();
-        review.setId(request.id());
-        review.setRecord(record);
-        review.setAdvisorId(request.advisorId());
-        review.setAdvisorName(request.advisorName());
-        review.setDate(request.date());
-        review.setResult(result);
-        review.setComment(request.comment());
+        RecordReview review = recordReviewMapper.toEntity(request, record, result);
         reviews.save(review);
 
         record.setStatus(result);
         records.save(record);
-        return new ReviewCreateResponse(review.getId(), record.getId(), review.getAdvisorId(),
-                review.getAdvisorName(), review.getDate(), review.getResult(), review.getComment(),
-                record.getStatus());
+        return recordReviewMapper.toResponse(review, record.getStatus());
     }
 
     private void validateRecordData(String type, RecordCreateRequest request) {
@@ -153,59 +142,4 @@ public class RecordsService {
         }
     }
 
-    private void saveSoilData(Record record, RecordCreateRequest.SoilDataRequest request) {
-        SoilData data = new SoilData();
-        data.setRecord(record);
-        data.setPh(request.ph());
-        data.setElectricalConductivity(request.electricalConductivity());
-        data.setNitrogen(request.nitrogen());
-        data.setPhosphorus(request.phosphorus());
-        data.setPotassium(request.potassium());
-        data.setCalcium(request.calcium());
-        data.setMagnesium(request.magnesium());
-        data.setOrganicMatter(request.organicMatter());
-        soilData.save(data);
-    }
-
-    private void saveWaterData(Record record, RecordCreateRequest.WaterDataRequest request) {
-        WaterData data = new WaterData();
-        data.setRecord(record);
-        data.setPh(request.ph());
-        data.setElectricalConductivity(request.electricalConductivity());
-        data.setNitrogen(request.nitrogen());
-        data.setPhosphorus(request.phosphorus());
-        data.setPotassium(request.potassium());
-        data.setCalcium(request.calcium());
-        data.setMagnesium(request.magnesium());
-        data.setWaterSource(request.waterSource());
-        waterData.save(data);
-    }
-
-    private void saveFoliarData(Record record, RecordCreateRequest.FoliarDataRequest request,
-                                List<RecordCreateRequest.FoliarPhotoRequest> photos) {
-        FoliarData data = new FoliarData();
-        data.setRecord(record);
-        data.setNitrogen(request.nitrogen());
-        data.setPhosphorus(request.phosphorus());
-        data.setPotassium(request.potassium());
-        data.setCalcium(request.calcium());
-        data.setMagnesium(request.magnesium());
-        data.setSymptoms(request.symptoms());
-        foliarData.save(data);
-
-        if (photos != null) {
-            for (RecordCreateRequest.FoliarPhotoRequest photoRequest : photos) {
-                FoliarPhoto photo = new FoliarPhoto();
-                photo.setId(photoRequest.id());
-                photo.setRecord(record);
-                photo.setPath(photoRequest.path());
-                foliarPhotos.save(photo);
-            }
-        }
-    }
-
-    private RecordSummaryResponse toSummary(Record record) {
-        return new RecordSummaryResponse(record.getId(), record.getCrop().getId(), record.getUserId(),
-                record.getDate(), record.getType(), record.getStatus(), record.getObservations());
-    }
 }
