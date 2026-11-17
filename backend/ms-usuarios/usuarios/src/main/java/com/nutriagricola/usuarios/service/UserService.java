@@ -20,7 +20,7 @@ public class UserService {
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
-    private List<UserResponse> findAll(){
+    public List<UserResponse> findAll(){
         return userRepository.findAll()
                 .stream()
                 .map(userMapper::toResponse)
@@ -28,14 +28,14 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    private UserResponse findById(UUID id){
+    public UserResponse findById(UUID id){
         return userRepository.findById(id)
                 .map(userMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("usuario no encontrado por ID " + id));
     }
 
     @Transactional(readOnly = true)
-    private UserResponse findByEmail(String email){
+    public UserResponse findByEmail(String email){
         return userRepository.findByEmailIgnoreCase(email)
                 .map(userMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado por email " + email));
