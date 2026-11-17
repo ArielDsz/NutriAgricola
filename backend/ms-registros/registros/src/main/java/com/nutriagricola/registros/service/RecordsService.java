@@ -7,6 +7,9 @@ import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateResponse;
+import com.nutriagricola.registros.exception.InvalidRecordException;
+import com.nutriagricola.registros.exception.ResourceConflictException;
+import com.nutriagricola.registros.exception.ResourceNotFoundException;
 import com.nutriagricola.registros.mapper.CropMapper;
 import com.nutriagricola.registros.mapper.FarmMapper;
 import com.nutriagricola.registros.mapper.RecordMapper;
@@ -22,10 +25,8 @@ import com.nutriagricola.registros.repository.RecordRepository;
 import com.nutriagricola.registros.repository.RecordReviewRepository;
 import com.nutriagricola.registros.repository.SoilDataRepository;
 import com.nutriagricola.registros.repository.WaterDataRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Locale;
@@ -86,8 +87,12 @@ public class RecordsService {
         String type = request.type().toUpperCase(Locale.ROOT);
         validateRecordData(type, request);
 
+        if (records.existsById(request.id())) {
+            throw new ResourceConflictException("Ya existe un análisis con el identificador indicado");
+        }
+
         Crop crop = crops.findById(request.cropId()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Cultivo no encontrado"));
+                new ResourceNotFoundException("Cultivo no encontrado"));
 
         Record record = recordMapper.toEntity(request, crop, type,
                 request.status().toUpperCase(Locale.ROOT));
@@ -100,8 +105,7 @@ public class RecordsService {
                 foliarData.save(recordMapper.toFoliarData(request.foliarData(), record));
                 foliarPhotos.saveAll(recordMapper.toFoliarPhotos(request.foliarPhotos(), record));
             }
-            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "type debe ser SOIL, WATER o FOLIAR");
+            default -> throw new InvalidRecordException("type debe ser SOIL, WATER o FOLIAR");
         }
 
         return recordMapper.toCreateResponse(record);
@@ -111,12 +115,15 @@ public class RecordsService {
     public ReviewCreateResponse createReview(ReviewCreateRequest request) {
         String result = request.result().toUpperCase(Locale.ROOT);
         if (!List.of("VIEWED", "VALIDATED").contains(result)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "result debe ser VIEWED o VALIDATED");
+            throw new InvalidRecordException("result debe ser VIEWED o VALIDATED");
         }
 
         Record record = records.findById(request.recordId()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Análisis no encontrado"));
+                new ResourceNotFoundException("Análisis no encontrado"));
+
+        if (reviews.existsById(request.id())) {
+            throw new ResourceConflictException("Ya existe una revisión con el identificador indicado");
+        }
 
         RecordReview review = recordReviewMapper.toEntity(request, record, result);
         reviews.save(review);
@@ -137,7 +144,7 @@ public class RecordsService {
             default -> false;
         };
         if (!valid) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new InvalidRecordException(
                     "Envía únicamente el bloque de datos que corresponde al tipo de análisis");
         }
     }
