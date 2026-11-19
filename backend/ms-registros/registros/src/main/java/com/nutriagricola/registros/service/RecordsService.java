@@ -198,6 +198,18 @@ public class RecordsService {
         return recordReviewMapper.toResponse(review, record.getStatus());
     }
 
+    @Transactional
+    public void deleteRecord(String id, UserClientResponse user) {
+        requireRole(user, "FARMER");
+        Record record = records.findById(id).orElseThrow(() -> new ResourceNotFoundException("Análisis no encontrado"));
+        requireFarmAccess(record.getCrop().getFarm().getId(), user);
+        if (!user.id().equals(record.getUserId())) {
+            throw new AccessDeniedException("Solo el autor puede anular este análisis");
+        }
+        record.setStatus("DELETED");
+        records.save(record);
+    }
+
     private void requireFarmAccess(String farmId, UserClientResponse user) {
         if (!farmUsers.existsByFarm_IdAndUserId(farmId, user.id())) {
             throw new AccessDeniedException("No estás asignado a este predio");

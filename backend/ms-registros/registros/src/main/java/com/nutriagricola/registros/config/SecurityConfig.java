@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/crops/*").hasRole("FARMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/crops/*").hasRole("FARMER")
                         .requestMatchers(HttpMethod.POST, "/api/v1/records").hasRole("FARMER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/records/*").hasRole("FARMER")
                         .requestMatchers(HttpMethod.POST, "/api/v1/reviews").hasRole("ADVISOR")
                         .anyRequest().denyAll())
                 .addFilterBefore(new UserAuthenticationFilter(usersClient),
