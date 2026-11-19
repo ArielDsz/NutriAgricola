@@ -6,6 +6,14 @@ CREATE TABLE farms (
     active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+-- user_id pertenece al ms de usuarios; no hay una FK entre microservicios.
+CREATE TABLE farm_users (
+    id VARCHAR(36) PRIMARY KEY,
+    farm_id VARCHAR(36) NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
+    user_id VARCHAR(36) NOT NULL,
+    CONSTRAINT uk_farm_users_farm_user UNIQUE (farm_id, user_id)
+);
+
 CREATE TABLE crops (
     id VARCHAR(36) PRIMARY KEY,
     farm_id VARCHAR(36) NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
@@ -78,6 +86,7 @@ CREATE TABLE record_reviews (
 );
 
 -- Indices para buscar hijos sin recorrer todas las filas de cada tabla.
+CREATE INDEX idx_farm_users_user ON farm_users(user_id);
 CREATE INDEX idx_crops_farm ON crops(farm_id);
 CREATE INDEX idx_records_crop_date ON records(crop_id, date);
 CREATE INDEX idx_records_status ON records(status);
