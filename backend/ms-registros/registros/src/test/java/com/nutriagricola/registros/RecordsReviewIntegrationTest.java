@@ -12,20 +12,15 @@ import com.nutriagricola.registros.service.RecordsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:records-test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-        "spring.datasource.username=sa",
-        "spring.datasource.password=",
-        "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
-})
+@SpringBootTest
+@Transactional
 class RecordsReviewIntegrationTest {
     @Autowired
     private RecordsService recordsService;
@@ -44,7 +39,7 @@ class RecordsReviewIntegrationTest {
 
     @Test
     void savesReviewAndUpdatesRecordStatusInOneTransaction() {
-        String suffix = UUID.randomUUID().toString();
+        String reviewId = UUID.randomUUID().toString();
 
         Farm farm = new Farm();
         farm.setId(UUID.randomUUID().toString());
@@ -68,7 +63,7 @@ class RecordsReviewIntegrationTest {
         recordRepository.save(record);
 
         recordsService.createReview(new ReviewCreateRequest(
-                "review-" + suffix,
+                reviewId,
                 record.getId(),
                 "advisor-test",
                 "Asesor de prueba",
@@ -76,7 +71,9 @@ class RecordsReviewIntegrationTest {
                 "VALIDATED",
                 "Revisión válida"));
 
-        assertNotNull(reviewRepository.findById("review-" + suffix).orElse(null));
+        reviewRepository.flush();
+
+        assertNotNull(reviewRepository.findById(reviewId).orElse(null));
         assertEquals("VALIDATED", recordRepository.findById(record.getId()).orElseThrow().getStatus());
     }
 }
