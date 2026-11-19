@@ -1,0 +1,52 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+          routes:
+            - id: users-service-auth
+              uri: ${USERS_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/auth/**
+
+            - id: users-service-users
+              uri: ${USERS_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/users/**
+
+            - id: records-service-farms
+              uri: ${RECORDS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/farms/**
+
+            - id: records-service-crops
+              uri: ${RECORDS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/crops/**
+
+            - id: records-service-records
+              uri: ${RECORDS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/records/**
+
+            - id: records-service-reviews
+              uri: ${RECORDS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/reviews/**

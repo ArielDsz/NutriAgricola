@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,17 +26,17 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> findById(UUID id){
+    public ResponseEntity<UserResponse> findById(@PathVariable UUID id){
         return ResponseEntity.ok(userService.findById(id));
     }
 
-    @GetMapping("/{email}")
-    public ResponseEntity<UserResponse>  findByEmail(String email){
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UserResponse>  findByEmail(@PathVariable String email){
         return ResponseEntity.ok(userService.findByEmail(email));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(UUID id){
+    public ResponseEntity<Void> deleteById(@PathVariable UUID id){
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
