@@ -20,11 +20,11 @@ public class RecordMapper {
                 record.getDate(), record.getType(), record.getStatus(), record.getObservations());
     }
 
-    public Record toEntity(RecordCreateRequest request, Crop crop, String type, String status) {
+    public Record toEntity(RecordCreateRequest request, Crop crop, String type, String status, String userId) {
         Record record = new Record();
         record.setId(request.id());
         record.setCrop(crop);
-        record.setUserId(request.userId());
+        record.setUserId(userId);
         record.setDate(request.date());
         record.setType(type);
         record.setStatus(status);

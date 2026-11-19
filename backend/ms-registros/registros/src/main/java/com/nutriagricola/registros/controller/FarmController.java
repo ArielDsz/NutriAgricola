@@ -1,5 +1,7 @@
 package com.nutriagricola.registros.controller;
 
+import com.nutriagricola.registros.client.UserClientResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.nutriagricola.registros.dto.CropResponse;
 import com.nutriagricola.registros.dto.FarmResponse;
 import com.nutriagricola.registros.service.RecordsService;
@@ -20,12 +22,13 @@ public class FarmController {
     }
 
     @GetMapping("/farms")
-    public List<FarmResponse> getFarms() {
-        return recordsService.getFarms();
+    public List<FarmResponse> getFarms(@AuthenticationPrincipal UserClientResponse user) {
+        return recordsService.getFarms(user);
     }
 
     @GetMapping("/crops/farm/{farmId}")
-    public List<CropResponse> getCropsByFarm(@PathVariable String farmId) {
-        return recordsService.getCropsByFarm(farmId);
+    public List<CropResponse> getCropsByFarm(@PathVariable String farmId,
+                                           @AuthenticationPrincipal UserClientResponse user) {
+        return recordsService.getCropsByFarm(farmId, user);
     }
 }

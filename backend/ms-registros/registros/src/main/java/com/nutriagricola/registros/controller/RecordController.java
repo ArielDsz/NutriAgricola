@@ -1,5 +1,7 @@
 package com.nutriagricola.registros.controller;
 
+import com.nutriagricola.registros.client.UserClientResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.nutriagricola.registros.dto.RecordCreateRequest;
 import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
@@ -26,13 +28,15 @@ public class RecordController {
     }
 
     @GetMapping("/status/{status}")
-    public List<RecordSummaryResponse> getByStatus(@PathVariable String status) {
-        return recordsService.getRecordsByStatus(status);
+    public List<RecordSummaryResponse> getByStatus(@PathVariable String status,
+                                                  @AuthenticationPrincipal UserClientResponse user) {
+        return recordsService.getRecordsByStatus(status, user);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public RecordCreateResponse create(@Valid @RequestBody RecordCreateRequest request) {
-        return recordsService.createRecord(request);
+    public RecordCreateResponse create(@Valid @RequestBody RecordCreateRequest request,
+                                        @AuthenticationPrincipal UserClientResponse user) {
+        return recordsService.createRecord(request, user);
     }
 }

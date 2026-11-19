@@ -7,10 +7,8 @@ import java.util.List;
 public record RecordCreateRequest(
         @NotBlank String id,
         @NotBlank String cropId,
-        @NotBlank String userId,
         @NotBlank String date,
         @NotBlank String type,
-        @NotBlank String status,
         String observations,
         @Valid SoilDataRequest soilData,
         @Valid WaterDataRequest waterData,

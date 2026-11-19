@@ -1,5 +1,6 @@
 package com.nutriagricola.registros.service;
 
+import com.nutriagricola.registros.client.UserClientResponse;
 import com.nutriagricola.registros.dto.CropResponse;
 import com.nutriagricola.registros.dto.FarmResponse;
 import com.nutriagricola.registros.dto.RecordCreateRequest;
@@ -18,7 +19,7 @@ import com.nutriagricola.registros.model.Crop;
 import com.nutriagricola.registros.model.Record;
 import com.nutriagricola.registros.model.RecordReview;
 import com.nutriagricola.registros.repository.CropRepository;
-import com.nutriagricola.registros.repository.FarmRepository;
+import com.nutriagricola.registros.repository.FarmUserRepository;
 import com.nutriagricola.registros.repository.FoliarDataRepository;
 import com.nutriagricola.registros.repository.FoliarPhotoRepository;
 import com.nutriagricola.registros.repository.RecordRepository;
@@ -26,6 +27,7 @@ import com.nutriagricola.registros.repository.RecordReviewRepository;
 import com.nutriagricola.registros.repository.SoilDataRepository;
 import com.nutriagricola.registros.repository.WaterDataRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -33,7 +35,7 @@ import java.util.Locale;
 
 @Service
 public class RecordsService {
-    private final FarmRepository farms;
+    private final FarmUserRepository farmUsers;
     private final CropRepository crops;
     private final RecordRepository records;
     private final SoilDataRepository soilData;
@@ -46,12 +48,12 @@ public class RecordsService {
     private final RecordMapper recordMapper;
     private final RecordReviewMapper recordReviewMapper;
 
-    public RecordsService(FarmRepository farms, CropRepository crops, RecordRepository records,
+    public RecordsService(FarmUserRepository farmUsers, CropRepository crops, RecordRepository records,
                           SoilDataRepository soilData, WaterDataRepository waterData,
                           FoliarDataRepository foliarData, FoliarPhotoRepository foliarPhotos,
                           RecordReviewRepository reviews, FarmMapper farmMapper, CropMapper cropMapper,
                           RecordMapper recordMapper, RecordReviewMapper recordReviewMapper) {
-        this.farms = farms;
+        this.farmUsers = farmUsers;
         this.crops = crops;
         this.records = records;
         this.soilData = soilData;
@@ -66,24 +68,26 @@ public class RecordsService {
     }
 
     @Transactional(readOnly = true)
-    public List<FarmResponse> getFarms() {
-        return farms.findAll().stream().map(farmMapper::toResponse).toList();
+    public List<FarmResponse> getFarms(UserClientResponse user) {
+        return farmUsers.findFarmsByUserId(user.id()).stream().map(farmMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public List<CropResponse> getCropsByFarm(String farmId) {
+    public List<CropResponse> getCropsByFarm(String farmId, UserClientResponse user) {
+        requireFarmAccess(farmId, user);
         return crops.findByFarm_Id(farmId).stream().map(cropMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public List<RecordSummaryResponse> getRecordsByStatus(String status) {
-        return records.findByStatus(status.toUpperCase(Locale.ROOT)).stream()
+    public List<RecordSummaryResponse> getRecordsByStatus(String status, UserClientResponse user) {
+        return records.findByStatusAndAssignedUser(status.toUpperCase(Locale.ROOT), user.id()).stream()
                 .map(recordMapper::toSummaryResponse)
                 .toList();
     }
 
     @Transactional
-    public RecordCreateResponse createRecord(RecordCreateRequest request) {
+    public RecordCreateResponse createRecord(RecordCreateRequest request, UserClientResponse user) {
+        requireRole(user, "FARMER");
         String type = request.type().toUpperCase(Locale.ROOT);
         validateRecordData(type, request);
 
@@ -93,10 +97,10 @@ public class RecordsService {
 
         Crop crop = crops.findById(request.cropId()).orElseThrow(() ->
                 new ResourceNotFoundException("Cultivo no encontrado"));
+        requireFarmAccess(crop.getFarm().getId(), user);
 
-        Record record = recordMapper.toEntity(request, crop, type,
-                request.status().toUpperCase(Locale.ROOT));
-        records.save(record);
+        Record record = recordMapper.toEntity(request, crop, type, "PENDING", user.id());
+        record = records.save(record);
 
         switch (type) {
             case "SOIL" -> soilData.save(recordMapper.toSoilData(request.soilData(), record));
@@ -112,7 +116,8 @@ public class RecordsService {
     }
 
     @Transactional
-    public ReviewCreateResponse createReview(ReviewCreateRequest request) {
+    public ReviewCreateResponse createReview(ReviewCreateRequest request, UserClientResponse user) {
+        requireRole(user, "ADVISOR");
         String result = request.result().toUpperCase(Locale.ROOT);
         if (!List.of("VIEWED", "VALIDATED").contains(result)) {
             throw new InvalidRecordException("result debe ser VIEWED o VALIDATED");
@@ -120,17 +125,31 @@ public class RecordsService {
 
         Record record = records.findById(request.recordId()).orElseThrow(() ->
                 new ResourceNotFoundException("Análisis no encontrado"));
+        requireFarmAccess(record.getCrop().getFarm().getId(), user);
 
         if (reviews.existsById(request.id())) {
             throw new ResourceConflictException("Ya existe una revisión con el identificador indicado");
         }
 
-        RecordReview review = recordReviewMapper.toEntity(request, record, result);
+        RecordReview review = recordReviewMapper.toEntity(request, record, result,
+                user.id(), user.firstName() + " " + user.lastName());
         reviews.save(review);
 
         record.setStatus(result);
         records.save(record);
         return recordReviewMapper.toResponse(review, record.getStatus());
+    }
+
+    private void requireFarmAccess(String farmId, UserClientResponse user) {
+        if (!farmUsers.existsByFarm_IdAndUserId(farmId, user.id())) {
+            throw new AccessDeniedException("No estás asignado a este predio");
+        }
+    }
+
+    private void requireRole(UserClientResponse user, String role) {
+        if (!role.equals(user.role())) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta operación");
+        }
     }
 
     private void validateRecordData(String type, RecordCreateRequest request) {

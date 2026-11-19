@@ -1,5 +1,7 @@
 package com.nutriagricola.registros.controller;
 
+import com.nutriagricola.registros.client.UserClientResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateResponse;
 import com.nutriagricola.registros.service.RecordsService;
@@ -22,7 +24,8 @@ public class ReviewController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReviewCreateResponse create(@Valid @RequestBody ReviewCreateRequest request) {
-        return recordsService.createReview(request);
+    public ReviewCreateResponse create(@Valid @RequestBody ReviewCreateRequest request,
+                                        @AuthenticationPrincipal UserClientResponse user) {
+        return recordsService.createReview(request, user);
     }
 }

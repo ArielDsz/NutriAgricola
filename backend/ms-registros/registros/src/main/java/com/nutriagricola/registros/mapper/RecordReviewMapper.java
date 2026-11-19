@@ -8,12 +8,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class RecordReviewMapper {
-    public RecordReview toEntity(ReviewCreateRequest request, Record record, String result) {
+    public RecordReview toEntity(ReviewCreateRequest request, Record record, String result,
+                                 String advisorId, String advisorName) {
         RecordReview review = new RecordReview();
         review.setId(request.id());
         review.setRecord(record);
-        review.setAdvisorId(request.advisorId());
-        review.setAdvisorName(request.advisorName());
+        review.setAdvisorId(advisorId);
+        review.setAdvisorName(advisorName);
         review.setDate(request.date());
         review.setResult(result);
         review.setComment(request.comment());

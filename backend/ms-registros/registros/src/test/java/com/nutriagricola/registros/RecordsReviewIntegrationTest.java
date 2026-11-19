@@ -1,5 +1,8 @@
 package com.nutriagricola.registros;
 
+import com.nutriagricola.registros.client.UserClientResponse;
+import com.nutriagricola.registros.model.FarmUser;
+import com.nutriagricola.registros.repository.FarmUserRepository;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.model.Crop;
 import com.nutriagricola.registros.model.Farm;
@@ -37,6 +40,9 @@ class RecordsReviewIntegrationTest {
     @Autowired
     private RecordReviewRepository reviewRepository;
 
+    @Autowired
+    private FarmUserRepository farmUsers;
+
     @Test
     void savesReviewAndUpdatesRecordStatusInOneTransaction() {
         String reviewId = UUID.randomUUID().toString();
@@ -45,13 +51,19 @@ class RecordsReviewIntegrationTest {
         farm.setId(UUID.randomUUID().toString());
         farm.setName("Predio de prueba");
         farm.setLocation("Chile");
-        farmRepository.save(farm);
+        farm = farmRepository.save(farm);
+
+        String advisorId = UUID.randomUUID().toString();
+        FarmUser assignment = new FarmUser();
+        assignment.setFarm(farm);
+        assignment.setUserId(advisorId);
+        farmUsers.save(assignment);
 
         Crop crop = new Crop();
         crop.setId(UUID.randomUUID().toString());
         crop.setFarm(farm);
         crop.setName("Tomate");
-        cropRepository.save(crop);
+        crop = cropRepository.save(crop);
 
         Record record = new Record();
         record.setId(UUID.randomUUID().toString());
@@ -60,20 +72,19 @@ class RecordsReviewIntegrationTest {
         record.setDate("2026-11-17");
         record.setType("SOIL");
         record.setStatus("PENDING");
-        recordRepository.save(record);
+        record = recordRepository.save(record);
 
         recordsService.createReview(new ReviewCreateRequest(
                 reviewId,
                 record.getId(),
-                "advisor-test",
-                "Asesor de prueba",
                 "2026-11-17T12:00:00",
                 "VALIDATED",
-                "Revisión válida"));
+                "Revisión válida"), new UserClientResponse(advisorId, "ADVISOR", true, "Asesor", "Prueba"));
 
         reviewRepository.flush();
 
         assertNotNull(reviewRepository.findById(reviewId).orElse(null));
+        assertEquals(advisorId, reviewRepository.findById(reviewId).orElseThrow().getAdvisorId());
         assertEquals("VALIDATED", recordRepository.findById(record.getId()).orElseThrow().getStatus());
     }
 }
