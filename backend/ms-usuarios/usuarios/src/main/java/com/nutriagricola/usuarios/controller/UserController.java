@@ -4,6 +4,7 @@ import com.nutriagricola.usuarios.dto.UserResponse;
 import com.nutriagricola.usuarios.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +20,13 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> findMe(
+            @AuthenticationPrincipal UUID userId
+    ) {
+        return ResponseEntity.ok(userService.findById(userId));
+    }
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> findAll(){
