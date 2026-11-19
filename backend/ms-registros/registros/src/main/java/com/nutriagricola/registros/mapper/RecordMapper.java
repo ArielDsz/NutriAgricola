@@ -65,6 +65,11 @@ public class RecordMapper {
     public SoilData toSoilData(RecordCreateRequest.SoilDataRequest request, Record record) {
         SoilData data = new SoilData();
         data.setRecord(record);
+        updateSoilData(request, data);
+        return data;
+    }
+
+    public void updateSoilData(RecordCreateRequest.SoilDataRequest request, SoilData data) {
         data.setPh(request.ph());
         data.setElectricalConductivity(request.electricalConductivity());
         data.setNitrogen(request.nitrogen());
@@ -73,12 +78,16 @@ public class RecordMapper {
         data.setCalcium(request.calcium());
         data.setMagnesium(request.magnesium());
         data.setOrganicMatter(request.organicMatter());
-        return data;
     }
 
     public WaterData toWaterData(RecordCreateRequest.WaterDataRequest request, Record record) {
         WaterData data = new WaterData();
         data.setRecord(record);
+        updateWaterData(request, data);
+        return data;
+    }
+
+    public void updateWaterData(RecordCreateRequest.WaterDataRequest request, WaterData data) {
         data.setPh(request.ph());
         data.setElectricalConductivity(request.electricalConductivity());
         data.setNitrogen(request.nitrogen());
@@ -87,19 +96,22 @@ public class RecordMapper {
         data.setCalcium(request.calcium());
         data.setMagnesium(request.magnesium());
         data.setWaterSource(request.waterSource());
-        return data;
     }
 
     public FoliarData toFoliarData(RecordCreateRequest.FoliarDataRequest request, Record record) {
         FoliarData data = new FoliarData();
         data.setRecord(record);
+        updateFoliarData(request, data);
+        return data;
+    }
+
+    public void updateFoliarData(RecordCreateRequest.FoliarDataRequest request, FoliarData data) {
         data.setNitrogen(request.nitrogen());
         data.setPhosphorus(request.phosphorus());
         data.setPotassium(request.potassium());
         data.setCalcium(request.calcium());
         data.setMagnesium(request.magnesium());
         data.setSymptoms(request.symptoms());
-        return data;
     }
 
     public List<FoliarPhoto> toFoliarPhotos(List<RecordCreateRequest.FoliarPhotoRequest> requests,

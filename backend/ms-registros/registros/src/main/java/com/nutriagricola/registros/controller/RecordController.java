@@ -7,6 +7,7 @@ import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
 import com.nutriagricola.registros.dto.RecordPageResponse;
 import com.nutriagricola.registros.dto.RecordDetailResponse;
+import com.nutriagricola.registros.dto.RecordUpdateRequest;
 import com.nutriagricola.registros.service.RecordsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,6 +55,12 @@ public class RecordController {
     public RecordDetailResponse getDetail(@PathVariable String id,
                                           @AuthenticationPrincipal UserClientResponse user) {
         return recordsService.getDetail(id, user);
+    }
+
+    @PutMapping("/{id}")
+    public RecordSummaryResponse update(@PathVariable String id, @Valid @RequestBody RecordUpdateRequest request,
+                                         @AuthenticationPrincipal UserClientResponse user) {
+        return recordsService.updateRecord(id, request, user);
     }
 
     @DeleteMapping("/{id}")

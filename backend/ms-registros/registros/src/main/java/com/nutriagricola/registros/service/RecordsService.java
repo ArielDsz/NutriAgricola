@@ -5,6 +5,8 @@ import com.nutriagricola.registros.dto.RecordCreateRequest;
 import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordPageResponse;
 import com.nutriagricola.registros.dto.RecordDetailResponse;
+import com.nutriagricola.registros.dto.RecordSummaryResponse;
+import com.nutriagricola.registros.dto.RecordUpdateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateResponse;
 import com.nutriagricola.registros.exception.InvalidRecordException;
@@ -199,15 +201,62 @@ public class RecordsService {
     }
 
     @Transactional
+    public RecordSummaryResponse updateRecord(String id, RecordUpdateRequest request, UserClientResponse user) {
+        requireRole(user, "FARMER");
+        Record record = findRecordForAuthor(id, user);
+        if (!"PENDING".equals(record.getStatus()) || reviews.existsByRecord_Id(id)) {
+            throw new ResourceConflictException("Solo puedes editar un análisis pendiente que todavía no tenga revisiones");
+        }
+
+        List<RecordCreateRequest.FoliarPhotoRequest> existingPhotos = "FOLIAR".equals(record.getType())
+                ? foliarPhotos.findByRecord_IdOrderByIdAsc(id).stream()
+                    .map(photo -> new RecordCreateRequest.FoliarPhotoRequest(photo.getId(), photo.getPath())).toList()
+                : List.of();
+        var validationRequest = new RecordCreateRequest(record.getId(), record.getCrop().getId(), request.date(),
+                record.getType(), request.observations(), request.soilData(), request.waterData(),
+                request.foliarData(), existingPhotos);
+        recordValidator.validate(record.getType(), validationRequest);
+
+        switch (record.getType()) {
+            case "SOIL" -> {
+                SoilData data = soilData.findById(id).orElseThrow(() ->
+                        new ResourceConflictException("Faltan los datos del análisis de suelo"));
+                recordMapper.updateSoilData(request.soilData(), data);
+                soilData.save(data);
+            }
+            case "WATER" -> {
+                WaterData data = waterData.findById(id).orElseThrow(() ->
+                        new ResourceConflictException("Faltan los datos del análisis de agua"));
+                recordMapper.updateWaterData(request.waterData(), data);
+                waterData.save(data);
+            }
+            case "FOLIAR" -> {
+                FoliarData data = foliarData.findById(id).orElseThrow(() ->
+                        new ResourceConflictException("Faltan los datos del análisis foliar"));
+                recordMapper.updateFoliarData(request.foliarData(), data);
+                foliarData.save(data);
+            }
+        }
+        record.setDate(request.date().toString());
+        record.setObservations(request.observations());
+        return recordMapper.toSummaryResponse(records.save(record));
+    }
+
+    @Transactional
     public void deleteRecord(String id, UserClientResponse user) {
         requireRole(user, "FARMER");
+        Record record = findRecordForAuthor(id, user);
+        record.setStatus("DELETED");
+        records.save(record);
+    }
+
+    private Record findRecordForAuthor(String id, UserClientResponse user) {
         Record record = records.findById(id).orElseThrow(() -> new ResourceNotFoundException("Análisis no encontrado"));
         requireFarmAccess(record.getCrop().getFarm().getId(), user);
         if (!user.id().equals(record.getUserId())) {
-            throw new AccessDeniedException("Solo el autor puede anular este análisis");
+            throw new AccessDeniedException("Solo el autor puede modificar o anular este análisis");
         }
-        record.setStatus("DELETED");
-        records.save(record);
+        return record;
     }
 
     private void requireFarmAccess(String farmId, UserClientResponse user) {
