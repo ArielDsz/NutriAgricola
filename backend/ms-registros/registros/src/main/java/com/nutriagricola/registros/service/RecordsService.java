@@ -2,7 +2,7 @@ package com.nutriagricola.registros.service;
 
 import com.nutriagricola.registros.client.UserClientResponse;
 import com.nutriagricola.registros.dto.RecordCreateRequest;
-import com.nutriagricola.registros.dto.RecordCreateResponse;
+import com.nutriagricola.registros.dto.RecordCreationResult;
 import com.nutriagricola.registros.dto.RecordPageResponse;
 import com.nutriagricola.registros.dto.RecordDetailResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
@@ -30,6 +30,8 @@ import com.nutriagricola.registros.repository.RecordReviewRepository;
 import com.nutriagricola.registros.repository.SoilDataRepository;
 import com.nutriagricola.registros.repository.WaterDataRepository;
 import com.nutriagricola.registros.validation.RecordValidator;
+import com.nutriagricola.registros.validation.RecordRequestMatcher;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -52,13 +54,16 @@ public class RecordsService {
     private final RecordMapper recordMapper;
     private final RecordReviewMapper recordReviewMapper;
     private final RecordValidator recordValidator;
+    private final RecordRequestMatcher recordRequestMatcher;
+    private final EntityManager entityManager;
 
     public RecordsService(FarmUserRepository farmUsers, CropRepository crops, RecordRepository records,
                           SoilDataRepository soilData, WaterDataRepository waterData,
                           FoliarDataRepository foliarData, FoliarPhotoRepository foliarPhotos,
                           RecordReviewRepository reviews,
                           RecordMapper recordMapper, RecordReviewMapper recordReviewMapper,
-                          RecordValidator recordValidator) {
+                          RecordValidator recordValidator, RecordRequestMatcher recordRequestMatcher,
+                          EntityManager entityManager) {
         this.farmUsers = farmUsers;
         this.crops = crops;
         this.records = records;
@@ -70,6 +75,8 @@ public class RecordsService {
         this.recordMapper = recordMapper;
         this.recordReviewMapper = recordReviewMapper;
         this.recordValidator = recordValidator;
+        this.recordRequestMatcher = recordRequestMatcher;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +104,11 @@ public class RecordsService {
         Record record = records.findById(id).orElseThrow(() -> new ResourceNotFoundException("Análisis no encontrado"));
         requireFarmAccess(record.getCrop().getFarm().getId(), user);
 
+        return loadDetail(record, true);
+    }
+
+    private RecordDetailResponse loadDetail(Record record, boolean includeReviews) {
+        String id = record.getId();
         SoilData soil = null;
         WaterData water = null;
         FoliarData foliar = null;
@@ -111,7 +123,7 @@ public class RecordsService {
             default -> throw new InvalidRecordException("El análisis tiene un tipo no reconocido");
         }
         return recordMapper.toDetailResponse(record, soil, water, foliar, photos,
-                reviews.findByRecord_IdOrderByDateDescIdAsc(id));
+                includeReviews ? reviews.findByRecord_IdOrderByDateDescIdAsc(id) : List.of());
     }
 
     private String normalizeFilter(String value, List<String> allowed, String field) {
@@ -126,13 +138,21 @@ public class RecordsService {
     }
 
     @Transactional
-    public RecordCreateResponse createRecord(RecordCreateRequest request, UserClientResponse user) {
+    public RecordCreationResult createRecord(RecordCreateRequest request, UserClientResponse user) {
         requireRole(user, "FARMER");
         String type = request.type().strip().toUpperCase(Locale.ROOT);
         recordValidator.validate(type, request);
 
-        if (records.existsById(request.id())) {
-            throw new ResourceConflictException("Ya existe un análisis con el identificador indicado");
+        Record existing = records.findById(request.id()).orElse(null);
+        if (existing != null) {
+            requireFarmAccess(existing.getCrop().getFarm().getId(), user);
+            if (!user.id().equals(existing.getUserId())) {
+                throw new AccessDeniedException("Solo el autor puede reenviar este análisis");
+            }
+            if (!recordRequestMatcher.matches(request, loadDetail(existing, false))) {
+                throw new ResourceConflictException("El identificador ya pertenece a un análisis con datos diferentes");
+            }
+            return new RecordCreationResult(recordMapper.toCreateResponse(existing), false);
         }
 
         Crop crop = crops.findById(request.cropId()).orElseThrow(() ->
@@ -153,7 +173,7 @@ public class RecordsService {
         }
 
         Record record = recordMapper.toEntity(request, crop, type, "PENDING", user.id());
-        record = records.save(record);
+        entityManager.persist(record);
 
         switch (type) {
             case "SOIL" -> soilData.save(recordMapper.toSoilData(request.soilData(), record));
@@ -165,7 +185,7 @@ public class RecordsService {
             default -> throw new InvalidRecordException("type debe ser SOIL, WATER o FOLIAR");
         }
 
-        return recordMapper.toCreateResponse(record);
+        return new RecordCreationResult(recordMapper.toCreateResponse(record), true);
     }
 
     @Transactional

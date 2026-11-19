@@ -11,6 +11,7 @@ import com.nutriagricola.registros.dto.RecordUpdateRequest;
 import com.nutriagricola.registros.service.RecordsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,9 +71,9 @@ public class RecordController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public RecordCreateResponse create(@Valid @RequestBody RecordCreateRequest request,
-                                        @AuthenticationPrincipal UserClientResponse user) {
-        return recordsService.createRecord(request, user);
+    public ResponseEntity<RecordCreateResponse> create(@Valid @RequestBody RecordCreateRequest request,
+                                                       @AuthenticationPrincipal UserClientResponse user) {
+        var result = recordsService.createRecord(request, user);
+        return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.response());
     }
 }
