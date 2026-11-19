@@ -1,7 +1,6 @@
 package com.nutriagricola.registros.service;
 
 import com.nutriagricola.registros.client.UserClientResponse;
-import com.nutriagricola.registros.dto.CropResponse;
 import com.nutriagricola.registros.dto.RecordCreateRequest;
 import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
@@ -10,7 +9,6 @@ import com.nutriagricola.registros.dto.ReviewCreateResponse;
 import com.nutriagricola.registros.exception.InvalidRecordException;
 import com.nutriagricola.registros.exception.ResourceConflictException;
 import com.nutriagricola.registros.exception.ResourceNotFoundException;
-import com.nutriagricola.registros.mapper.CropMapper;
 import com.nutriagricola.registros.mapper.RecordMapper;
 import com.nutriagricola.registros.mapper.RecordReviewMapper;
 import com.nutriagricola.registros.model.Crop;
@@ -41,14 +39,13 @@ public class RecordsService {
     private final FoliarDataRepository foliarData;
     private final FoliarPhotoRepository foliarPhotos;
     private final RecordReviewRepository reviews;
-    private final CropMapper cropMapper;
     private final RecordMapper recordMapper;
     private final RecordReviewMapper recordReviewMapper;
 
     public RecordsService(FarmUserRepository farmUsers, CropRepository crops, RecordRepository records,
                           SoilDataRepository soilData, WaterDataRepository waterData,
                           FoliarDataRepository foliarData, FoliarPhotoRepository foliarPhotos,
-                          RecordReviewRepository reviews, CropMapper cropMapper,
+                          RecordReviewRepository reviews,
                           RecordMapper recordMapper, RecordReviewMapper recordReviewMapper) {
         this.farmUsers = farmUsers;
         this.crops = crops;
@@ -58,15 +55,8 @@ public class RecordsService {
         this.foliarData = foliarData;
         this.foliarPhotos = foliarPhotos;
         this.reviews = reviews;
-        this.cropMapper = cropMapper;
         this.recordMapper = recordMapper;
         this.recordReviewMapper = recordReviewMapper;
-    }
-
-    @Transactional(readOnly = true)
-    public List<CropResponse> getCropsByFarm(String farmId, UserClientResponse user) {
-        requireFarmAccess(farmId, user);
-        return crops.findByFarm_Id(farmId).stream().map(cropMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -92,6 +82,9 @@ public class RecordsService {
 
         if (!Boolean.TRUE.equals(crop.getFarm().getActive())) {
             throw new ResourceConflictException("No se pueden crear análisis en un predio inactivo");
+        }
+        if (!Boolean.TRUE.equals(crop.getActive())) {
+            throw new ResourceConflictException("No se pueden crear análisis en un cultivo inactivo");
         }
 
         Record record = recordMapper.toEntity(request, crop, type, "PENDING", user.id());
