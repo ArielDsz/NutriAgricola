@@ -3,10 +3,12 @@ package com.nutriagricola.registros.mapper;
 import com.nutriagricola.registros.dto.RecordCreateRequest;
 import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
+import com.nutriagricola.registros.dto.RecordDetailResponse;
 import com.nutriagricola.registros.model.Crop;
 import com.nutriagricola.registros.model.FoliarData;
 import com.nutriagricola.registros.model.FoliarPhoto;
 import com.nutriagricola.registros.model.Record;
+import com.nutriagricola.registros.model.RecordReview;
 import com.nutriagricola.registros.model.SoilData;
 import com.nutriagricola.registros.model.WaterData;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,30 @@ import java.util.List;
 
 @Component
 public class RecordMapper {
+    public RecordDetailResponse toDetailResponse(Record record, SoilData soil, WaterData water,
+                                                 FoliarData foliar, List<FoliarPhoto> photos,
+                                                 List<RecordReview> reviews) {
+        var soilResponse = soil == null ? null : new RecordDetailResponse.SoilDataResponse(
+                soil.getPh(), soil.getElectricalConductivity(), soil.getNitrogen(), soil.getPhosphorus(),
+                soil.getPotassium(), soil.getCalcium(), soil.getMagnesium(), soil.getOrganicMatter());
+        var waterResponse = water == null ? null : new RecordDetailResponse.WaterDataResponse(
+                water.getPh(), water.getElectricalConductivity(), water.getNitrogen(), water.getPhosphorus(),
+                water.getPotassium(), water.getCalcium(), water.getMagnesium(), water.getWaterSource());
+        var foliarResponse = foliar == null ? null : new RecordDetailResponse.FoliarDataResponse(
+                foliar.getNitrogen(), foliar.getPhosphorus(), foliar.getPotassium(),
+                foliar.getCalcium(), foliar.getMagnesium(), foliar.getSymptoms());
+        var photoResponses = photos.stream()
+                .map(photo -> new RecordDetailResponse.FoliarPhotoResponse(photo.getId(), photo.getPath()))
+                .toList();
+        var reviewResponses = reviews.stream()
+                .map(review -> new RecordDetailResponse.ReviewResponse(review.getId(), review.getAdvisorId(),
+                        review.getAdvisorName(), review.getDate(), review.getResult(), review.getComment()))
+                .toList();
+        return new RecordDetailResponse(record.getId(), record.getCrop().getId(), record.getUserId(),
+                record.getDate(), record.getType(), record.getStatus(), record.getObservations(),
+                soilResponse, waterResponse, foliarResponse, photoResponses, reviewResponses);
+    }
+
     public RecordSummaryResponse toSummaryResponse(Record record) {
         return new RecordSummaryResponse(record.getId(), record.getCrop().getId(), record.getUserId(),
                 record.getDate(), record.getType(), record.getStatus(), record.getObservations());

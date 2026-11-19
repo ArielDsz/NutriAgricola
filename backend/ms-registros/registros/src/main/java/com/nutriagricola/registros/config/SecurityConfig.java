@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/farms", "/api/v1/farms/*", "/api/v1/crops/farm/*", "/api/v1/crops/*",
-                                "/api/v1/records/status/*").hasAnyRole("FARMER", "ADVISOR")
+                                "/api/v1/records", "/api/v1/records/*", "/api/v1/records/status/*").hasAnyRole("FARMER", "ADVISOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/farms").hasRole("FARMER")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/farms/*").hasRole("FARMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/farms/*").hasRole("FARMER")

@@ -3,7 +3,8 @@ package com.nutriagricola.registros.service;
 import com.nutriagricola.registros.client.UserClientResponse;
 import com.nutriagricola.registros.dto.RecordCreateRequest;
 import com.nutriagricola.registros.dto.RecordCreateResponse;
-import com.nutriagricola.registros.dto.RecordSummaryResponse;
+import com.nutriagricola.registros.dto.RecordPageResponse;
+import com.nutriagricola.registros.dto.RecordDetailResponse;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateResponse;
 import com.nutriagricola.registros.exception.InvalidRecordException;
@@ -14,6 +15,10 @@ import com.nutriagricola.registros.mapper.RecordReviewMapper;
 import com.nutriagricola.registros.model.Crop;
 import com.nutriagricola.registros.model.Record;
 import com.nutriagricola.registros.model.RecordReview;
+import com.nutriagricola.registros.model.SoilData;
+import com.nutriagricola.registros.model.WaterData;
+import com.nutriagricola.registros.model.FoliarData;
+import com.nutriagricola.registros.model.FoliarPhoto;
 import com.nutriagricola.registros.repository.CropRepository;
 import com.nutriagricola.registros.repository.FarmUserRepository;
 import com.nutriagricola.registros.repository.FoliarDataRepository;
@@ -23,6 +28,8 @@ import com.nutriagricola.registros.repository.RecordReviewRepository;
 import com.nutriagricola.registros.repository.SoilDataRepository;
 import com.nutriagricola.registros.repository.WaterDataRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,10 +67,56 @@ public class RecordsService {
     }
 
     @Transactional(readOnly = true)
-    public List<RecordSummaryResponse> getRecordsByStatus(String status, UserClientResponse user) {
-        return records.findByStatusAndAssignedUser(status.toUpperCase(Locale.ROOT), user.id()).stream()
-                .map(recordMapper::toSummaryResponse)
-                .toList();
+    public RecordPageResponse getHistory(String cropId, String type, String status, int page, int size,
+                                          UserClientResponse user) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new InvalidRecordException("page debe ser mayor o igual a 0 y size debe estar entre 1 y 100");
+        }
+        String normalizedType = normalizeFilter(type, List.of("SOIL", "WATER", "FOLIAR"), "type");
+        String normalizedStatus = normalizeFilter(status,
+                List.of("DRAFT", "PENDING", "VIEWED", "VALIDATED", "DELETED"), "status");
+        if (cropId != null) {
+            Crop crop = crops.findById(cropId).orElseThrow(() -> new ResourceNotFoundException("Cultivo no encontrado"));
+            requireFarmAccess(crop.getFarm().getId(), user);
+        }
+        var pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Order.desc("date"), Sort.Order.asc("id")));
+        var result = records.findHistory(user.id(), cropId, normalizedType, normalizedStatus, pageable);
+        return new RecordPageResponse(result.getContent().stream().map(recordMapper::toSummaryResponse).toList(),
+                result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
+    }
+
+    @Transactional(readOnly = true)
+    public RecordDetailResponse getDetail(String id, UserClientResponse user) {
+        Record record = records.findById(id).orElseThrow(() -> new ResourceNotFoundException("Análisis no encontrado"));
+        requireFarmAccess(record.getCrop().getFarm().getId(), user);
+
+        SoilData soil = null;
+        WaterData water = null;
+        FoliarData foliar = null;
+        List<FoliarPhoto> photos = List.of();
+        switch (record.getType()) {
+            case "SOIL" -> soil = soilData.findById(id).orElse(null);
+            case "WATER" -> water = waterData.findById(id).orElse(null);
+            case "FOLIAR" -> {
+                foliar = foliarData.findById(id).orElse(null);
+                photos = foliarPhotos.findByRecord_IdOrderByIdAsc(id);
+            }
+            default -> throw new InvalidRecordException("El análisis tiene un tipo no reconocido");
+        }
+        return recordMapper.toDetailResponse(record, soil, water, foliar, photos,
+                reviews.findByRecord_IdOrderByDateDescIdAsc(id));
+    }
+
+    private String normalizeFilter(String value, List<String> allowed, String field) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.strip().toUpperCase(Locale.ROOT);
+        if (!allowed.contains(normalized)) {
+            throw new InvalidRecordException(field + " debe ser uno de: " + String.join(", ", allowed));
+        }
+        return normalized;
     }
 
     @Transactional

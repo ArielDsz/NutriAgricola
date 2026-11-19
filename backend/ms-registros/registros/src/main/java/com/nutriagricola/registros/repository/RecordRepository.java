@@ -4,18 +4,31 @@ import com.nutriagricola.registros.model.Record;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface RecordRepository extends JpaRepository<Record, String> {
-    @Query("""
+    @Query(value = """
             select record from Record record
             join fetch record.crop crop
-            where record.status = :status
+            where (:status is null or record.status = :status)
+            and (:type is null or record.type = :type)
+            and (:cropId is null or crop.id = :cropId)
             and exists (
                 select assignment.id from FarmUser assignment
                 where assignment.farm = crop.farm and assignment.userId = :userId
             )
-            order by record.date desc, record.id
+            """, countQuery = """
+            select count(record) from Record record
+            join record.crop crop
+            where (:status is null or record.status = :status)
+            and (:type is null or record.type = :type)
+            and (:cropId is null or crop.id = :cropId)
+            and exists (
+                select assignment.id from FarmUser assignment
+                where assignment.farm = crop.farm and assignment.userId = :userId
+            )
             """)
-    List<Record> findByStatusAndAssignedUser(@Param("status") String status, @Param("userId") String userId);
+    Page<Record> findHistory(@Param("userId") String userId, @Param("cropId") String cropId,
+                             @Param("type") String type, @Param("status") String status, Pageable pageable);
 }
