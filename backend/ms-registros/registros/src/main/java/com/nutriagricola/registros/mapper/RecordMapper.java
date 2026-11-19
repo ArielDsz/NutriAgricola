@@ -51,7 +51,7 @@ public class RecordMapper {
         record.setId(request.id());
         record.setCrop(crop);
         record.setUserId(userId);
-        record.setDate(request.date());
+        record.setDate(request.date().toString());
         record.setType(type);
         record.setStatus(status);
         record.setObservations(request.observations());

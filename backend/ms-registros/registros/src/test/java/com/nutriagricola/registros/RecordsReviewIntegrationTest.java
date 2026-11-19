@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -77,7 +78,7 @@ class RecordsReviewIntegrationTest {
         recordsService.createReview(new ReviewCreateRequest(
                 reviewId,
                 record.getId(),
-                "2026-11-17T12:00:00",
+                LocalDateTime.parse("2026-11-17T12:00:00"),
                 "VALIDATED",
                 "Revisión válida"), new UserClientResponse(advisorId, "ADVISOR", true, "Asesor", "Prueba"));
 

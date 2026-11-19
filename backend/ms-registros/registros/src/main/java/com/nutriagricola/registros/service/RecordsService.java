@@ -27,6 +27,7 @@ import com.nutriagricola.registros.repository.RecordRepository;
 import com.nutriagricola.registros.repository.RecordReviewRepository;
 import com.nutriagricola.registros.repository.SoilDataRepository;
 import com.nutriagricola.registros.repository.WaterDataRepository;
+import com.nutriagricola.registros.validation.RecordValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -48,12 +49,14 @@ public class RecordsService {
     private final RecordReviewRepository reviews;
     private final RecordMapper recordMapper;
     private final RecordReviewMapper recordReviewMapper;
+    private final RecordValidator recordValidator;
 
     public RecordsService(FarmUserRepository farmUsers, CropRepository crops, RecordRepository records,
                           SoilDataRepository soilData, WaterDataRepository waterData,
                           FoliarDataRepository foliarData, FoliarPhotoRepository foliarPhotos,
                           RecordReviewRepository reviews,
-                          RecordMapper recordMapper, RecordReviewMapper recordReviewMapper) {
+                          RecordMapper recordMapper, RecordReviewMapper recordReviewMapper,
+                          RecordValidator recordValidator) {
         this.farmUsers = farmUsers;
         this.crops = crops;
         this.records = records;
@@ -64,6 +67,7 @@ public class RecordsService {
         this.reviews = reviews;
         this.recordMapper = recordMapper;
         this.recordReviewMapper = recordReviewMapper;
+        this.recordValidator = recordValidator;
     }
 
     @Transactional(readOnly = true)
@@ -122,8 +126,8 @@ public class RecordsService {
     @Transactional
     public RecordCreateResponse createRecord(RecordCreateRequest request, UserClientResponse user) {
         requireRole(user, "FARMER");
-        String type = request.type().toUpperCase(Locale.ROOT);
-        validateRecordData(type, request);
+        String type = request.type().strip().toUpperCase(Locale.ROOT);
+        recordValidator.validate(type, request);
 
         if (records.existsById(request.id())) {
             throw new ResourceConflictException("Ya existe un análisis con el identificador indicado");
@@ -138,6 +142,12 @@ public class RecordsService {
         }
         if (!Boolean.TRUE.equals(crop.getActive())) {
             throw new ResourceConflictException("No se pueden crear análisis en un cultivo inactivo");
+        }
+        if (request.foliarPhotos() != null && !request.foliarPhotos().isEmpty()) {
+            var photoIds = request.foliarPhotos().stream().map(RecordCreateRequest.FoliarPhotoRequest::id).toList();
+            if (!foliarPhotos.findAllById(photoIds).isEmpty()) {
+                throw new ResourceConflictException("Ya existe una fotografía con uno de los identificadores indicados");
+            }
         }
 
         Record record = recordMapper.toEntity(request, crop, type, "PENDING", user.id());
@@ -159,14 +169,21 @@ public class RecordsService {
     @Transactional
     public ReviewCreateResponse createReview(ReviewCreateRequest request, UserClientResponse user) {
         requireRole(user, "ADVISOR");
-        String result = request.result().toUpperCase(Locale.ROOT);
-        if (!List.of("VIEWED", "VALIDATED").contains(result)) {
-            throw new InvalidRecordException("result debe ser VIEWED o VALIDATED");
+        String result = request.result().strip().toUpperCase(Locale.ROOT);
+        if (!List.of("OBSERVED", "VALIDATED").contains(result)) {
+            throw new InvalidRecordException("result debe ser OBSERVED o VALIDATED");
+        }
+        if ("OBSERVED".equals(result) && (request.comment() == null || request.comment().isBlank())) {
+            throw new InvalidRecordException("Las observaciones del asesor requieren un comentario");
         }
 
         Record record = records.findById(request.recordId()).orElseThrow(() ->
                 new ResourceNotFoundException("Análisis no encontrado"));
         requireFarmAccess(record.getCrop().getFarm().getId(), user);
+
+        if (!List.of("PENDING", "VIEWED", "VALIDATED").contains(record.getStatus())) {
+            throw new ResourceConflictException("Este análisis no está disponible para revisión");
+        }
 
         if (reviews.existsById(request.id())) {
             throw new ResourceConflictException("Ya existe una revisión con el identificador indicado");
@@ -176,7 +193,7 @@ public class RecordsService {
                 user.id(), user.firstName() + " " + user.lastName());
         reviews.save(review);
 
-        record.setStatus(result);
+        record.setStatus("OBSERVED".equals(result) ? "PENDING" : "VALIDATED");
         records.save(record);
         return recordReviewMapper.toResponse(review, record.getStatus());
     }
@@ -190,22 +207,6 @@ public class RecordsService {
     private void requireRole(UserClientResponse user, String role) {
         if (!role.equals(user.role())) {
             throw new AccessDeniedException("No tienes permiso para realizar esta operación");
-        }
-    }
-
-    private void validateRecordData(String type, RecordCreateRequest request) {
-        boolean valid = switch (type) {
-            case "SOIL" -> request.soilData() != null && request.waterData() == null
-                    && request.foliarData() == null && (request.foliarPhotos() == null || request.foliarPhotos().isEmpty());
-            case "WATER" -> request.waterData() != null && request.soilData() == null
-                    && request.foliarData() == null && (request.foliarPhotos() == null || request.foliarPhotos().isEmpty());
-            case "FOLIAR" -> request.foliarData() != null && request.soilData() == null
-                    && request.waterData() == null;
-            default -> false;
-        };
-        if (!valid) {
-            throw new InvalidRecordException(
-                    "Envía únicamente el bloque de datos que corresponde al tipo de análisis");
         }
     }
 

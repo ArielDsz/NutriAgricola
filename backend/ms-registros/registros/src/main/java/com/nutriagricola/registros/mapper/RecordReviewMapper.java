@@ -15,9 +15,9 @@ public class RecordReviewMapper {
         review.setRecord(record);
         review.setAdvisorId(advisorId);
         review.setAdvisorName(advisorName);
-        review.setDate(request.date());
+        review.setDate(request.date().toString());
         review.setResult(result);
-        review.setComment(request.comment());
+        review.setComment(request.comment() == null ? "" : request.comment().strip());
         return review;
     }
 
