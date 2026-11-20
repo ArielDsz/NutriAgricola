@@ -28,6 +28,8 @@ public class SecurityConfig {
                                 response.sendError(403, "No tienes permiso para realizar esta operación")))
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/records/*/photos/*").hasAnyRole("FARMER", "ADVISOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/records/*/photos/*").hasRole("FARMER")
                         .requestMatchers(HttpMethod.GET, "/api/v1/farms", "/api/v1/farms/*", "/api/v1/crops/farm/*", "/api/v1/crops/*",
                                 "/api/v1/records", "/api/v1/records/*", "/api/v1/records/status/*").hasAnyRole("FARMER", "ADVISOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/farms").hasRole("FARMER")

@@ -4,6 +4,7 @@ import com.nutriagricola.registros.dto.RecordCreateRequest;
 import com.nutriagricola.registros.dto.RecordCreateResponse;
 import com.nutriagricola.registros.dto.RecordSummaryResponse;
 import com.nutriagricola.registros.dto.RecordDetailResponse;
+import com.nutriagricola.registros.dto.PhotoResponse;
 import com.nutriagricola.registros.model.Crop;
 import com.nutriagricola.registros.model.FoliarData;
 import com.nutriagricola.registros.model.FoliarPhoto;
@@ -30,7 +31,7 @@ public class RecordMapper {
                 foliar.getNitrogen(), foliar.getPhosphorus(), foliar.getPotassium(),
                 foliar.getCalcium(), foliar.getMagnesium(), foliar.getSymptoms());
         var photoResponses = photos.stream()
-                .map(photo -> new RecordDetailResponse.FoliarPhotoResponse(photo.getId(), photo.getPath()))
+                .map(this::toPhotoResponse)
                 .toList();
         var reviewResponses = reviews.stream()
                 .map(review -> new RecordDetailResponse.ReviewResponse(review.getId(), review.getAdvisorId(),
@@ -39,6 +40,12 @@ public class RecordMapper {
         return new RecordDetailResponse(record.getId(), record.getCrop().getId(), record.getUserId(),
                 record.getDate(), record.getType(), record.getStatus(), record.getObservations(),
                 soilResponse, waterResponse, foliarResponse, photoResponses, reviewResponses);
+    }
+
+    public PhotoResponse toPhotoResponse(FoliarPhoto photo) {
+        boolean uploaded = photo.getStorageKey() != null;
+        String url = uploaded ? "/api/v1/records/" + photo.getRecord().getId() + "/photos/" + photo.getId() : null;
+        return new PhotoResponse(photo.getId(), photo.getPath(), uploaded, photo.getContentType(), photo.getSizeBytes(), url);
     }
 
     public RecordSummaryResponse toSummaryResponse(Record record) {

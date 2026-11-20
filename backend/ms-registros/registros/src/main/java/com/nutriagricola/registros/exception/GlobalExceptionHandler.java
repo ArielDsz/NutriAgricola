@@ -11,12 +11,24 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleLargeUpload(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        return response(HttpStatus.valueOf(413), "La fotografía supera el tamaño permitido", request.getRequestURI());
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingFile(MissingServletRequestPartException ex, HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "Debes enviar el archivo en el campo file", request.getRequestURI());
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleInvalidParameter(MethodArgumentTypeMismatchException ex,
                                                                 HttpServletRequest request) {
