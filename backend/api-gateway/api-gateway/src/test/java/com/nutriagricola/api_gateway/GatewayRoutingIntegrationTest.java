@@ -24,6 +24,7 @@ class GatewayRoutingIntegrationTest {
             .port(0)
             .handle((request, response) -> response
                     .status(200)
+                    .header("X-Received-Authorization", request.requestHeaders().get("Authorization", ""))
                     .sendString(Mono.just(request.uri())))
             .bindNow();
 
@@ -46,11 +47,14 @@ class GatewayRoutingIntegrationTest {
     void forwardsUsersAndRecordsRequestsWithoutChangingTheirPaths() throws Exception {
         assertForwardedPath("/api/v1/users", "/api/v1/users");
         assertForwardedPath("/api/v1/records", "/api/v1/records");
+        assertForwardedPath("/api/v1/programs?page=0", "/api/v1/programs?page=0");
+        assertForwardedPath("/api/v1/records/demo/photos/demo", "/api/v1/records/demo/photos/demo");
     }
 
     private void assertForwardedPath(String gatewayPath, String expectedBackendPath) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://127.0.0.1:" + gatewayPort + gatewayPath))
+                .header("Authorization", "Bearer gateway-test-token")
                 .GET()
                 .build();
         HttpResponse<String> response = HttpClient.newHttpClient()
@@ -58,5 +62,6 @@ class GatewayRoutingIntegrationTest {
 
         assertEquals(200, response.statusCode());
         assertEquals(expectedBackendPath, response.body());
+        assertEquals("Bearer gateway-test-token", response.headers().firstValue("X-Received-Authorization").orElseThrow());
     }
 }

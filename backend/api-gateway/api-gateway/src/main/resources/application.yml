@@ -46,6 +46,11 @@ spring:
               predicates:
                 - Path=/api/v1/records/**
 
+            - id: records-service-programs
+              uri: ${RECORDS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/programs/**
+
             - id: records-service-reviews
               uri: ${RECORDS_SERVICE_URL:http://localhost:8082}
               predicates:
