@@ -7,6 +7,7 @@ import com.nutriagricola.registros.dto.CropUpdateRequest;
 import com.nutriagricola.registros.service.CropService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,10 +42,10 @@ public class CropController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CropResponse create(@Valid @RequestBody CropCreateRequest request,
+    public ResponseEntity<CropResponse> create(@Valid @RequestBody CropCreateRequest request,
                                @AuthenticationPrincipal UserClientResponse user) {
-        return cropService.create(request, user);
+        var result = cropService.create(request, user);
+        return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.response());
     }
 
     @PutMapping("/{id}")

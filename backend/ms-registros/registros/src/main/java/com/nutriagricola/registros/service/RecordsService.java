@@ -9,6 +9,7 @@ import com.nutriagricola.registros.dto.RecordSummaryResponse;
 import com.nutriagricola.registros.dto.RecordUpdateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateRequest;
 import com.nutriagricola.registros.dto.ReviewCreateResponse;
+import com.nutriagricola.registros.dto.ReviewCreationResult;
 import com.nutriagricola.registros.exception.InvalidRecordException;
 import com.nutriagricola.registros.exception.ResourceConflictException;
 import com.nutriagricola.registros.exception.ResourceNotFoundException;
@@ -40,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class RecordsService {
@@ -189,7 +191,7 @@ public class RecordsService {
     }
 
     @Transactional
-    public ReviewCreateResponse createReview(ReviewCreateRequest request, UserClientResponse user) {
+    public ReviewCreationResult createReview(ReviewCreateRequest request, UserClientResponse user) {
         requireRole(user, "ADVISOR");
         String result = request.result().strip().toUpperCase(Locale.ROOT);
         if (!List.of("OBSERVED", "VALIDATED").contains(result)) {
@@ -197,6 +199,22 @@ public class RecordsService {
         }
         if ("OBSERVED".equals(result) && (request.comment() == null || request.comment().isBlank())) {
             throw new InvalidRecordException("Las observaciones del asesor requieren un comentario");
+        }
+
+        RecordReview existing = reviews.findById(request.id()).orElse(null);
+        if (existing != null) {
+            requireFarmAccess(existing.getRecord().getCrop().getFarm().getId(), user);
+            if (!existing.getAdvisorId().equals(user.id())) {
+                throw new AccessDeniedException("Solo el asesor autor puede reenviar esta revisión");
+            }
+            String comment = request.comment() == null ? "" : request.comment().strip();
+            if (!existing.getRecord().getId().equals(request.recordId())
+                    || !Objects.equals(existing.getDate(), request.date().toString())
+                    || !Objects.equals(existing.getResult(), result)
+                    || !Objects.equals(existing.getComment(), comment)) {
+                throw new ResourceConflictException("La revisión ya existe con datos diferentes");
+            }
+            return new ReviewCreationResult(recordReviewMapper.toResponse(existing, existing.getRecord().getStatus()), false);
         }
 
         Record record = records.findById(request.recordId()).orElseThrow(() ->
@@ -207,17 +225,13 @@ public class RecordsService {
             throw new ResourceConflictException("Este análisis no está disponible para revisión");
         }
 
-        if (reviews.existsById(request.id())) {
-            throw new ResourceConflictException("Ya existe una revisión con el identificador indicado");
-        }
-
         RecordReview review = recordReviewMapper.toEntity(request, record, result,
                 user.id(), user.firstName() + " " + user.lastName());
-        reviews.save(review);
+        entityManager.persist(review);
 
         record.setStatus("OBSERVED".equals(result) ? "PENDING" : "VALIDATED");
         records.save(record);
-        return recordReviewMapper.toResponse(review, record.getStatus());
+        return new ReviewCreationResult(recordReviewMapper.toResponse(review, record.getStatus()), true);
     }
 
     @Transactional

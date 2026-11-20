@@ -7,6 +7,7 @@ import com.nutriagricola.registros.dto.ReviewCreateResponse;
 import com.nutriagricola.registros.service.RecordsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,9 +24,9 @@ public class ReviewController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ReviewCreateResponse create(@Valid @RequestBody ReviewCreateRequest request,
+    public ResponseEntity<ReviewCreateResponse> create(@Valid @RequestBody ReviewCreateRequest request,
                                         @AuthenticationPrincipal UserClientResponse user) {
-        return recordsService.createReview(request, user);
+        var result = recordsService.createReview(request, user);
+        return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.response());
     }
 }

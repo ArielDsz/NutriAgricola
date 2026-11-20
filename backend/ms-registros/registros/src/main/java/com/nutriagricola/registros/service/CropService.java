@@ -2,6 +2,8 @@ package com.nutriagricola.registros.service;
 
 import com.nutriagricola.registros.client.UserClientResponse;
 import com.nutriagricola.registros.dto.CropCreateRequest;
+import com.nutriagricola.registros.dto.CropCreationResult;
+import jakarta.persistence.EntityManager;
 import com.nutriagricola.registros.dto.CropResponse;
 import com.nutriagricola.registros.dto.CropUpdateRequest;
 import com.nutriagricola.registros.exception.ResourceConflictException;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CropService {
@@ -26,13 +29,15 @@ public class CropService {
     private final FarmRepository farms;
     private final FarmUserRepository farmUsers;
     private final CropMapper cropMapper;
+    private final EntityManager entityManager;
 
     public CropService(CropRepository crops, FarmRepository farms,
-                       FarmUserRepository farmUsers, CropMapper cropMapper) {
+                       FarmUserRepository farmUsers, CropMapper cropMapper, EntityManager entityManager) {
         this.crops = crops;
         this.farms = farms;
         this.farmUsers = farmUsers;
         this.cropMapper = cropMapper;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -47,19 +52,32 @@ public class CropService {
     }
 
     @Transactional
-    public CropResponse create(CropCreateRequest request, UserClientResponse user) {
+    public CropCreationResult create(CropCreateRequest request, UserClientResponse user) {
         requireFarmer(user);
+        validateArea(request.areaHectares());
+        Crop existing = crops.findById(request.id()).orElse(null);
+        if (existing != null) {
+            requireFarmAccess(existing.getFarm().getId(), user);
+            Crop candidate = cropMapper.toEntity(request, existing.getFarm());
+            if (!request.farmId().equals(existing.getFarm().getId())
+                    || !Objects.equals(candidate.getName(), existing.getName())
+                    || !Objects.equals(candidate.getVariety(), existing.getVariety())
+                    || !Objects.equals(candidate.getAreaHectares(), existing.getAreaHectares())
+                    || !Objects.equals(candidate.getPhenologicalStage(), existing.getPhenologicalStage())
+                    || !Objects.equals(candidate.getImagePath(), existing.getImagePath())) {
+                throw new ResourceConflictException("El cultivo ya existe con datos diferentes");
+            }
+            return new CropCreationResult(cropMapper.toResponse(existing), false);
+        }
         requireFarmAccess(request.farmId(), user);
         Farm farm = farms.findById(request.farmId()).orElseThrow(() ->
                 new ResourceNotFoundException("Predio no encontrado"));
         if (!Boolean.TRUE.equals(farm.getActive())) {
             throw new ResourceConflictException("No se pueden crear cultivos en un predio inactivo");
         }
-        if (crops.existsById(request.id())) {
-            throw new ResourceConflictException("Ya existe un cultivo con el identificador indicado");
-        }
-        validateArea(request.areaHectares());
-        return cropMapper.toResponse(crops.save(cropMapper.toEntity(request, farm)));
+        Crop crop = cropMapper.toEntity(request, farm);
+        entityManager.persist(crop);
+        return new CropCreationResult(cropMapper.toResponse(crop), true);
     }
 
     @Transactional

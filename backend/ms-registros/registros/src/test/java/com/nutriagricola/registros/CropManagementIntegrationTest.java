@@ -61,7 +61,7 @@ class CropManagementIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Uva de mesa"));
         mvc.perform(post("/api/v1/crops").header("Authorization", AUTHORIZATION)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isConflict());
+                .andExpect(status().isOk());
         mvc.perform(get("/api/v1/crops/farm/" + farm.getId()).header("Authorization", AUTHORIZATION))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(id));
         mvc.perform(put("/api/v1/crops/" + id).header("Authorization", AUTHORIZATION)

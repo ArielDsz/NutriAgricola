@@ -2,6 +2,8 @@ package com.nutriagricola.registros.service;
 
 import com.nutriagricola.registros.client.UserClientResponse;
 import com.nutriagricola.registros.dto.FarmCreateRequest;
+import com.nutriagricola.registros.dto.FarmCreationResult;
+import jakarta.persistence.EntityManager;
 import com.nutriagricola.registros.dto.FarmResponse;
 import com.nutriagricola.registros.dto.FarmUpdateRequest;
 import com.nutriagricola.registros.exception.ResourceConflictException;
@@ -16,17 +18,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class FarmService {
     private final FarmRepository farms;
     private final FarmUserRepository farmUsers;
     private final FarmMapper farmMapper;
+    private final EntityManager entityManager;
 
-    public FarmService(FarmRepository farms, FarmUserRepository farmUsers, FarmMapper farmMapper) {
+    public FarmService(FarmRepository farms, FarmUserRepository farmUsers, FarmMapper farmMapper, EntityManager entityManager) {
         this.farms = farms;
         this.farmUsers = farmUsers;
         this.farmMapper = farmMapper;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -40,17 +45,25 @@ public class FarmService {
     }
 
     @Transactional
-    public FarmResponse create(FarmCreateRequest request, UserClientResponse user) {
+    public FarmCreationResult create(FarmCreateRequest request, UserClientResponse user) {
         requireFarmer(user);
+        Farm candidate = farmMapper.toEntity(request);
         if (farms.existsById(request.id())) {
-            throw new ResourceConflictException("Ya existe un predio con el identificador indicado");
+            Farm existing = findAssignedFarm(request.id(), user);
+            if (!Objects.equals(candidate.getName(), existing.getName())
+                    || !Objects.equals(candidate.getLocation(), existing.getLocation())
+                    || !Objects.equals(candidate.getImagePath(), existing.getImagePath())) {
+                throw new ResourceConflictException("El predio ya existe con datos diferentes");
+            }
+            return new FarmCreationResult(farmMapper.toResponse(existing), false);
         }
-        Farm farm = farms.save(farmMapper.toEntity(request));
+        Farm farm = candidate;
+        entityManager.persist(farm);
         FarmUser assignment = new FarmUser();
         assignment.setFarm(farm);
         assignment.setUserId(user.id());
         farmUsers.save(assignment);
-        return farmMapper.toResponse(farm);
+        return new FarmCreationResult(farmMapper.toResponse(farm), true);
     }
 
     @Transactional

@@ -6,6 +6,7 @@ import com.nutriagricola.registros.dto.FarmUpdateRequest;
 import com.nutriagricola.registros.service.FarmService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.nutriagricola.registros.dto.FarmResponse;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,10 +41,10 @@ public class FarmController {
     }
 
     @PostMapping("/farms")
-    @ResponseStatus(HttpStatus.CREATED)
-    public FarmResponse create(@Valid @RequestBody FarmCreateRequest request,
+    public ResponseEntity<FarmResponse> create(@Valid @RequestBody FarmCreateRequest request,
                                @AuthenticationPrincipal UserClientResponse user) {
-        return farmService.create(request, user);
+        var result = farmService.create(request, user);
+        return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.response());
     }
 
     @PutMapping("/farms/{id}")
