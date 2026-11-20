@@ -72,7 +72,10 @@ CREATE TABLE foliar_data (
 CREATE TABLE foliar_photos (
     id VARCHAR(36) PRIMARY KEY,
     record_id VARCHAR(36) NOT NULL REFERENCES records(id) ON DELETE CASCADE,
-    path TEXT NOT NULL
+    path TEXT NOT NULL,
+    storage_key VARCHAR(40),
+    content_type VARCHAR(50),
+    size_bytes BIGINT CHECK (size_bytes > 0)
 );
 
 CREATE TABLE record_reviews (

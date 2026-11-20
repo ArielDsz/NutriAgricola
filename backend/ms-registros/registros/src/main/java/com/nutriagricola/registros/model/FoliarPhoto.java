@@ -28,4 +28,13 @@ public class FoliarPhoto {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String path;
+
+    @Column(name = "storage_key", length = 40)
+    private String storageKey;
+
+    @Column(name = "content_type", length = 50)
+    private String contentType;
+
+    @Column(name = "size_bytes")
+    private Long sizeBytes;
 }
