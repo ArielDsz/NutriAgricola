@@ -79,13 +79,13 @@ fun AdvisorBottomBar(
                 colors = itemColors,
                 icon = {
                     Icon(
-                        painter = painterResource(R.drawable.ic_farms),
+                        painter = painterResource(R.drawable.ic_calendar),
                         contentDescription = null,
                         modifier = Modifier.size(28.dp)
                     )
                 },
                 label = {
-                    Text("Predios", style = MaterialTheme.typography.bodySmall)
+                    Text("Registros", style = MaterialTheme.typography.bodySmall)
                 }
             )
 
@@ -101,7 +101,7 @@ fun AdvisorBottomBar(
                     )
                 },
                 label = {
-                    Text("Programa", style = MaterialTheme.typography.bodySmall)
+                    Text("Programas", style = MaterialTheme.typography.bodySmall)
                 }
             )
         }

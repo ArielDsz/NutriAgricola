@@ -39,8 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nutriagricola.app.ui.advisor.home.AdvisorHomeScreen
-import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModel
-import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModelFactory
+import com.nutriagricola.app.ui.advisor.programs.AdvisorProgramsScreen
 import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsScreen
 import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModel
 import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModelFactory
@@ -232,14 +231,8 @@ fun AppNavigation() {
                     }
                 } else if (currentUser.role == UserRole.ADVISOR) {
                     composable("advisor_home") {
-                        val advisorHomeFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
-                            AdvisorHomeViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
-                        }
-                        val advisorHomeViewModel: AdvisorHomeViewModel = viewModel(factory = advisorHomeFactory)
-
                         AdvisorHomeScreen(
                             user = currentUser,
-                            viewModel = advisorHomeViewModel,
                             onLogoutClick = { sessionViewModel.logout() },
                             onPendingClick = { navController.navigate("advisor_pending") {
                                 popUpTo("advisor_home") { inclusive = false }
@@ -249,9 +242,10 @@ fun AppNavigation() {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
                             } },
-                            onRecordClick = { recordId ->
-                                navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
-                            }
+                            onProgramClick = { navController.navigate("advisor_programs") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } }
                         )
                     }
 
@@ -263,6 +257,10 @@ fun AppNavigation() {
 
                         AdvisorPendingRecordsScreen(
                             viewModel = pendingViewModel,
+                            onProgramClick = { navController.navigate("advisor_programs") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } },
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
                             onAllRecordsClick = {
@@ -285,6 +283,10 @@ fun AppNavigation() {
 
                         AdvisorAllRecordsScreen(
                             viewModel = allRecordsViewModel,
+                            onProgramClick = { navController.navigate("advisor_programs") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } },
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
                             onPendingClick = {
@@ -296,6 +298,21 @@ fun AppNavigation() {
                             onRecordClick = { recordId ->
                                 navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
                             }
+                        )
+                    }
+
+                    composable("advisor_programs") {
+                        AdvisorProgramsScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
+                            onPendingClick = { navController.navigate("advisor_pending") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } },
+                            onAllRecordsClick = { navController.navigate("advisor_all_records") {
+                                popUpTo("advisor_home") { inclusive = false }
+                                launchSingleTop = true
+                            } }
                         )
                     }
 

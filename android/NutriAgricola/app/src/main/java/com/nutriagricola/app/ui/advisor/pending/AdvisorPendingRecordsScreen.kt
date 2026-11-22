@@ -33,6 +33,7 @@ fun AdvisorPendingRecordsScreen(
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
+    onProgramClick: () -> Unit,
     onRecordClick: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -65,7 +66,7 @@ fun AdvisorPendingRecordsScreen(
                 onHomeClick = onHomeClick,
                 onPendingClick = {},
                 onAllRecordsClick = onAllRecordsClick,
-                onProgramClick = {}
+                onProgramClick = onProgramClick
             )
         }
     ) { paddingValues ->

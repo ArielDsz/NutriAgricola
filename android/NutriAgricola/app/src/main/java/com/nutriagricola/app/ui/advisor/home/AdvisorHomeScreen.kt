@@ -8,45 +8,34 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import com.nutriagricola.app.ui.advisor.components.AdvisorRefreshOnResume
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.user.User
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomBar
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
 import com.nutriagricola.app.ui.farmer.home.components.HomeHeader
 import com.nutriagricola.app.ui.farmer.home.components.SyncStatus
-import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
-import com.nutriagricola.app.ui.theme.ForestGreen
 
 @Composable
 fun AdvisorHomeScreen(
     user: User,
-    viewModel: AdvisorHomeViewModel,
     onLogoutClick: () -> Unit,
     onPendingClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
-    onRecordClick: (String) -> Unit
+    onProgramClick: () -> Unit
 ) {
     val initials = remember(user.firstName, user.lastName) {
         listOf(user.firstName, user.lastName)
             .mapNotNull { it.trim().firstOrNull()?.toString() }
             .joinToString("")
             .uppercase()
-    }
-    val state by viewModel.uiState.collectAsState()
-
-    AdvisorRefreshOnResume {
-        viewModel.loadData()
     }
 
     Scaffold(
@@ -56,187 +45,81 @@ fun AdvisorHomeScreen(
                 onHomeClick = {},
                 onPendingClick = onPendingClick,
                 onAllRecordsClick = onAllRecordsClick,
-                onProgramClick = {}
+                onProgramClick = onProgramClick
             )
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
                 .padding(bottom = innerPadding.calculateBottomPadding())
                 .verticalScroll(rememberScrollState())
         ) {
-            // Header with overlapping Context Card
             Box(modifier = Modifier.fillMaxWidth()) {
                 HomeHeader(
                     initials = initials,
                     onLogoutClick = onLogoutClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(164.dp)
+                    modifier = Modifier.fillMaxWidth().height(164.dp)
                 )
-
-                // Advisor Profile / Summary Card
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 116.dp)
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_check),
-                                    contentDescription = null,
-                                    tint = ForestGreen,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(14.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "${user.firstName} ${user.lastName}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Asesor Agronómico",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Surface(
-                                    shape = RoundedCornerShape(50),
-                                    color = MaterialTheme.colorScheme.primaryContainer
-                                ) {
-                                    Text(
-                                        text = "${state.pendingCount} análisis pendientes de revisión",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ForestGreen,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Connection Status
-            SyncStatus(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            )
-
-            if (state.isLoading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-            }
-            state.error?.let { error ->
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    Text(error, color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = viewModel::loadData) { Text("Reintentar") }
-                }
-            }
-
-            // Main Actions Section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = "Gestión de Asesoría",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                // Action 1: Pending Reviews
-                AdvisorActionCard(
-                    title = "Revisar Análisis Pendientes",
-                    subtitle = "${state.pendingCount} muestras requieren tu dictamen",
-                    iconRes = R.drawable.ic_history,
-                    badgeText = if (state.pendingCount > 0) state.pendingCount.toString() else null,
-                    onClick = onPendingClick
-                )
-
-                // Action 2: All Records & Farms
-                AdvisorActionCard(
-                    title = "Predios y Análisis Totales",
-                    subtitle = "${state.totalFarmsCount} predios • ${state.totalRecordsCount} registros en total",
-                    iconRes = R.drawable.ic_farms,
-                    badgeText = null,
-                    onClick = onAllRecordsClick
-                )
-
-                // Action 3: Nutritional Programs
-                AdvisorActionCard(
-                    title = "Programas Nutricionales",
-                    subtitle = "Planes de fertilización y fertirriego",
-                    iconRes = R.drawable.ic_program,
-                    badgeText = null,
-                    isUpcoming = true,
-                    onClick = {}
-                )
-            }
-
-            // Recent Pending List
-            if (state.recentPendingRecords.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 116.dp, start = 16.dp, end = 16.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Text(
-                            text = "Pendientes recientes",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        TextButton(onClick = onPendingClick) {
-                            Text("Ver todos", style = MaterialTheme.typography.bodySmall)
+                        Box(
+                            modifier = Modifier.size(52.dp).clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                                painterResource(R.drawable.ic_check), contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)
                             )
                         }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(user.firstName + " " + user.lastName,
+                                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("Asesor agronómico", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
+                }
+            }
 
-                    state.recentPendingRecords.take(3).forEach { item ->
-                        RecordHistoryCard(
-                            record = item.record,
-                            cropName = "${item.farmName} • ${item.cropName}",
-                            onClick = { onRecordClick(item.record.id) }
-                        )
+            SyncStatus(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp))
+
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("Tu espacio de asesoría", style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold)
+                Text("Selecciona el módulo en el que quieres trabajar.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                // Stack the cards on narrow screens or when larger text needs more space.
+                if (maxWidth < 320.dp || LocalDensity.current.fontScale > 1.3f) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        AdvisorModuleCard("Registros", "Consulta análisis y revisa muestras pendientes.",
+                            R.drawable.ic_history, onAllRecordsClick, Modifier.fillMaxWidth())
+                        AdvisorModuleCard("Programas", "Organiza los programas nutricionales de los cultivos.",
+                            R.drawable.ic_program, onProgramClick, Modifier.fillMaxWidth())
+                    }
+                } else {
+                    Row(modifier = Modifier.height(IntrinsicSize.Min),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        AdvisorModuleCard("Registros", "Consulta análisis y revisa muestras pendientes.",
+                            R.drawable.ic_history, onAllRecordsClick, Modifier.weight(1f).fillMaxHeight())
+                        AdvisorModuleCard("Programas", "Organiza los programas nutricionales de los cultivos.",
+                            R.drawable.ic_program, onProgramClick, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
             }
@@ -245,93 +128,39 @@ fun AdvisorHomeScreen(
 }
 
 @Composable
-private fun AdvisorActionCard(
+private fun AdvisorModuleCard(
     title: String,
-    subtitle: String,
+    description: String,
     iconRes: Int,
-    badgeText: String?,
-    isUpcoming: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onClick,
-        enabled = !isUpcoming,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.heightIn(min = 200.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(ForestGreen.copy(alpha = 0.1f)),
+                modifier = Modifier.size(54.dp).clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    tint = ForestGreen,
-                    modifier = Modifier.size(24.dp)
-                )
+                Icon(painterResource(iconRes), contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (isUpcoming) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer
-                        ) {
-                            Text(
-                                text = "Próximamente",
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1,
-                                softWrap = false,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (badgeText != null) {
-                Badge(
-                    containerColor = ForestGreen,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Text(
-                        text = badgeText,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            } else if (!isUpcoming) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(description, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.End).size(22.dp))
         }
     }
 }

@@ -35,6 +35,7 @@ fun AdvisorAllRecordsScreen(
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onPendingClick: () -> Unit,
+    onProgramClick: () -> Unit,
     onRecordClick: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -46,7 +47,7 @@ fun AdvisorAllRecordsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Predios y Análisis Totales", fontWeight = FontWeight.Bold) },
+                title = { Text("Registros", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -67,7 +68,7 @@ fun AdvisorAllRecordsScreen(
                 onHomeClick = onHomeClick,
                 onPendingClick = onPendingClick,
                 onAllRecordsClick = {},
-                onProgramClick = {}
+                onProgramClick = onProgramClick
             )
         }
     ) { paddingValues ->
