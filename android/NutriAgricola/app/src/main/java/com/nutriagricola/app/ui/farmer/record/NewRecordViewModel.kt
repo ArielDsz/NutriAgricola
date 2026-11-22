@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 class NewRecordViewModel(
     private val cropRepository: CropRepository
 ) : ViewModel() {
+    private var cropsJob: Job? = null
 
     private val _crops = MutableStateFlow<List<Crop>>(emptyList())
     val crops: StateFlow<List<Crop>> = _crops.asStateFlow()
@@ -24,8 +26,14 @@ class NewRecordViewModel(
     val selectedType: StateFlow<RecordType?> = _selectedType.asStateFlow()
 
     fun loadCrops(farmId: String) {
-        viewModelScope.launch {
-            _crops.value = cropRepository.getByFarmId(farmId)
+        cropsJob?.cancel()
+        _crops.value = emptyList()
+        _selectedCrop.value = null
+        cropsJob = viewModelScope.launch {
+            cropRepository.observeByFarmId(farmId).collect { crops ->
+                _crops.value = crops.filter { it.active }
+                _selectedCrop.value = _crops.value.find { it.id == _selectedCrop.value?.id }
+            }
         }
     }
 

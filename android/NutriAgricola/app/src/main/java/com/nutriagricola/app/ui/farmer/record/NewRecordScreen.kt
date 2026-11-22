@@ -23,13 +23,11 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.nutriagricola.app.R
-import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.domain.model.farm.Crop
 import com.nutriagricola.app.domain.model.record.RecordType
@@ -38,6 +36,7 @@ import com.nutriagricola.app.ui.farmer.record.components.RecordTypeCard
 
 @Composable
 fun NewRecordScreen(
+    cropRepository: CropRepository,
     farmId: String,
     farmName: String,
     onBackClick: () -> Unit,
@@ -45,17 +44,7 @@ fun NewRecordScreen(
     farmImagePath: String? = null
 ) {
 
-    val context = LocalContext.current
-
-    val database = remember {
-        AppDatabase.getDatabase(context)
-    }
-
-    val cropRepository = remember {
-        CropRepository(database.cropDao())
-    }
-
-    val factory = remember {
+    val factory = remember(cropRepository) {
         NewRecordViewModelFactory(cropRepository)
     }
 

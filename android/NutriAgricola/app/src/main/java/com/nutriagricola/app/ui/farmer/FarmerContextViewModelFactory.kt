@@ -3,10 +3,12 @@ package com.nutriagricola.app.ui.farmer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.nutriagricola.app.data.repository.FarmRepository
+import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmerPreferencesRepository
 
 class FarmerContextViewModelFactory(
     private val farmRepository: FarmRepository,
+    private val cropRepository: CropRepository,
     private val preferencesRepository: FarmerPreferencesRepository,
     private val userId: String,
     private val onSessionExpired: () -> Unit
@@ -17,6 +19,6 @@ class FarmerContextViewModelFactory(
             "Unknown ViewModel class: ${modelClass.name}"
         }
         require(userId.isNotBlank()) { "An authenticated user is required" }
-        return FarmerContextViewModel(farmRepository, preferencesRepository, userId, onSessionExpired) as T
+        return FarmerContextViewModel(farmRepository, cropRepository, preferencesRepository, userId, onSessionExpired) as T
     }
 }

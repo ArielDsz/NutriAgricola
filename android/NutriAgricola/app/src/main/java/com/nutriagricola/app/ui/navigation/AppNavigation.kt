@@ -159,7 +159,9 @@ fun AppNavigation() {
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val cropRepository = remember(database) { CropRepository(database.cropDao()) }
+    val cropRepository = remember(database, apiClient, sessionRepository) {
+        CropRepository(database.cropDao(), apiClient.cropApi, sessionRepository)
+    }
     val recordRepository = remember(database) { RecordRepository(database) }
     val farmRepository = remember(database, apiClient, sessionRepository) {
         FarmRepository(database.farmDao(), apiClient.farmApi, sessionRepository)
@@ -176,7 +178,7 @@ fun AppNavigation() {
     }
     val farmerContextFactory = remember(database, farmerPreferences, currentUser?.id) {
         FarmerContextViewModelFactory(
-            farmRepository, farmerPreferences, currentUser?.id.orEmpty(),
+            farmRepository, cropRepository, farmerPreferences, currentUser?.id.orEmpty(),
             onSessionExpired = { sessionViewModel.logout() }
         )
     }
@@ -450,6 +452,7 @@ fun AppNavigation() {
                             val contextState by farmerContext.uiState.collectAsState()
 
                             NewRecordScreen(
+                                cropRepository = cropRepository,
                                 farmId = farmId,
                                 farmName = farmName,
                                 farmImagePath = contextState.farms.find { it.id == farmId }?.imagePath,

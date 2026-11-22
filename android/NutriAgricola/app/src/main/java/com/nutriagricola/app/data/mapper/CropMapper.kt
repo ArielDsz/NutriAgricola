@@ -2,6 +2,13 @@ package com.nutriagricola.app.data.mapper
 
 import com.nutriagricola.app.data.local.entity.CropEntity
 import com.nutriagricola.app.domain.model.farm.Crop
+import com.nutriagricola.app.data.remote.dto.CropResponseDto
+
+fun CropResponseDto.toEntity() = CropEntity(
+    id = id, farmId = farmId, name = name, variety = variety,
+    areaHectares = areaHectares, active = active, imagePath = imagePath,
+    phenologicalStage = phenologicalStage
+)
 
 fun CropEntity.toDomain(): Crop {
     return Crop(

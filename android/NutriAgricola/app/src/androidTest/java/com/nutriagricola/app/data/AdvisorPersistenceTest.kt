@@ -9,6 +9,7 @@ import com.nutriagricola.app.data.local.database.MIGRATION_1_2
 import com.nutriagricola.app.data.local.database.MIGRATION_2_3
 import com.nutriagricola.app.data.local.database.MIGRATION_3_4
 import com.nutriagricola.app.data.local.entity.FarmEntity
+import com.nutriagricola.app.data.local.entity.CropEntity
 import kotlinx.coroutines.flow.first
 import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.RecordReviewRepository
@@ -94,6 +95,31 @@ class AdvisorPersistenceTest {
         assertEquals(listOf("farm"), dao.observeByUser("advisor").first().map { it.id })
         assertNotNull(db.recordDao().getById("record"))
         assertEquals(2, dao.getAll().size)
+    }
+
+    @Test
+    fun cropRefreshPreservesRecordsAndDeactivatesMissingCropsOnlyInItsFarm() = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        db.farmDao().insert(FarmEntity("other-farm", "Otro predio", null, true))
+        val dao = db.cropDao()
+        dao.insert(CropEntity("other-crop", "other-farm", "Otro cultivo", null, null, true))
+        val updated = CropEntity("crop", "farm", "Palto actualizado", "Hass", 0.0, true, null, "Floración")
+        dao.replaceRemoteCrops("farm", listOf(updated))
+        assertEquals(updated, dao.observeByFarmId("farm").first().single())
+        assertNotNull(db.recordDao().getById("record"))
+        assertEquals(1, db.foliarPhotoDao().getByRecordId("record").size)
+
+        assertTrue(runCatching {
+            dao.replaceRemoteCrops("farm", listOf(updated.copy(farmId = "other-farm")))
+        }.isFailure)
+        assertTrue(dao.getById("crop")!!.active)
+
+        dao.replaceRemoteCrops("farm", emptyList())
+        assertFalse(dao.getById("crop")!!.active)
+        assertTrue(dao.getById("other-crop")!!.active)
+        assertNotNull(db.recordDao().getById("record"))
+        assertEquals(1, db.foliarPhotoDao().getByRecordId("record").size)
     }
 
     @Test
