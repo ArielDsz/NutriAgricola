@@ -349,6 +349,7 @@ fun AppNavigation() {
                                 recordId = recordId,
                                 getCurrentUser = { sessionViewModel.uiState.value.currentUser },
                                 recordRepository = recordRepository,
+                                recordRemoteRepository = recordRemoteRepository,
                                 recordReviewRepository = recordReviewRepository,
                                 farmRepository = farmRepository,
                                 cropRepository = cropRepository,
@@ -477,6 +478,7 @@ fun AppNavigation() {
                                 RecordDetailViewModelFactory(
                                     recordId = recordId,
                                     recordRepository = recordRepository,
+                                    recordReviewRepository = recordReviewRepository,
                                     cropRepository = cropRepository,
                                     getCurrentUser = { sessionViewModel.uiState.value.currentUser },
                                     selectedFarm = farmerContext.selectedFarm

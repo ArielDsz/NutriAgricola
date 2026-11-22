@@ -39,7 +39,7 @@ fun RecordDetailScreen(
     // Do not display cached data while a different farm is being validated.
     val state = if (loadedState.farmId == contextState.selectedFarm?.id) loadedState
     else RecordDetailUiState()
-    val error = contextState.error ?: state.error
+    val error = state.error
     val ready = error == null && !contextState.isLoading && !state.isLoading
     val record = state.record.takeIf { ready }
     val crop = state.crop.takeIf { ready }
@@ -84,6 +84,21 @@ fun RecordDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         (record.data as? FoliarData)?.let { FoliarPhotoGallery(photos = it.photos) }
+                        if (state.reviews.isNotEmpty()) {
+                            Text("Revisiones del asesor", style = MaterialTheme.typography.titleMedium)
+                            state.reviews.forEach { review ->
+                                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(review.advisorName, style = MaterialTheme.typography.titleSmall)
+                                        Text(if (review.result == com.nutriagricola.app.domain.model.advisor.ReviewResult.OBSERVED)
+                                            "Observado" else "Validado", style = MaterialTheme.typography.labelLarge)
+                                        Text(review.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                                            style = MaterialTheme.typography.bodySmall)
+                                        Text(review.comment, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

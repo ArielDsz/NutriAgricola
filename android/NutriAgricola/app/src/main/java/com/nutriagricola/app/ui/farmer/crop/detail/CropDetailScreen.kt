@@ -45,7 +45,7 @@ fun CropDetailScreen(
     // Hide cached data immediately when it no longer belongs to the current farm.
     val state = if (loadedState.farmId == contextState.selectedFarm?.id) loadedState
     else CropDetailUiState()
-    val error = contextState.error ?: state.error
+    val error = state.error
     val crop = state.crop
 
     Scaffold { innerPadding ->

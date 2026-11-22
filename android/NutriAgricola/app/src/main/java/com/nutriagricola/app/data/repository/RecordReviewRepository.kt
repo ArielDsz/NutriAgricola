@@ -8,12 +8,30 @@ import com.nutriagricola.app.domain.model.advisor.RecordReview
 import com.nutriagricola.app.domain.model.advisor.ReviewResult
 import com.nutriagricola.app.domain.model.record.RecordStatus
 import com.nutriagricola.app.domain.model.user.UserRole
+import com.nutriagricola.app.data.remote.dto.ReviewCreateResponseDto
+import com.nutriagricola.app.data.local.entity.RecordReviewEntity
 
 class RecordReviewRepository(
     private val database: AppDatabase
 ) {
     private val recordReviewDao = database.recordReviewDao()
     private val recordDao = database.recordDao()
+
+    suspend fun saveConfirmedRemoteReview(response: ReviewCreateResponseDto) {
+        val status = RecordStatus.valueOf(response.recordStatus)
+        require(status == RecordStatus.PENDING || status == RecordStatus.VALIDATED)
+        ReviewResult.valueOf(response.result)
+        database.withTransaction {
+            val record = requireNotNull(recordDao.getById(response.recordId))
+            val sync = requireNotNull(database.recordSyncDao().getById(response.recordId))
+            check(!sync.dirty) { "Hay cambios locales pendientes" }
+            recordReviewDao.upsert(RecordReviewEntity(
+                response.id, response.recordId, response.advisorId, response.advisorName,
+                response.date, response.result, response.comment
+            ))
+            recordDao.update(record.copy(status = status.name))
+        }
+    }
 
     suspend fun saveReviewAndUpdateStatus(review: RecordReview) {
         require(review.result != ReviewResult.OBSERVED || review.comment.isNotBlank())

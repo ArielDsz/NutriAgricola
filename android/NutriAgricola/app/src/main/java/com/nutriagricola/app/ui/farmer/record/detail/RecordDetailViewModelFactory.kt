@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.RecordRepository
+import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.domain.model.farm.Farm
 import com.nutriagricola.app.domain.model.user.User
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 class RecordDetailViewModelFactory(
     private val recordId: String,
     private val recordRepository: RecordRepository,
+    private val recordReviewRepository: RecordReviewRepository,
     private val cropRepository: CropRepository,
     private val getCurrentUser: () -> User?,
     private val selectedFarm: Flow<Farm?>
@@ -21,7 +23,7 @@ class RecordDetailViewModelFactory(
             "Unknown ViewModel class: ${modelClass.name}"
         }
         return RecordDetailViewModel(
-            recordId, recordRepository, cropRepository, getCurrentUser, selectedFarm
+            recordId, recordRepository, recordReviewRepository, cropRepository, getCurrentUser, selectedFarm
         ) as T
     }
 }

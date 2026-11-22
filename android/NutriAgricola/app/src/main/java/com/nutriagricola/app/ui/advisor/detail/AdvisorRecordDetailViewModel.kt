@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
 import com.nutriagricola.app.data.repository.RecordRepository
+import com.nutriagricola.app.data.repository.RecordRemoteRepository
+import retrofit2.HttpException
+import java.io.IOException
 import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.data.repository.UserRepository
 import com.nutriagricola.app.domain.model.advisor.RecordReview
@@ -34,6 +37,7 @@ data class AdvisorRecordDetailUiState(
     val isLoading: Boolean = true,
     val remotePhotoCount: Int = 0,
     val isSaving: Boolean = false,
+    val canReview: Boolean = false,
     val error: String? = null,
     val loadError: String? = null,
     val successMessage: String? = null
@@ -43,6 +47,7 @@ class AdvisorRecordDetailViewModel(
     private val recordId: String,
     private val getCurrentUser: () -> User?,
     private val recordRepository: RecordRepository,
+    private val recordRemoteRepository: RecordRemoteRepository,
     private val recordReviewRepository: RecordReviewRepository,
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
@@ -51,6 +56,7 @@ class AdvisorRecordDetailViewModel(
 
     private val _uiState = MutableStateFlow(AdvisorRecordDetailUiState())
     val uiState: StateFlow<AdvisorRecordDetailUiState> = _uiState.asStateFlow()
+    private var pendingReview: RecordReview? = null
 
     init {
         loadDetail()
@@ -76,6 +82,7 @@ class AdvisorRecordDetailViewModel(
                 val farm = crop?.let { farmRepository.getAll().find { f -> f.id == it.farmId } }
                 val farmerUser = userRepository.getById(record.userId)
                 val reviews = recordReviewRepository.getReviewsForRecord(recordId)
+                val sync = recordRepository.getSyncState(recordId)
 
                 _uiState.update {
                     it.copy(
@@ -84,6 +91,7 @@ class AdvisorRecordDetailViewModel(
                         farm = farm,
                         farmerUser = farmerUser,
                         reviews = reviews,
+                        canReview = sync != null && !sync.dirty && record.status !in listOf(RecordStatus.DRAFT, RecordStatus.DELETED),
                         remotePhotoCount = recordRepository.getSyncState(record.id)?.remotePhotoCount ?: 0,
                         isLoading = false
                     )
@@ -103,7 +111,7 @@ class AdvisorRecordDetailViewModel(
     }
 
     fun submitReview(result: ReviewResult) {
-        if (_uiState.value.isSaving || _uiState.value.isLoading || _uiState.value.record == null) return
+        if (_uiState.value.isSaving || _uiState.value.isLoading || !_uiState.value.canReview || _uiState.value.record == null) return
         val currentUser = getCurrentUser()
         if (currentUser == null || !currentUser.active || currentUser.role != UserRole.ADVISOR) {
             _uiState.update { it.copy(error = "Sesión de asesor no válida") }
@@ -119,29 +127,32 @@ class AdvisorRecordDetailViewModel(
         _uiState.update { it.copy(isSaving = true, error = null, successMessage = null) }
         viewModelScope.launch {
             try {
-                val review = RecordReview(
+                val finalComment = if (comment.isEmpty()) "Análisis validado formalmente por el asesor." else comment
+                // Keep the UUID and date on retry if the first response was lost.
+                val review = pendingReview?.takeIf { it.result == result && it.comment == finalComment } ?: RecordReview(
                     id = UUID.randomUUID().toString(),
                     recordId = recordId,
                     advisorId = currentUser.id,
                     advisorName = "${currentUser.firstName} ${currentUser.lastName}",
                     date = LocalDateTime.now(),
                     result = result,
-                    comment = if (comment.isEmpty()) "Análisis validado formalmente por el asesor." else comment
+                    comment = finalComment
                 )
+                pendingReview = review
 
-                recordReviewRepository.saveReviewAndUpdateStatus(review)
-                val newStatus = if (result == ReviewResult.VALIDATED) RecordStatus.VALIDATED else RecordStatus.PENDING
+                val confirmed = recordRemoteRepository.submitReview(review)
+                val newStatus = RecordStatus.valueOf(confirmed.recordStatus)
+                val savedReview = review.copy(advisorName = confirmed.advisorName,
+                    date = LocalDateTime.parse(confirmed.date), result = ReviewResult.valueOf(confirmed.result),
+                    comment = confirmed.comment)
+                pendingReview = null
 
-                val message = if (result == ReviewResult.VALIDATED) {
-                    "Análisis validado exitosamente"
-                } else {
-                    "Observación guardada. El análisis sigue pendiente"
-                }
+                val message = "Revisión confirmada y guardada en el servidor"
 
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        reviews = listOf(review) + it.reviews,
+                        reviews = (listOf(savedReview) + it.reviews).distinctBy { item -> item.id },
                         commentInput = "",
                         record = it.record?.copy(status = newStatus),
                         successMessage = message
@@ -149,6 +160,16 @@ class AdvisorRecordDetailViewModel(
                 }
             } catch (e: CancellationException) {
                 throw e
+            } catch (_: IOException) {
+                _uiState.update { it.copy(isSaving = false,
+                    error = "No se pudo confirmar el envío. Conservamos tu comentario; vuelve a intentarlo con conexión.") }
+            } catch (e: HttpException) {
+                _uiState.update { it.copy(isSaving = false, error = when (e.code()) {
+                    401 -> "La sesión venció. Vuelve a iniciar sesión para enviar la revisión."
+                    403 -> "No tienes permiso para revisar este análisis."
+                    409 -> "El análisis cambió. Actualiza los registros antes de reintentar."
+                    else -> "El servidor no pudo confirmar la revisión. Inténtalo nuevamente."
+                }) }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(isSaving = false, error = "No se pudo guardar la revisión")

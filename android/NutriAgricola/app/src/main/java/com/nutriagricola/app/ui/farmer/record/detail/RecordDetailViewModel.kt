@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.RecordRepository
+import com.nutriagricola.app.data.repository.RecordReviewRepository
+import com.nutriagricola.app.domain.model.advisor.RecordReview
 import com.nutriagricola.app.domain.model.farm.Crop
 import com.nutriagricola.app.domain.model.farm.Farm
 import com.nutriagricola.app.domain.model.record.Record
@@ -22,12 +24,14 @@ data class RecordDetailUiState(
     val crop: Crop? = null,
     val isLoading: Boolean = true,
     val remotePhotoCount: Int = 0,
+    val reviews: List<RecordReview> = emptyList(),
     val error: String? = null
 )
 
 class RecordDetailViewModel(
     recordId: String,
     recordRepository: RecordRepository,
+    recordReviewRepository: RecordReviewRepository,
     cropRepository: CropRepository,
     getCurrentUser: () -> User?,
     selectedFarm: Flow<Farm?>
@@ -57,7 +61,8 @@ class RecordDetailViewModel(
                     _uiState.value = if (record != null && crop != null && crop.farmId == farm.id) {
                         RecordDetailUiState(
                             farmId = farm.id, record = record, crop = crop, isLoading = false,
-                            remotePhotoCount = recordRepository.getSyncState(record.id)?.remotePhotoCount ?: 0
+                            remotePhotoCount = recordRepository.getSyncState(record.id)?.remotePhotoCount ?: 0,
+                            reviews = recordReviewRepository.getReviewsForRecord(record.id)
                         )
                     } else {
                         RecordDetailUiState(

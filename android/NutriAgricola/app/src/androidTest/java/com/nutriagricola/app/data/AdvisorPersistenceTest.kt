@@ -14,6 +14,7 @@ import com.nutriagricola.app.data.remote.dto.SoilDataDto
 import com.nutriagricola.app.data.remote.dto.FoliarDataDto
 import com.nutriagricola.app.data.remote.dto.PhotoResponseDto
 import com.nutriagricola.app.data.remote.dto.ReviewResponseDto
+import com.nutriagricola.app.data.remote.dto.ReviewCreateResponseDto
 import com.nutriagricola.app.data.local.entity.FarmEntity
 import com.nutriagricola.app.data.local.entity.CropEntity
 import kotlinx.coroutines.flow.first
@@ -105,6 +106,28 @@ class AdvisorPersistenceTest {
         assertTrue(db.foliarPhotoDao().getByRecordId(remote.id).isEmpty())
         assertEquals("Nombre del asesor", db.recordReviewDao().getByRecordId(remote.id).single().advisorName)
         assertTrue(db.userDao().getById("advisor")!!.active)
+    }
+
+    @Test
+    fun confirmedRemoteReviewUpdatesStatusWithoutDuplicatesOrDirtyingTheRecord() = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        val records = RecordRepository(db)
+        records.cacheRemoteRecord(RecordDetailDto("remote", "crop", "farmer", "2026-11-20", "SOIL", "PENDING",
+            soilData = SoilDataDto(ph = 6.5)))
+        val reviews = RecordReviewRepository(db)
+        val response = ReviewCreateResponseDto("confirmed", "remote", "advisor", "Asesor del servidor",
+            "2026-11-22T12:00:00", "VALIDATED", "Validado", "VALIDATED")
+        reviews.saveConfirmedRemoteReview(response)
+        reviews.saveConfirmedRemoteReview(response)
+        assertEquals(1, reviews.getReviewsForRecord("remote").size)
+        assertEquals(RecordStatus.VALIDATED, records.getById("remote")!!.status)
+        assertFalse(records.getSyncState("remote")!!.dirty)
+
+        records.update(records.getById("remote")!!.copy(observations = "Cambio local"))
+        assertTrue(runCatching { reviews.saveConfirmedRemoteReview(response.copy(id = "second")) }.isFailure)
+        assertEquals(1, reviews.getReviewsForRecord("remote").size)
+        assertEquals("Cambio local", records.getById("remote")!!.observations)
     }
 
     @Test

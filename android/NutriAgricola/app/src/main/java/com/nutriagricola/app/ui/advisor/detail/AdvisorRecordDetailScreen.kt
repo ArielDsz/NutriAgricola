@@ -282,6 +282,10 @@ fun AdvisorRecordDetailScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(8.dp))
+                            Text(if (state.canReview) "La revisión se confirma con conexión al servidor."
+                                else "Este análisis no está disponible para enviar una revisión.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                             OutlinedTextField(
                                 value = state.commentInput,
                                 onValueChange = { viewModel.onCommentChange(it) },
@@ -291,7 +295,7 @@ fun AdvisorRecordDetailScreen(
                                     .fillMaxWidth()
                                     .heightIn(min = 96.dp),
                                 maxLines = 4,
-                                enabled = !state.isSaving
+                                enabled = !state.isSaving && state.canReview
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
@@ -300,14 +304,14 @@ fun AdvisorRecordDetailScreen(
                             ) {
                                 OutlinedButton(
                                     onClick = { viewModel.submitReview(ReviewResult.OBSERVED) },
-                                    enabled = !state.isSaving,
+                                    enabled = !state.isSaving && state.canReview,
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Observar")
                                 }
                                 Button(
                                     onClick = { viewModel.submitReview(ReviewResult.VALIDATED) },
-                                    enabled = !state.isSaving,
+                                    enabled = !state.isSaving && state.canReview,
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Validar")

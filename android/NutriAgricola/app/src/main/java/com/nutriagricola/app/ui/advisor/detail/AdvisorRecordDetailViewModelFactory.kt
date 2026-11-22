@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
 import com.nutriagricola.app.data.repository.RecordRepository
+import com.nutriagricola.app.data.repository.RecordRemoteRepository
 import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.data.repository.UserRepository
 import com.nutriagricola.app.domain.model.user.User
@@ -13,6 +14,7 @@ class AdvisorRecordDetailViewModelFactory(
     private val recordId: String,
     private val getCurrentUser: () -> User?,
     private val recordRepository: RecordRepository,
+    private val recordRemoteRepository: RecordRemoteRepository,
     private val recordReviewRepository: RecordReviewRepository,
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
@@ -27,6 +29,7 @@ class AdvisorRecordDetailViewModelFactory(
             recordId,
             getCurrentUser,
             recordRepository,
+            recordRemoteRepository,
             recordReviewRepository,
             farmRepository,
             cropRepository,
