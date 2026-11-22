@@ -4,10 +4,14 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Upsert
 import com.nutriagricola.app.data.local.entity.FoliarPhotoEntity
 
 @Dao
 interface FoliarPhotoDao {
+    @Upsert
+    suspend fun upsert(photo: FoliarPhotoEntity)
+
 
     @Insert
     suspend fun insert(photo: FoliarPhotoEntity)

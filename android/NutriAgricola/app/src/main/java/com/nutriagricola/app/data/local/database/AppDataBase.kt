@@ -16,13 +16,14 @@ import com.nutriagricola.app.data.local.entity.*
         CropEntity::class,
         RecordEntity::class,
         RecordSyncEntity::class,
+        RemotePhotoEntity::class,
         SoilDataEntity::class,
         WaterDataEntity::class,
         FoliarDataEntity::class,
         FoliarPhotoEntity::class,
         RecordReviewEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cropDao(): CropDao
     abstract fun recordDao(): RecordDao
     abstract fun recordSyncDao(): RecordSyncDao
+    abstract fun remotePhotoDao(): RemotePhotoDao
     abstract fun soilDataDao(): SoilDataDao
     abstract fun waterDataDao(): WaterDataDao
     abstract fun foliarDataDao(): FoliarDataDao
@@ -52,7 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "nutri_agricola_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build()
 
                 INSTANCE = instance

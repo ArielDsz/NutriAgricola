@@ -163,7 +163,7 @@ class FoliarRecordViewModel(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
-                _uiState.update { it.copy(error = "No se pudo copiar la imagen al dispositivo. Inténtalo nuevamente.") }
+                _uiState.update { it.copy(error = "No se pudo importar la foto. Usa JPEG o PNG de hasta 10 MB y 25 megapíxeles.") }
             } finally {
                 _uiState.update { it.copy(isProcessingPhoto = false) }
             }
@@ -271,7 +271,7 @@ class FoliarRecordViewModel(
         viewModelScope.launch {
             try {
                 if (state.photos.any { !photoStorage.isValidPhoto(recordId, it) }) {
-                    _uiState.update { it.copy(isSaving = false, error = "Una fotografía ya no está disponible. Quítala y vuelve a agregarla.") }
+                    _uiState.update { it.copy(isSaving = false, error = "Una foto no está disponible o supera los límites. Usa JPEG o PNG de hasta 10 MB y 25 megapíxeles.") }
                     return@launch
                 }
                 recordRepository.insert(record)

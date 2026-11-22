@@ -40,10 +40,12 @@ class FoliarPhotoStorage(
     }
 
     private fun isImage(file: File): Boolean {
-        if (!file.isFile || file.length() == 0L) return false
+        if (!file.isFile || file.length() !in 1..10L * 1024 * 1024) return false
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.absolutePath, options)
-        return options.outWidth > 0 && options.outHeight > 0
+        return options.outWidth > 0 && options.outHeight > 0 &&
+            options.outMimeType in listOf("image/jpeg", "image/png") &&
+            options.outWidth.toLong() * options.outHeight <= 25_000_000L
     }
 
     suspend fun createCameraPhoto(recordId: String): PendingCameraPhoto = withContext(Dispatchers.IO) {

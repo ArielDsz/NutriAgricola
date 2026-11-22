@@ -9,6 +9,7 @@ import com.nutriagricola.app.data.local.database.MIGRATION_1_2
 import com.nutriagricola.app.data.local.database.MIGRATION_2_3
 import com.nutriagricola.app.data.local.database.MIGRATION_3_4
 import com.nutriagricola.app.data.local.database.MIGRATION_4_5
+import com.nutriagricola.app.data.local.database.MIGRATION_5_6
 import com.nutriagricola.app.data.remote.dto.RecordDetailDto
 import com.nutriagricola.app.data.remote.dto.SoilDataDto
 import com.nutriagricola.app.data.remote.dto.FoliarDataDto
@@ -61,7 +62,7 @@ class AdvisorPersistenceTest {
 
     private fun openMigratedDatabase(): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .build().also { database = it }
     }
 
@@ -128,6 +129,31 @@ class AdvisorPersistenceTest {
         assertTrue(runCatching { reviews.saveConfirmedRemoteReview(response.copy(id = "second")) }.isFailure)
         assertEquals(1, reviews.getReviewsForRecord("remote").size)
         assertEquals("Cambio local", records.getById("remote")!!.observations)
+    }
+
+    @Test
+    fun uploadConfirmationClearsPendingOnlyIfTheLocalSnapshotStillMatches(): Unit = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        val records = RecordRepository(db)
+        db.recordDao().update(db.recordDao().getById("record")!!.copy(status = "VALIDATED"))
+        db.farmDao().replaceAssignedFarms("farmer", db.farmDao().getAll())
+        val pending = com.nutriagricola.app.domain.model.record.Record("new-record", "crop", "farmer",
+            java.time.LocalDate.parse("2026-11-22"), com.nutriagricola.app.domain.model.record.RecordType.SOIL,
+            RecordStatus.PENDING, data = com.nutriagricola.app.domain.model.record.SoilData(ph = 0.0))
+        records.insert(pending)
+        records.insert(pending.copy(id = "draft", status = RecordStatus.DRAFT))
+        assertEquals(1, records.observePendingUploadCount("farmer").first())
+        assertEquals(0, records.observePendingUploadCount("advisor").first())
+        val detail = RecordDetailDto(pending.id, "crop", "farmer", "2026-11-22", "SOIL", "PENDING", soilData = SoilDataDto(ph = 0.0))
+        assertTrue(records.confirmUpload(pending, detail))
+        assertEquals(0, records.observePendingUploadCount("farmer").first())
+        val edited = records.getById(pending.id)!!.copy(observations = "Editar")
+        records.update(edited)
+        assertEquals(1, records.observePendingUploadCount("farmer").first())
+        assertFalse(records.confirmUpload(pending, detail))
+        assertEquals("Editar", records.getById(pending.id)!!.observations)
+        assertTrue(records.getSyncState(pending.id)!!.dirty)
     }
 
     @Test

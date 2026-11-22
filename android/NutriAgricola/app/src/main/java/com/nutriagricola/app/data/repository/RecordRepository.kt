@@ -5,6 +5,7 @@ import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.entity.FoliarPhotoEntity
 import com.nutriagricola.app.data.local.entity.RecordEntity
 import com.nutriagricola.app.data.local.entity.RecordSyncEntity
+import com.nutriagricola.app.data.local.entity.RemotePhotoEntity
 import com.nutriagricola.app.data.local.entity.UserEntity
 import com.nutriagricola.app.data.local.entity.RecordReviewEntity
 import com.nutriagricola.app.data.remote.dto.RecordDetailDto
@@ -22,7 +23,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class RecordRepository(
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val onPendingChange: (String) -> Unit = {}
 ) {
 
     private val recordDao = database.recordDao()
@@ -35,6 +37,24 @@ class RecordRepository(
         recordDao.getByAssignedUser(userId).mapNotNull { getCompleteRecord(it) }
 
     suspend fun getSyncState(id: String) = database.recordSyncDao().getById(id)
+    fun observePendingUploadCount(userId: String) = recordDao.observePendingUploadCount(userId)
+    suspend fun getPendingUploads(userId: String) =
+        recordDao.getPendingUploads(userId).mapNotNull { getCompleteRecord(it) }
+    suspend fun getPhotos(recordId: String) = foliarPhotoDao.getByRecordId(recordId)
+
+    suspend fun confirmUpload(submitted: Record, detail: RecordDetailDto): Boolean = database.withTransaction {
+        require(detail.id == submitted.id && detail.userId == submitted.userId &&
+            detail.cropId == submitted.cropId && detail.type == submitted.type.name)
+        val current = getById(submitted.id)
+        if (current == null) return@withTransaction false
+        // A user may have edited while the network request was running.
+        if (current != submitted) {
+            database.recordSyncDao().upsert(RecordSyncEntity(submitted.id, true, detail.foliarPhotos.count { it.uploaded }))
+            return@withTransaction false
+        }
+        database.recordSyncDao().upsert(RecordSyncEntity(submitted.id, false, detail.foliarPhotos.count { it.uploaded }))
+        cacheRemoteRecord(detail)
+    }
 
     suspend fun cacheRemoteRecord(detail: RecordDetailDto): Boolean {
         val record = detail.toDomain()
@@ -62,6 +82,9 @@ class RecordRepository(
             database.recordSyncDao().upsert(RecordSyncEntity(
                 record.id, false, detail.foliarPhotos.count { it.uploaded }
             ))
+            database.remotePhotoDao().upsertAll(detail.foliarPhotos.map {
+                RemotePhotoEntity(it.id, record.id, it.uploaded)
+            })
             true
         }
     }
@@ -140,6 +163,7 @@ class RecordRepository(
                 }
             }
         }
+        onPendingChange(record.userId)
     }
 
     suspend fun update(record: Record) {
@@ -170,6 +194,7 @@ class RecordRepository(
                 }
             }
         }
+        onPendingChange(record.userId)
     }
 
     suspend fun delete(record: Record) {

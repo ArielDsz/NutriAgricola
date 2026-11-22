@@ -12,6 +12,20 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RecordDao {
+    @Query("""SELECT r.* FROM records r
+        JOIN crops c ON c.id = r.cropId JOIN farm_users fu ON fu.farmId = c.farmId
+        LEFT JOIN record_sync s ON s.recordId = r.id
+        WHERE r.userId = :userId AND fu.userId = :userId AND r.status = 'PENDING'
+          AND (s.recordId IS NULL OR s.dirty = 1)
+        ORDER BY r.date, r.id""")
+    suspend fun getPendingUploads(userId: String): List<RecordEntity>
+
+    @Query("""SELECT COUNT(*) FROM records r
+        JOIN crops c ON c.id = r.cropId JOIN farm_users fu ON fu.farmId = c.farmId
+        LEFT JOIN record_sync s ON s.recordId = r.id
+        WHERE r.userId = :userId AND fu.userId = :userId AND r.status = 'PENDING'
+          AND (s.recordId IS NULL OR s.dirty = 1)""")
+    fun observePendingUploadCount(userId: String): Flow<Int>
 
     @Query("""SELECT r.* FROM records r
         JOIN crops c ON c.id = r.cropId

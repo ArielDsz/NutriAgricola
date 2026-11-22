@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.okhttp.mockwebserver)
+    androidTestImplementation(libs.okhttp.mockwebserver)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

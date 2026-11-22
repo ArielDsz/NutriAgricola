@@ -3,6 +3,18 @@ package com.nutriagricola.app.data.local.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS remote_photos (
+                id TEXT NOT NULL PRIMARY KEY, recordId TEXT NOT NULL, uploaded INTEGER NOT NULL,
+                FOREIGN KEY(recordId) REFERENCES records(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_remote_photos_recordId ON remote_photos(recordId)")
+    }
+}
+
 // Existing records remain local. Only a successful download creates a sync marker.
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
