@@ -3,6 +3,9 @@ package com.nutriagricola.app.ui.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nutriagricola.app.data.repository.AuthRepository
+import com.nutriagricola.app.data.remote.InvalidUserProfileException
+import retrofit2.HttpException
+import java.io.IOException
 import com.nutriagricola.app.domain.model.user.User
 import com.nutriagricola.app.domain.model.user.UserRole
 import kotlinx.coroutines.CancellationException
@@ -43,6 +46,14 @@ class LoginViewModel(
                 }
             } catch (exception: CancellationException) {
                 throw exception
+            } catch (exception: InvalidUserProfileException) {
+                _uiState.value = LoginUiState(error = exception.message)
+            } catch (_: IOException) {
+                _uiState.value = LoginUiState(error = "No se pudo conectar. Revisa tu conexión e inténtalo nuevamente.")
+            } catch (exception: HttpException) {
+                _uiState.value = LoginUiState(error = if (exception.code() in 500..599)
+                    "El servicio no está disponible. Inténtalo más tarde."
+                else "No se pudo iniciar sesión. Inténtalo nuevamente.")
             } catch (_: Exception) {
                 _uiState.value = LoginUiState(
                     error = "No se pudo iniciar sesión. Inténtalo nuevamente"

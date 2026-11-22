@@ -95,17 +95,19 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.nutriagricola.app.data.remote.ApiClient
 
 @Composable
 fun AppNavigation() {
 
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
-    val sessionFactory = remember(database) {
-        SessionViewModelFactory(
-            SessionRepository(context, UserRepository(database.userDao()))
-        )
+    val apiClient = remember { ApiClient() }
+    val userRepository = remember(database) { UserRepository(database.userDao()) }
+    val sessionRepository = remember(database, apiClient) {
+        SessionRepository(context, userRepository, apiClient.authApi)
     }
+    val sessionFactory = remember(sessionRepository) { SessionViewModelFactory(sessionRepository) }
     // This ViewModel belongs to the Activity, outside individual navigation destinations.
     val sessionViewModel: SessionViewModel = viewModel(factory = sessionFactory)
     val sessionState by sessionViewModel.uiState.collectAsState()
@@ -147,11 +149,11 @@ fun AppNavigation() {
         return
     }
 
-    val loginFactory = remember(database) {
+    val loginFactory = remember(apiClient, sessionRepository) {
         LoginViewModelFactory(
             AuthRepository(
-                userRepository = UserRepository(database.userDao()),
-                userCredentialDao = database.userCredentialDao()
+                authApi = apiClient.authApi,
+                sessionRepository = sessionRepository
             )
         )
     }
@@ -160,7 +162,6 @@ fun AppNavigation() {
     val cropRepository = remember(database) { CropRepository(database.cropDao()) }
     val recordRepository = remember(database) { RecordRepository(database) }
     val farmRepository = remember(database) { FarmRepository(database.farmDao()) }
-    val userRepository = remember(database) { UserRepository(database.userDao()) }
     val recordReviewRepository = remember(database) { RecordReviewRepository(database) }
     val foliarPhotoStorage = remember(recordRepository, context.applicationContext) {
         FoliarPhotoStorage(context.applicationContext) { recordId ->

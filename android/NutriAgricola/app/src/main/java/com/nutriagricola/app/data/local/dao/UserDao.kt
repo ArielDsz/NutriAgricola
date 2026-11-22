@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.nutriagricola.app.data.local.entity.UserEntity
 
 @Dao
@@ -12,6 +13,9 @@ interface UserDao {
 
     @Insert
     suspend fun insert(user: UserEntity)
+
+    @Upsert
+    suspend fun upsert(user: UserEntity)
 
     @Query("SELECT * FROM users")
     suspend fun getAll(): List<UserEntity>

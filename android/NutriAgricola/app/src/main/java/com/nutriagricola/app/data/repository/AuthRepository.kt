@@ -1,37 +1,29 @@
 package com.nutriagricola.app.data.repository
 
-import com.nutriagricola.app.data.local.dao.UserCredentialDao
-import com.nutriagricola.app.data.security.PasswordHasher
+import com.nutriagricola.app.data.mapper.toDomain
+import com.nutriagricola.app.data.remote.InvalidUserProfileException
+import com.nutriagricola.app.data.remote.api.AuthApi
+import com.nutriagricola.app.data.remote.dto.LoginRequestDto
 import com.nutriagricola.app.domain.model.user.User
+import retrofit2.HttpException
 import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class AuthRepository(
-    private val userRepository: UserRepository,
-    private val userCredentialDao: UserCredentialDao
+    private val authApi: AuthApi,
+    private val sessionRepository: SessionRepository
 ) {
-
     suspend fun authenticate(email: String, password: String): User? {
-        val user = userRepository.getByEmail(email.trim().lowercase(Locale.ROOT))
-            ?: return null
-        if (!user.active) return null
-
-        val credential = userCredentialDao.getByUserId(user.id) ?: return null
-        val isValid = withContext(Dispatchers.Default) {
-            val passwordChars = password.toCharArray()
-            try {
-                PasswordHasher.verify(
-                    password = passwordChars,
-                    passwordHash = credential.passwordHash,
-                    salt = credential.salt,
-                    iterations = credential.iterations
-                )
-            } finally {
-                passwordChars.fill('\u0000')
-            }
+        val response = try {
+            authApi.login(LoginRequestDto(email.trim().lowercase(Locale.ROOT), password))
+        } catch (error: HttpException) {
+            if (error.code() == 401) return null
+            throw error
         }
-
-        return if (isValid) user else null
+        if (response.accessToken.isBlank()) {
+            throw InvalidUserProfileException("El servidor no devolvió una sesión válida")
+        }
+        val user = response.user.toDomain()
+        sessionRepository.saveSession(user, response.accessToken)
+        return user
     }
 }

@@ -31,7 +31,7 @@ class SessionViewModel(
             val user = sessionRepository.getSavedUser()
             val validUser = user?.takeIf { isSupportedUser(it) }
             if (validUser == null) {
-                sessionRepository.clearUserId()
+                sessionRepository.clearSession()
             }
             _uiState.value = SessionUiState(currentUser = validUser, isRestored = true)
         } catch (exception: CancellationException) {
@@ -54,7 +54,7 @@ class SessionViewModel(
         _uiState.value = state.copy(isBusy = true, error = null)
         viewModelScope.launch {
             try {
-                sessionRepository.saveUserId(user.id)
+                check(sessionRepository.hasSession(user.id)) { "No hay una sesión autenticada guardada" }
                 _uiState.value = SessionUiState(currentUser = user, isRestored = true)
             } catch (exception: CancellationException) {
                 throw exception
@@ -73,7 +73,7 @@ class SessionViewModel(
         _uiState.value = state.copy(isBusy = true, error = null)
         viewModelScope.launch {
             try {
-                sessionRepository.clearUserId()
+                sessionRepository.clearSession()
                 _uiState.value = SessionUiState(isRestored = true)
             } catch (exception: CancellationException) {
                 throw exception

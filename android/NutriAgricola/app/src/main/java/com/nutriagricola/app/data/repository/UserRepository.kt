@@ -25,6 +25,10 @@ class UserRepository(
         userDao.insert(user.toEntity())
     }
 
+    suspend fun upsert(user: User) {
+        userDao.upsert(user.toEntity())
+    }
+
     suspend fun update(user: User) {
         userDao.update(user.toEntity())
     }
