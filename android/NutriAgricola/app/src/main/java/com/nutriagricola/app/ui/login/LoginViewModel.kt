@@ -49,7 +49,7 @@ class LoginViewModel(
             } catch (exception: InvalidUserProfileException) {
                 _uiState.value = LoginUiState(error = exception.message)
             } catch (_: IOException) {
-                _uiState.value = LoginUiState(error = "No se pudo conectar. Revisa tu conexión e inténtalo nuevamente.")
+                _uiState.value = LoginUiState(error = "No se pudo conectar con el servidor. Inténtalo nuevamente.")
             } catch (exception: HttpException) {
                 _uiState.value = LoginUiState(error = if (exception.code() in 500..599)
                     "El servicio no está disponible. Inténtalo más tarde."
