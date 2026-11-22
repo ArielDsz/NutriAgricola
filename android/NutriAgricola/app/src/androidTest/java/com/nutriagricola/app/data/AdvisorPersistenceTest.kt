@@ -7,6 +7,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.database.MIGRATION_1_2
 import com.nutriagricola.app.data.local.database.MIGRATION_2_3
+import com.nutriagricola.app.data.local.database.MIGRATION_3_4
+import com.nutriagricola.app.data.local.entity.FarmEntity
+import kotlinx.coroutines.flow.first
 import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.RecordReviewRepository
 import com.nutriagricola.app.domain.model.advisor.RecordReview
@@ -50,7 +53,7 @@ class AdvisorPersistenceTest {
 
     private fun openMigratedDatabase(): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build().also { database = it }
     }
 
@@ -67,6 +70,30 @@ class AdvisorPersistenceTest {
         assertEquals(listOf("/private/test-photo.jpg"), data.photos)
         assertEquals(2, db.userDao().getAll().size)
         assertTrue(db.recordReviewDao().getAll().isEmpty())
+    }
+
+    @Test
+    fun downloadedFarmsAreScopedByAccountAndRefreshPreservesExistingRecords() = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        val dao = db.farmDao()
+        // Migration must not automatically grant access to legacy demonstration farms.
+        assertTrue(dao.observeByUser("farmer").first().isEmpty())
+        val farm = FarmEntity("farm", "Nombre actualizado", "Región", true)
+        val inactive = FarmEntity("inactive", "Inactivo", null, false)
+        dao.replaceAssignedFarms("farmer", listOf(farm, inactive))
+        dao.replaceAssignedFarms("advisor", listOf(farm))
+        assertEquals(listOf("farm"), dao.observeByUser("farmer").first().map { it.id })
+        assertEquals("Nombre actualizado", dao.observeByUser("advisor").first().single().name)
+        assertNotNull(db.recordDao().getById("record"))
+        assertEquals(1, db.foliarPhotoDao().getByRecordId("record").size)
+
+        // A successful empty response removes only this account's assignments.
+        dao.replaceAssignedFarms("farmer", emptyList())
+        assertTrue(dao.observeByUser("farmer").first().isEmpty())
+        assertEquals(listOf("farm"), dao.observeByUser("advisor").first().map { it.id })
+        assertNotNull(db.recordDao().getById("record"))
+        assertEquals(2, dao.getAll().size)
     }
 
     @Test

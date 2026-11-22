@@ -3,6 +3,22 @@ package com.nutriagricola.app.data.local.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+// Keep existing farms and records. Remote assignments are downloaded per account.
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS farm_users (
+                userId TEXT NOT NULL,
+                farmId TEXT NOT NULL,
+                PRIMARY KEY(userId, farmId),
+                FOREIGN KEY(userId) REFERENCES users(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                FOREIGN KEY(farmId) REFERENCES farms(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_farm_users_farmId ON farm_users(farmId)")
+    }
+}
+
 // Add Advisor reviews without rebuilding any Farmer tables.
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {

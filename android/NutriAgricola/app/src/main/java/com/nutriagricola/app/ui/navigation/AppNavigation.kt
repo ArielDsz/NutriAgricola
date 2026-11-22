@@ -161,7 +161,9 @@ fun AppNavigation() {
     val snackbarHostState = remember { SnackbarHostState() }
     val cropRepository = remember(database) { CropRepository(database.cropDao()) }
     val recordRepository = remember(database) { RecordRepository(database) }
-    val farmRepository = remember(database) { FarmRepository(database.farmDao()) }
+    val farmRepository = remember(database, apiClient, sessionRepository) {
+        FarmRepository(database.farmDao(), apiClient.farmApi, sessionRepository)
+    }
     val recordReviewRepository = remember(database) { RecordReviewRepository(database) }
     val foliarPhotoStorage = remember(recordRepository, context.applicationContext) {
         FoliarPhotoStorage(context.applicationContext) { recordId ->
@@ -174,7 +176,8 @@ fun AppNavigation() {
     }
     val farmerContextFactory = remember(database, farmerPreferences, currentUser?.id) {
         FarmerContextViewModelFactory(
-            farmRepository, farmerPreferences, currentUser?.id.orEmpty()
+            farmRepository, farmerPreferences, currentUser?.id.orEmpty(),
+            onSessionExpired = { sessionViewModel.logout() }
         )
     }
     val coroutineScope = rememberCoroutineScope()
@@ -337,6 +340,7 @@ fun AppNavigation() {
                                 contextState = contextState,
                                 onLogoutClick = { sessionViewModel.logout() },
                                 onFarmSelected = { farmerContext.selectFarm(it) },
+                                onRefreshFarms = { farmerContext.refreshFarms() },
                                 onCropClick = { cropId ->
                                     navController.navigate("crop_detail/${Uri.encode(cropId)}") {
                                         launchSingleTop = true

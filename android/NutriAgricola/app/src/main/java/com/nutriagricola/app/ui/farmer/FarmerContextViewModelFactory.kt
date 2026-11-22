@@ -8,7 +8,8 @@ import com.nutriagricola.app.data.repository.FarmerPreferencesRepository
 class FarmerContextViewModelFactory(
     private val farmRepository: FarmRepository,
     private val preferencesRepository: FarmerPreferencesRepository,
-    private val userId: String
+    private val userId: String,
+    private val onSessionExpired: () -> Unit
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -16,6 +17,6 @@ class FarmerContextViewModelFactory(
             "Unknown ViewModel class: ${modelClass.name}"
         }
         require(userId.isNotBlank()) { "An authenticated user is required" }
-        return FarmerContextViewModel(farmRepository, preferencesRepository, userId) as T
+        return FarmerContextViewModel(farmRepository, preferencesRepository, userId, onSessionExpired) as T
     }
 }

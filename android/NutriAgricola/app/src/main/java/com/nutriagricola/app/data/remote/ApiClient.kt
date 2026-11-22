@@ -1,6 +1,7 @@
 package com.nutriagricola.app.data.remote
 
 import com.nutriagricola.app.data.remote.api.AuthApi
+import com.nutriagricola.app.data.remote.api.FarmApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -24,4 +25,5 @@ class ApiClient(baseUrl: String = "http://127.0.0.1:8080/") {
         .build()
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
+    val farmApi: FarmApi = retrofit.create(FarmApi::class.java)
 }

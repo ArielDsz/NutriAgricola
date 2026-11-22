@@ -59,6 +59,7 @@ fun FarmerHomeScreen(
     contextState: FarmerContextUiState,
     onLogoutClick: () -> Unit,
     onFarmSelected: (String) -> Unit,
+    onRefreshFarms: () -> Unit,
     onHistoryClick: () -> Unit,
     onRecordClick: (String) -> Unit,
     onCropClick: (String) -> Unit,
@@ -74,7 +75,7 @@ fun FarmerHomeScreen(
     val farm = contextState.selectedFarm
     val state = if (loadedState.farmId == farm?.id) loadedState
     else FarmerHomeUiState(farmId = farm?.id, isLoading = true)
-    val error = contextState.error ?: state.error
+    val error = state.error
     var showFarmSelector by rememberSaveable { mutableStateOf(false) }
 
     if (showFarmSelector) {
@@ -171,6 +172,16 @@ fun FarmerHomeScreen(
             }
 
             Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(onClick = onRefreshFarms, enabled = !contextState.isRefreshing) {
+                    Text(if (contextState.isRefreshing) "Actualizando predios…" else "Actualizar predios")
+                }
+                contextState.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+
+            Column(
                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -193,7 +204,7 @@ fun FarmerHomeScreen(
                     error != null -> Text(error, color = MaterialTheme.colorScheme.error)
                     contextState.isLoading || (farm != null && state.isLoading) ->
                         CircularProgressIndicator()
-                    farm == null -> Text("No hay un predio seleccionado")
+                    farm == null -> Text(if (contextState.isRefreshing) "Buscando predios…" else "No hay predios asignados descargados para tu cuenta")
                     state.recentRecords.isEmpty() -> Text("No hay registros recientes")
                     else -> state.recentRecords.forEach { record ->
                         val crop = state.crops.find { it.id == record.cropId }
