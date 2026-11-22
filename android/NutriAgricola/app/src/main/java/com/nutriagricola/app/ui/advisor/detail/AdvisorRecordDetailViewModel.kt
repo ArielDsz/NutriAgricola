@@ -6,6 +6,7 @@ import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.FarmRepository
 import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.RecordRemoteRepository
+import com.nutriagricola.app.data.repository.RecordPhotoRepository
 import retrofit2.HttpException
 import java.io.IOException
 import com.nutriagricola.app.data.repository.RecordReviewRepository
@@ -38,6 +39,8 @@ data class AdvisorRecordDetailUiState(
     val remotePhotoCount: Int = 0,
     val isSaving: Boolean = false,
     val canReview: Boolean = false,
+    val isDownloadingPhotos: Boolean = false,
+    val photoError: String? = null,
     val error: String? = null,
     val loadError: String? = null,
     val successMessage: String? = null
@@ -48,6 +51,7 @@ class AdvisorRecordDetailViewModel(
     private val getCurrentUser: () -> User?,
     private val recordRepository: RecordRepository,
     private val recordRemoteRepository: RecordRemoteRepository,
+    private val photoRepository: RecordPhotoRepository,
     private val recordReviewRepository: RecordReviewRepository,
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
@@ -57,6 +61,24 @@ class AdvisorRecordDetailViewModel(
     private val _uiState = MutableStateFlow(AdvisorRecordDetailUiState())
     val uiState: StateFlow<AdvisorRecordDetailUiState> = _uiState.asStateFlow()
     private var pendingReview: RecordReview? = null
+
+    fun downloadPhotos() {
+        val record = _uiState.value.record ?: return
+        val user = getCurrentUser() ?: return
+        if (_uiState.value.isDownloadingPhotos || user.role != UserRole.ADVISOR) return
+        _uiState.update { it.copy(isDownloadingPhotos = true, photoError = null) }
+        viewModelScope.launch {
+            try {
+                val updated = photoRepository.download(record.id, user.id)
+                _uiState.update { it.copy(record = updated) }
+            } catch (exception: CancellationException) { throw exception
+            } catch (_: Exception) {
+                _uiState.update { it.copy(photoError = "No se pudieron descargar todas las fotos. Revisa la conexión y vuelve a intentar.") }
+            } finally {
+                _uiState.update { it.copy(isDownloadingPhotos = false) }
+            }
+        }
+    }
 
     init {
         loadDetail()

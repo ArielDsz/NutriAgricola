@@ -41,7 +41,10 @@ import com.nutriagricola.app.ui.theme.OnlineGreen
 
 @Composable
 fun SyncStatus(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pendingCount: Int = 0,
+    isSyncing: Boolean = false,
+    onSync: (() -> Unit)? = null
 ) {
 
     val context = LocalContext.current
@@ -111,7 +114,8 @@ fun SyncStatus(
                 }
             }
             Text(
-                text = if (isOnline) "En línea" else "Sin conexión",
+                text = (if (isSyncing) "Enviando registros…" else if (isOnline) "En línea" else "Sin conexión") +
+                    (if (pendingCount > 0) " · " + pendingCount + " pendientes" else ""),
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp, lineHeight = 22.sp),
                 fontWeight = FontWeight.Medium,
                 color = statusColor,
@@ -122,7 +126,7 @@ fun SyncStatus(
                 color = statusColor.copy(alpha = 0.25f)
             )
             Surface(
-                onClick = { updateConnection() },
+                onClick = { if (!isSyncing) { if (onSync != null) onSync() else updateConnection() } },
                 shape = RoundedCornerShape(10.dp),
                 color = statusColor.copy(alpha = 0.08f),
                 contentColor = statusColor
@@ -135,7 +139,7 @@ fun SyncStatus(
                 ) {
                     Icon(painterResource(R.drawable.ic_sync), contentDescription = null,
                         modifier = Modifier.size(20.dp))
-                    Text("Actualizar", style = MaterialTheme.typography.bodySmall,
+                    Text(if (onSync != null) "Sincronizar" else "Actualizar", style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium)
                 }
             }

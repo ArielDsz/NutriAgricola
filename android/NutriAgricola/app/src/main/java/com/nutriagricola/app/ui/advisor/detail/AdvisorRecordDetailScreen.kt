@@ -102,10 +102,13 @@ fun AdvisorRecordDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     if (state.remotePhotoCount > 0) {
-                        Text("Fotos disponibles en el servidor: " + state.remotePhotoCount +
-                            ". Su descarga aún no está habilitada.",
+                        Text("Fotos disponibles en el servidor: " + state.remotePhotoCount,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        TextButton(onClick = viewModel::downloadPhotos, enabled = !state.isDownloadingPhotos) {
+                            Text(if (state.isDownloadingPhotos) "Descargando fotos…" else "Descargar fotos")
+                        }
+                        state.photoError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     }
                     // Header Card
                     Card(

@@ -34,6 +34,7 @@ fun FarmerHistoryScreen(
     downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit,
     onMoreRecords: () -> Unit,
+    onUploadRecords: () -> Unit,
     contextState: FarmerContextUiState,
     onHomeClick: () -> Unit,
     onRecordClick: (String) -> Unit
@@ -79,7 +80,7 @@ fun FarmerHistoryScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { HistoryHeader(farm) }
-            item { RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords) }
+            item { RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords) }
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     val chipColors = FilterChipDefaults.filterChipColors(

@@ -60,6 +60,7 @@ fun FarmerHomeScreen(
     downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit,
     onMoreRecords: () -> Unit,
+    onUploadRecords: () -> Unit,
     viewModel: FarmerHomeViewModel,
     contextState: FarmerContextUiState,
     onLogoutClick: () -> Unit,
@@ -137,10 +138,13 @@ fun FarmerHomeScreen(
             }
 
             SyncStatus(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                pendingCount = downloadState.pendingUploads,
+                isSyncing = downloadState.isUploading,
+                onSync = { onUploadRecords(); onRefreshRecords() }
             )
 
-            RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords)
+            RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords)
 
             key(farm?.id) {
                 CropsSection(

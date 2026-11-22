@@ -11,6 +11,7 @@ fun RecordDownloadStatus(
     state: RecordDownloadUiState,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
+    onUpload: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -20,6 +21,14 @@ fun RecordDownloadStatus(
             Text("Descargando registros…", style = MaterialTheme.typography.bodySmall)
         }
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall) }
+        if (state.pendingUploads > 0 || state.isUploading) {
+            Text(if (state.isUploading) "Enviando registros y fotos…"
+                else "Registros pendientes de envío: " + state.pendingUploads,
+                style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = onUpload, enabled = !state.isUploading) { Text("Enviar pendientes") }
+        }
+        state.uploadMessage?.let { Text(it, color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall) }
         TextButton(onClick = onRefresh, enabled = !state.isBusy) { Text("Actualizar registros") }
         if (state.hasMore) {

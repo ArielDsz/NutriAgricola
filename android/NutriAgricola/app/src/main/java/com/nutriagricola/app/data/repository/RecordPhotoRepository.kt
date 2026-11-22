@@ -17,9 +17,14 @@ class RecordPhotoRepository(
     suspend fun download(recordId: String, userId: String): Record {
         check(sessions.hasSession(userId)) { "Vuelve a iniciar sesión para descargar las fotos." }
         val authorization = "Bearer " + requireNotNull(sessions.getAccessToken())
-        val detail = api.recordApi.getDetail(recordId, authorization)
-        require(detail.id == recordId)
-        for (photo in detail.foliarPhotos.filter { it.uploaded }) {
+        var metadata = database.remotePhotoDao().getByRecordId(recordId)
+        if (metadata.isEmpty()) {
+            val detail = api.recordApi.getDetail(recordId, authorization)
+            require(detail.id == recordId)
+            metadata = detail.foliarPhotos.map { RemotePhotoEntity(it.id, recordId, it.uploaded) }
+            database.remotePhotoDao().upsertAll(metadata)
+        }
+        for (photo in metadata.filter { it.uploaded }) {
             check(sessions.hasSession(userId))
             val local = records.getPhotos(recordId).find { it.id == photo.id }
             if (local != null && files.isAvailable(recordId, local.path)) continue
@@ -28,9 +33,6 @@ class RecordPhotoRepository(
             if (!sessions.hasSession(userId)) throw UploadSessionRequiredException()
             database.foliarPhotoDao().upsert(FoliarPhotoEntity(photo.id, recordId, path))
         }
-        database.remotePhotoDao().upsertAll(detail.foliarPhotos.map {
-            RemotePhotoEntity(it.id, recordId, it.uploaded)
-        })
         return requireNotNull(records.getById(recordId))
     }
 }

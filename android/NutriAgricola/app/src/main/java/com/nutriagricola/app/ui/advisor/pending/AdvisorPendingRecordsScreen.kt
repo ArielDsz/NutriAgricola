@@ -36,6 +36,7 @@ fun AdvisorPendingRecordsScreen(
     downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit,
     onMoreRecords: () -> Unit,
+    onUploadRecords: () -> Unit,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
@@ -110,7 +111,7 @@ fun AdvisorPendingRecordsScreen(
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
             ) {
-                RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords)
+                RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords)
                 // Search Input
                 OutlinedTextField(
                     value = state.searchQuery,

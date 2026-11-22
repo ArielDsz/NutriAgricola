@@ -6,6 +6,13 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.*
+import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.testing.WorkManagerTestInitHelper
+import androidx.work.testing.SynchronousExecutor
+import com.nutriagricola.app.data.sync.RecordUploadWorker
+import com.nutriagricola.app.data.sync.RecordUploadScheduler
+import kotlinx.coroutines.flow.filterNotNull
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.entity.CropEntity
 import com.nutriagricola.app.data.local.entity.FarmEntity
@@ -45,6 +52,14 @@ class RecordUploadIntegrationTest {
     private val farmerId = "11111111-1111-4111-8111-111111111111"
     private val cropId = "44444444-4444-4444-8444-444444444444"
     private lateinit var image: ByteArray
+    private var workTestingInitialized = false
+
+    private fun workerFactory() = object : WorkerFactory() {
+        override fun createWorker(appContext: android.content.Context, workerClassName: String,
+                                  workerParameters: WorkerParameters): ListenableWorker? =
+            if (workerClassName == RecordUploadWorker::class.java.name)
+                RecordUploadWorker(appContext, workerParameters, uploader) else null
+    }
 
     @Before
     fun setUp(): Unit = runBlocking {
@@ -79,6 +94,7 @@ class RecordUploadIntegrationTest {
 
     @After
     fun tearDown(): Unit = runBlocking {
+        if (workTestingInitialized) WorkManagerTestInitHelper.closeWorkDatabase()
         scope.cancel()
         scope.coroutineContext[Job]?.join()
         server.shutdown()
@@ -135,8 +151,6 @@ class RecordUploadIntegrationTest {
             foliarData = FoliarDataDto(nitrogen = 0.0),
             foliarPhotos = listOf(PhotoResponseDto(photoId, "/another/device.jpg", true)))
         records.cacheRemoteRecord(dto)
-        val body = kotlinx.serialization.json.Json.encodeToString(RecordDetailDto.serializer(), dto)
-        server.enqueue(json(body))
         server.enqueue(MockResponse().setHeader("Content-Type", "image/png").setBody(Buffer().write(image)))
         val photos = RecordPhotoRepository(db, api, sessions, files, records)
         try {
@@ -144,12 +158,11 @@ class RecordUploadIntegrationTest {
             val path = (downloaded.data as FoliarData).photos.single()
             assertTrue(files.isAvailable(id, path))
             assertArrayEquals(image, File(path.toUri().path!!).readBytes())
-            assertEquals("Bearer test-token", server.takeRequest().getHeader("Authorization"))
-            assertEquals("/api/v1/records/$id/photos/$photoId", server.takeRequest().path)
-            server.enqueue(json(body))
+            val photoRequest = server.takeRequest()
+            assertEquals("Bearer test-token", photoRequest.getHeader("Authorization"))
+            assertEquals("/api/v1/records/$id/photos/$photoId", photoRequest.path)
             photos.download(id, farmerId)
-            server.takeRequest()
-            assertEquals(3, server.requestCount)
+            assertEquals(1, server.requestCount)
         } finally {
             val downloadedFolder = File(context.filesDir, "foliar_photos/$id")
             downloadedFolder.listFiles()?.forEach { it.delete() }
@@ -163,5 +176,68 @@ class RecordUploadIntegrationTest {
         assertTrue(runCatching { uploader.uploadPending(farmerId) }.exceptionOrNull() is UploadSessionRequiredException)
         assertEquals(0, server.requestCount)
         assertEquals(1, records.observePendingUploadCount(farmerId).first())
+    }
+
+    @Test
+    fun conflictingRecordDoesNotPreventAnotherPendingRecordFromBeingSent(): Unit = runBlocking {
+        val other = record.copy(id = UUID.randomUUID().toString(), date = record.date.plusDays(1),
+            type = RecordType.SOIL, data = SoilData(ph = 6.0))
+        records.insert(other)
+        server.enqueue(MockResponse().setResponseCode(409))
+        server.enqueue(json("""{"id":"${other.id}","status":"PENDING"}""", 201))
+        server.enqueue(json("""{"id":"${other.id}","cropId":"$cropId","userId":"$farmerId",
+            "date":"${other.date}","type":"SOIL","status":"PENDING","soilData":{"ph":6.0},"foliarPhotos":[],"reviews":[]}"""))
+        assertTrue(runCatching { uploader.uploadPending(farmerId) }.exceptionOrNull() is HttpException)
+        assertEquals(1, records.observePendingUploadCount(farmerId).first())
+        assertNull(records.getSyncState(record.id))
+        assertFalse(records.getSyncState(other.id)!!.dirty)
+    }
+
+    @Test
+    fun workerRetriesTemporaryServerFailureWithoutClearingPending(): Unit = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(503))
+        val worker = TestListenableWorkerBuilder<RecordUploadWorker>(context)
+            .setWorkerFactory(workerFactory()).setInputData(workDataOf("userId" to farmerId)).build()
+        assertEquals(ListenableWorker.Result.retry(), worker.doWork())
+        assertEquals(1, records.observePendingUploadCount(farmerId).first())
+    }
+
+    @Test
+    fun workerStopsForMissingSessionAndRetainsPending(): Unit = runBlocking {
+        sessions.clearSession()
+        val worker = TestListenableWorkerBuilder<RecordUploadWorker>(context)
+            .setWorkerFactory(workerFactory()).setInputData(workDataOf("userId" to farmerId)).build()
+        val result = worker.doWork()
+        assertTrue(result is ListenableWorker.Result.Failure)
+        assertTrue((result as ListenableWorker.Result.Failure).outputData.getString("message")!!.contains("sesión"))
+        assertEquals(1, records.observePendingUploadCount(farmerId).first())
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun queuedUploadWaitsForNetworkConstraintAndSendsWhenItIsMet(): Unit = runBlocking {
+        val configuration = Configuration.Builder().setExecutor(SynchronousExecutor())
+            .setWorkerFactory(workerFactory()).build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration)
+        workTestingInitialized = true
+        val manager = WorkManager.getInstance(context)
+        val request = RecordUploadScheduler.request(farmerId)
+        assertEquals(NetworkType.CONNECTED, request.workSpec.constraints.requiredNetworkType)
+        assertEquals(setOf("userId"), request.workSpec.input.keyValueMap.keys)
+        val photo = records.getPhotos(record.id).single()
+        server.enqueue(json("""{"id":"${record.id}","status":"PENDING"}""", 201))
+        server.enqueue(json(detail(photo.id, false)))
+        server.enqueue(json("""{"id":"${photo.id}","path":"unused","uploaded":true}"""))
+        server.enqueue(json(detail(photo.id, true)))
+        manager.enqueue(request).result.get()
+        assertEquals(0, server.requestCount)
+        WorkManagerTestInitHelper.getTestDriver(context)!!.setAllConstraintsMet(request.id)
+        val completed = withTimeout(10_000) {
+            manager.getWorkInfoByIdFlow(request.id).filterNotNull().first { it.state.isFinished }
+        }
+        assertEquals(WorkInfo.State.SUCCEEDED, completed.state)
+        assertEquals(1, completed.outputData.getInt("uploaded", -1))
+        assertEquals(0, records.observePendingUploadCount(farmerId).first())
+        assertTrue(files.isAvailable(record.id, photo.path))
     }
 }

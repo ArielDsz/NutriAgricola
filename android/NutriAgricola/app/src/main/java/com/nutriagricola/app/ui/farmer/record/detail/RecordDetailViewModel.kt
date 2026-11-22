@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.RecordRepository
 import com.nutriagricola.app.data.repository.RecordReviewRepository
+import com.nutriagricola.app.data.repository.RecordPhotoRepository
 import com.nutriagricola.app.domain.model.advisor.RecordReview
 import com.nutriagricola.app.domain.model.farm.Crop
 import com.nutriagricola.app.domain.model.farm.Farm
@@ -25,19 +26,46 @@ data class RecordDetailUiState(
     val isLoading: Boolean = true,
     val remotePhotoCount: Int = 0,
     val reviews: List<RecordReview> = emptyList(),
+    val isDownloadingPhotos: Boolean = false,
+    val photoError: String? = null,
     val error: String? = null
 )
 
 class RecordDetailViewModel(
     recordId: String,
-    recordRepository: RecordRepository,
+    private val recordRepository: RecordRepository,
     recordReviewRepository: RecordReviewRepository,
+    private val photoRepository: RecordPhotoRepository,
     cropRepository: CropRepository,
-    getCurrentUser: () -> User?,
+    private val getCurrentUser: () -> User?,
     selectedFarm: Flow<Farm?>
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(RecordDetailUiState())
     val uiState = _uiState.asStateFlow()
+
+    fun downloadPhotos() {
+        val record = _uiState.value.record ?: return
+        val user = getCurrentUser() ?: return
+        if (_uiState.value.isDownloadingPhotos || record.userId != user.id) return
+        _uiState.value = _uiState.value.copy(isDownloadingPhotos = true, photoError = null)
+        viewModelScope.launch {
+            try {
+                val updated = photoRepository.download(record.id, user.id)
+                if (_uiState.value.record?.id == record.id) {
+                    _uiState.value = _uiState.value.copy(record = updated)
+                }
+            } catch (exception: CancellationException) { throw exception
+            } catch (_: Exception) {
+                if (_uiState.value.record?.id == record.id) {
+                    _uiState.value = _uiState.value.copy(photoError = "No se pudieron descargar todas las fotos. Revisa la conexión y vuelve a intentar.")
+                }
+            } finally {
+                if (_uiState.value.record?.id == record.id) {
+                    _uiState.value = _uiState.value.copy(isDownloadingPhotos = false)
+                }
+            }
+        }
+    }
 
     init {
         viewModelScope.launch {

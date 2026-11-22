@@ -1,6 +1,9 @@
 package com.nutriagricola.app.ui.navigation
 
 import android.net.Uri
+import com.nutriagricola.app.data.sync.RecordUploadScheduler
+import com.nutriagricola.app.data.remote.PhotoFileTransfer
+import com.nutriagricola.app.data.repository.RecordPhotoRepository
 import androidx.compose.runtime.DisposableEffect
 import com.nutriagricola.app.data.repository.RecordRemoteRepository
 import com.nutriagricola.app.ui.records.RecordDownloadViewModel
@@ -165,11 +168,17 @@ fun AppNavigation() {
     val cropRepository = remember(database, apiClient, sessionRepository) {
         CropRepository(database.cropDao(), apiClient.cropApi, sessionRepository)
     }
-    val recordRepository = remember(database) { RecordRepository(database) }
+    val uploadScheduler = remember(context.applicationContext) { RecordUploadScheduler(context.applicationContext) }
+    val recordRepository = remember(database, uploadScheduler) {
+        RecordRepository(database) { userId -> uploadScheduler.enqueue(userId) }
+    }
     val farmRepository = remember(database, apiClient, sessionRepository) {
         FarmRepository(database.farmDao(), apiClient.farmApi, sessionRepository)
     }
     val recordReviewRepository = remember(database) { RecordReviewRepository(database) }
+    val recordPhotoRepository = remember(database, apiClient, sessionRepository, recordRepository) {
+        RecordPhotoRepository(database, apiClient, sessionRepository, PhotoFileTransfer(context), recordRepository)
+    }
     val foliarPhotoStorage = remember(recordRepository, context.applicationContext) {
         FoliarPhotoStorage(context.applicationContext) { recordId ->
             recordRepository.getById(recordId) != null
@@ -180,14 +189,15 @@ fun AppNavigation() {
         RecordRemoteRepository(database, apiClient, sessionRepository, farmRepository, recordRepository)
     }
     val downloadFactory = remember(recordRemoteRepository, currentUser?.id) {
-        RecordDownloadViewModelFactory(recordRemoteRepository, currentUser?.id.orEmpty()) { sessionViewModel.logout() }
+        RecordDownloadViewModelFactory(recordRemoteRepository, recordRepository, uploadScheduler,
+            currentUser?.role == UserRole.FARMER, currentUser?.id.orEmpty()) { sessionViewModel.logout() }
     }
     val recordDownloadViewModel: RecordDownloadViewModel = viewModel(
         key = "record-download-" + currentUser?.id, factory = downloadFactory
     )
     val downloadState by recordDownloadViewModel.uiState.collectAsState()
     LaunchedEffect(recordDownloadViewModel) {
-        if (currentUser != null) recordDownloadViewModel.refresh()
+        if (currentUser != null) recordDownloadViewModel.start()
     }
     DisposableEffect(recordDownloadViewModel) {
         onDispose { recordDownloadViewModel.cancelDownload() }
@@ -280,6 +290,7 @@ fun AppNavigation() {
                             downloadState = downloadState,
                             onRefreshRecords = { recordDownloadViewModel.refresh() },
                             onMoreRecords = { recordDownloadViewModel.loadMore() },
+                            onUploadRecords = { recordDownloadViewModel.uploadPending() },
                             onProgramClick = { navController.navigate("advisor_programs") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
@@ -309,6 +320,7 @@ fun AppNavigation() {
                             downloadState = downloadState,
                             onRefreshRecords = { recordDownloadViewModel.refresh() },
                             onMoreRecords = { recordDownloadViewModel.loadMore() },
+                            onUploadRecords = { recordDownloadViewModel.uploadPending() },
                             onProgramClick = { navController.navigate("advisor_programs") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
@@ -350,6 +362,7 @@ fun AppNavigation() {
                                 getCurrentUser = { sessionViewModel.uiState.value.currentUser },
                                 recordRepository = recordRepository,
                                 recordRemoteRepository = recordRemoteRepository,
+                                photoRepository = recordPhotoRepository,
                                 recordReviewRepository = recordReviewRepository,
                                 farmRepository = farmRepository,
                                 cropRepository = cropRepository,
@@ -386,6 +399,7 @@ fun AppNavigation() {
                                 downloadState = downloadState,
                                 onRefreshRecords = { recordDownloadViewModel.refresh() },
                                 onMoreRecords = { recordDownloadViewModel.loadMore() },
+                                onUploadRecords = { recordDownloadViewModel.uploadPending() },
                                 contextState = contextState,
                                 onLogoutClick = { sessionViewModel.logout() },
                                 onFarmSelected = { farmerContext.selectFarm(it) },
@@ -429,6 +443,7 @@ fun AppNavigation() {
                                 downloadState = downloadState,
                                 onRefreshRecords = { recordDownloadViewModel.refresh() },
                                 onMoreRecords = { recordDownloadViewModel.loadMore() },
+                                onUploadRecords = { recordDownloadViewModel.uploadPending() },
                                 contextState = contextState,
                                 onRecordClick = onRecordClick,
                                 onHomeClick = {
@@ -479,6 +494,7 @@ fun AppNavigation() {
                                     recordId = recordId,
                                     recordRepository = recordRepository,
                                     recordReviewRepository = recordReviewRepository,
+                                    photoRepository = recordPhotoRepository,
                                     cropRepository = cropRepository,
                                     getCurrentUser = { sessionViewModel.uiState.value.currentUser },
                                     selectedFarm = farmerContext.selectedFarm

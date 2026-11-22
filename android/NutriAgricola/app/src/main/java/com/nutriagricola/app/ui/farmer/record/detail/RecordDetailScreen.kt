@@ -63,10 +63,13 @@ fun RecordDetailScreen(
                             modifier = Modifier.padding(top = 4.dp))
                         RecordMeasurements(record.data)
                         if (state.remotePhotoCount > 0) {
-                            Text("Fotos disponibles en el servidor: " + state.remotePhotoCount +
-                                ". Su descarga aún no está habilitada.",
+                            Text("Fotos disponibles en el servidor: " + state.remotePhotoCount,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            TextButton(onClick = viewModel::downloadPhotos, enabled = !state.isDownloadingPhotos) {
+                                Text(if (state.isDownloadingPhotos) "Descargando fotos…" else "Descargar fotos")
+                            }
+                            state.photoError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         }
                         (record.data as? WaterData)?.waterSource?.takeIf { it.isNotBlank() }?.let {
                             RecordTextBlock("Fuente de agua", it, R.drawable.ic_water_source)

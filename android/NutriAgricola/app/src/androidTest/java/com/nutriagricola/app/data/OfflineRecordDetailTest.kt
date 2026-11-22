@@ -52,6 +52,7 @@ class OfflineRecordDetailTest {
             val api = ApiClient()
             val sessions = SessionRepository(store, UserRepository(db.userDao()), api.authApi)
             val vm = RecordDetailViewModel("remote", records, RecordReviewRepository(db),
+                RecordPhotoRepository(db, api, sessions, com.nutriagricola.app.data.remote.PhotoFileTransfer(context), records),
                 CropRepository(db.cropDao(), api.cropApi, sessions), { user }, flowOf(farm))
             compose.setContent {
                 MaterialTheme {
