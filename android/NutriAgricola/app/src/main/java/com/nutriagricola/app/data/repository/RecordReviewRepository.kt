@@ -33,6 +33,7 @@ class RecordReviewRepository(
                 ReviewResult.VALIDATED -> RecordStatus.VALIDATED
             }
             recordReviewDao.insert(review.toEntity())
+            database.recordSyncDao().markDirty(review.recordId)
             recordDao.update(recordEntity.copy(status = newStatus.name))
         }
     }

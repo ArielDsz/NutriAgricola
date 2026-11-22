@@ -6,6 +6,9 @@ import retrofit2.http.Header
 import retrofit2.http.Path
 
 interface CropApi {
+    @GET("api/v1/crops/{id}")
+    suspend fun getById(@Path("id") id: String, @Header("Authorization") authorization: String): CropResponseDto
+
     @GET("api/v1/crops/farm/{farmId}")
     suspend fun getByFarm(@Path("farmId") farmId: String, @Header("Authorization") authorization: String): List<CropResponseDto>
 }

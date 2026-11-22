@@ -101,6 +101,12 @@ fun AdvisorRecordDetailScreen(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    if (state.remotePhotoCount > 0) {
+                        Text("Fotos disponibles en el servidor: " + state.remotePhotoCount +
+                            ". Su descarga aún no está habilitada.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     // Header Card
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -131,7 +137,8 @@ fun AdvisorRecordDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Agricultor: ${farmer?.firstName ?: ""} ${farmer?.lastName ?: ""}",
+                                    text = "Agricultor: " + listOfNotNull(farmer?.firstName, farmer?.lastName)
+                                        .joinToString(" ").trim().ifBlank { "Nombre no disponible" },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

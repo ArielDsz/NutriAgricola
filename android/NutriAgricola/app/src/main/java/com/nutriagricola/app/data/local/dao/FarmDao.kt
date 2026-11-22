@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface FarmDao {
 
+    @Query("SELECT f.* FROM farms f JOIN farm_users fu ON fu.farmId = f.id WHERE fu.userId = :userId ORDER BY f.name COLLATE NOCASE, f.id")
+    suspend fun getByUser(userId: String): List<FarmEntity>
+
     @Query("SELECT f.* FROM farms f INNER JOIN farm_users fu ON f.id = fu.farmId WHERE fu.userId = :userId AND f.active = 1 ORDER BY f.name COLLATE NOCASE, f.id")
     fun observeByUser(userId: String): Flow<List<FarmEntity>>
 

@@ -1,5 +1,7 @@
 package com.nutriagricola.app.data.local.dao
 
+import androidx.room.Upsert
+
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -9,6 +11,9 @@ import com.nutriagricola.app.data.local.entity.SoilDataEntity
 
 @Dao
 interface SoilDataDao {
+
+    @Upsert
+    suspend fun upsert(data: SoilDataEntity)
 
     @Insert
     suspend fun insert(soilData: SoilDataEntity)

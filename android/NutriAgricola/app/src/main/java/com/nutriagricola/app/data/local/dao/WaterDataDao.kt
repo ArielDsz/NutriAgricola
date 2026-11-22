@@ -1,5 +1,7 @@
 package com.nutriagricola.app.data.local.dao
 
+import androidx.room.Upsert
+
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -9,6 +11,9 @@ import com.nutriagricola.app.data.local.entity.WaterDataEntity
 
 @Dao
 interface WaterDataDao {
+
+    @Upsert
+    suspend fun upsert(data: WaterDataEntity)
 
     @Insert
     suspend fun insert(waterData: WaterDataEntity)

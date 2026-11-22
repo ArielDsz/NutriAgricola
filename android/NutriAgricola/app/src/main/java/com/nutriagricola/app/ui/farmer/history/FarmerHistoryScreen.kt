@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.nutriagricola.app.ui.records.RecordDownloadUiState
+import com.nutriagricola.app.ui.records.RecordDownloadStatus
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +31,9 @@ import com.nutriagricola.app.ui.farmer.record.components.historyLabel
 @Composable
 fun FarmerHistoryScreen(
     viewModel: FarmerHistoryViewModel,
+    downloadState: RecordDownloadUiState,
+    onRefreshRecords: () -> Unit,
+    onMoreRecords: () -> Unit,
     contextState: FarmerContextUiState,
     onHomeClick: () -> Unit,
     onRecordClick: (String) -> Unit
@@ -39,7 +44,7 @@ fun FarmerHistoryScreen(
     val state = if (loadedState.farmId == farm?.id) loadedState
     else FarmerHistoryUiState(farmId = farm?.id, isLoading = true)
     var showCropSelector by remember(farm?.id) { mutableStateOf(false) }
-    val error = contextState.error ?: state.error
+    val error = state.error
 
     if (showCropSelector) {
         CropSelectorBottomSheet(
@@ -74,6 +79,7 @@ fun FarmerHistoryScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { HistoryHeader(farm) }
+            item { RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords) }
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     val chipColors = FilterChipDefaults.filterChipColors(

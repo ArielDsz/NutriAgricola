@@ -62,6 +62,12 @@ fun RecordDetailScreen(
                         Text("Datos del análisis", style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.padding(top = 4.dp))
                         RecordMeasurements(record.data)
+                        if (state.remotePhotoCount > 0) {
+                            Text("Fotos disponibles en el servidor: " + state.remotePhotoCount +
+                                ". Su descarga aún no está habilitada.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         (record.data as? WaterData)?.waterSource?.takeIf { it.isNotBlank() }?.let {
                             RecordTextBlock("Fuente de agua", it, R.drawable.ic_water_source)
                         }

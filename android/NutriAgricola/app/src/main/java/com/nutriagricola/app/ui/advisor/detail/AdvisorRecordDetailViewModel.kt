@@ -32,6 +32,7 @@ data class AdvisorRecordDetailUiState(
     val reviews: List<RecordReview> = emptyList(),
     val commentInput: String = "",
     val isLoading: Boolean = true,
+    val remotePhotoCount: Int = 0,
     val isSaving: Boolean = false,
     val error: String? = null,
     val loadError: String? = null,
@@ -60,6 +61,13 @@ class AdvisorRecordDetailViewModel(
             _uiState.update { it.copy(isLoading = true, loadError = null) }
             try {
                 val record = recordRepository.getById(recordId)
+                val currentUser = getCurrentUser()
+                val assignedIds = currentUser?.let { farmRepository.getByUser(it.id).map { farm -> farm.id } }.orEmpty()
+                val assignedCrop = record?.let { cropRepository.getById(it.cropId) }
+                if (currentUser == null || currentUser.role != UserRole.ADVISOR || assignedCrop?.farmId !in assignedIds) {
+                    _uiState.update { it.copy(isLoading = false, loadError = "Análisis no disponible para tu cuenta") }
+                    return@launch
+                }
                 if (record == null) {
                     _uiState.update { it.copy(isLoading = false, loadError = "Análisis no encontrado") }
                     return@launch
@@ -76,6 +84,7 @@ class AdvisorRecordDetailViewModel(
                         farm = farm,
                         farmerUser = farmerUser,
                         reviews = reviews,
+                        remotePhotoCount = recordRepository.getSyncState(record.id)?.remotePhotoCount ?: 0,
                         isLoading = false
                     )
                 }

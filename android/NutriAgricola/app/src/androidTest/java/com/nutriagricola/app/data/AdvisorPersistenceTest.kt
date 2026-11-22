@@ -8,6 +8,12 @@ import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.database.MIGRATION_1_2
 import com.nutriagricola.app.data.local.database.MIGRATION_2_3
 import com.nutriagricola.app.data.local.database.MIGRATION_3_4
+import com.nutriagricola.app.data.local.database.MIGRATION_4_5
+import com.nutriagricola.app.data.remote.dto.RecordDetailDto
+import com.nutriagricola.app.data.remote.dto.SoilDataDto
+import com.nutriagricola.app.data.remote.dto.FoliarDataDto
+import com.nutriagricola.app.data.remote.dto.PhotoResponseDto
+import com.nutriagricola.app.data.remote.dto.ReviewResponseDto
 import com.nutriagricola.app.data.local.entity.FarmEntity
 import com.nutriagricola.app.data.local.entity.CropEntity
 import kotlinx.coroutines.flow.first
@@ -54,8 +60,51 @@ class AdvisorPersistenceTest {
 
     private fun openMigratedDatabase(): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build().also { database = it }
+    }
+
+    @Test
+    fun downloadedRecordsPreserveLocalChangesAndRespectFarmAssignments() = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        val repository = RecordRepository(db)
+        val remote = RecordDetailDto("remote", "crop", "farmer", "2026-11-20", "SOIL", "PENDING",
+            soilData = SoilDataDto(ph = 0.0, nitrogen = 15.0))
+        assertTrue(repository.cacheRemoteRecord(remote))
+        assertEquals(0.0, (repository.getById("remote")!!.data as com.nutriagricola.app.domain.model.record.SoilData).ph!!, 0.0)
+        assertTrue(repository.getByAssignedUser("advisor").isEmpty())
+        db.farmDao().replaceAssignedFarms("advisor", db.farmDao().getAll())
+        assertEquals(2, repository.getByAssignedUser("advisor").size)
+        assertTrue(repository.cacheRemoteRecord(remote.copy(observations = "Actualizado")))
+        assertEquals("Actualizado", repository.getById("remote")!!.observations)
+
+        val changed = repository.getById("remote")!!.copy(observations = "Cambio local pendiente")
+        repository.update(changed)
+        assertFalse(repository.cacheRemoteRecord(remote))
+        assertEquals("Cambio local pendiente", repository.getById("remote")!!.observations)
+        assertFalse(repository.cacheRemoteRecord(remote.copy(id = "record", type = "FOLIAR", foliarData = FoliarDataDto())))
+        assertEquals(1, db.foliarPhotoDao().getByRecordId("record").size)
+        assertNull(repository.getSyncState("record"))
+    }
+
+    @Test
+    fun remoteReferencesDoNotCreateActiveAccountsOrFakeLocalPhotoPaths() = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        val repository = RecordRepository(db)
+        val remote = RecordDetailDto("remote-foliar", "crop", "remote-author", "2026-11-20", "FOLIAR", "PENDING",
+            foliarData = FoliarDataDto(nitrogen = 0.0),
+            foliarPhotos = listOf(PhotoResponseDto("photo-remote", "/private/another-device.jpg", true)),
+            reviews = listOf(ReviewResponseDto("review-remote", "remote-advisor", "Nombre del asesor",
+                "2026-11-20T12:00:00", "OBSERVED", "Revisar")))
+        assertTrue(repository.cacheRemoteRecord(remote))
+        assertFalse(db.userDao().getById("remote-author")!!.active)
+        assertEquals("", db.userDao().getById("remote-author")!!.email)
+        assertEquals(1, repository.getSyncState(remote.id)!!.remotePhotoCount)
+        assertTrue(db.foliarPhotoDao().getByRecordId(remote.id).isEmpty())
+        assertEquals("Nombre del asesor", db.recordReviewDao().getByRecordId(remote.id).single().advisorName)
+        assertTrue(db.userDao().getById("advisor")!!.active)
     }
 
     @Test

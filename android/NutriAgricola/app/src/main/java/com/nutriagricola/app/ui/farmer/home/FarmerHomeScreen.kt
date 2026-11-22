@@ -23,6 +23,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.nutriagricola.app.ui.records.RecordDownloadUiState
+import com.nutriagricola.app.ui.records.RecordDownloadStatus
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,6 +57,9 @@ import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
 @Composable
 fun FarmerHomeScreen(
     user: User,
+    downloadState: RecordDownloadUiState,
+    onRefreshRecords: () -> Unit,
+    onMoreRecords: () -> Unit,
     viewModel: FarmerHomeViewModel,
     contextState: FarmerContextUiState,
     onLogoutClick: () -> Unit,
@@ -134,6 +139,8 @@ fun FarmerHomeScreen(
             SyncStatus(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             )
+
+            RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords)
 
             key(farm?.id) {
                 CropsSection(

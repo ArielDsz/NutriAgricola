@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import com.nutriagricola.app.ui.records.RecordDownloadUiState
+import com.nutriagricola.app.ui.records.RecordDownloadStatus
 import androidx.compose.runtime.Composable
 import com.nutriagricola.app.ui.advisor.components.AdvisorRefreshOnResume
 import androidx.compose.runtime.collectAsState
@@ -32,6 +35,9 @@ import com.nutriagricola.app.ui.theme.OfflineBackground
 @Composable
 fun AdvisorAllRecordsScreen(
     viewModel: AdvisorAllRecordsViewModel,
+    downloadState: RecordDownloadUiState,
+    onRefreshRecords: () -> Unit,
+    onMoreRecords: () -> Unit,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onPendingClick: () -> Unit,
@@ -39,6 +45,9 @@ fun AdvisorAllRecordsScreen(
     onRecordClick: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+    LaunchedEffect(downloadState.completedRefresh) {
+        if (downloadState.completedRefresh > 0) viewModel.loadData()
+    }
 
     AdvisorRefreshOnResume {
         viewModel.loadData()
@@ -103,6 +112,7 @@ fun AdvisorAllRecordsScreen(
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
             ) {
+                RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords)
                 // Search Input
                 OutlinedTextField(
                     value = state.searchQuery,

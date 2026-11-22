@@ -14,6 +14,8 @@ class FarmRepository(
     private val sessionRepository: SessionRepository
 ) {
 
+    suspend fun getByUser(userId: String): List<Farm> = farmDao.getByUser(userId).map { it.toDomain() }
+
     fun observeByUser(userId: String): Flow<List<Farm>> =
         farmDao.observeByUser(userId).map { farms -> farms.map { it.toDomain() } }
 

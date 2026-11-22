@@ -1,6 +1,10 @@
 package com.nutriagricola.app.ui.navigation
 
 import android.net.Uri
+import androidx.compose.runtime.DisposableEffect
+import com.nutriagricola.app.data.repository.RecordRemoteRepository
+import com.nutriagricola.app.ui.records.RecordDownloadViewModel
+import com.nutriagricola.app.ui.records.RecordDownloadViewModelFactory
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -172,6 +176,22 @@ fun AppNavigation() {
         }
     }
     val currentUser = sessionState.currentUser
+    val recordRemoteRepository = remember(database, apiClient, sessionRepository, farmRepository, recordRepository) {
+        RecordRemoteRepository(database, apiClient, sessionRepository, farmRepository, recordRepository)
+    }
+    val downloadFactory = remember(recordRemoteRepository, currentUser?.id) {
+        RecordDownloadViewModelFactory(recordRemoteRepository, currentUser?.id.orEmpty()) { sessionViewModel.logout() }
+    }
+    val recordDownloadViewModel: RecordDownloadViewModel = viewModel(
+        key = "record-download-" + currentUser?.id, factory = downloadFactory
+    )
+    val downloadState by recordDownloadViewModel.uiState.collectAsState()
+    LaunchedEffect(recordDownloadViewModel) {
+        if (currentUser != null) recordDownloadViewModel.refresh()
+    }
+    DisposableEffect(recordDownloadViewModel) {
+        onDispose { recordDownloadViewModel.cancelDownload() }
+    }
     val farmerPreferences = remember(context.applicationContext) {
         com.nutriagricola.app.data.repository.FarmerPreferencesRepository(context.applicationContext)
     }
@@ -251,12 +271,15 @@ fun AppNavigation() {
 
                     composable("advisor_pending") {
                         val pendingFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository) {
-                            AdvisorPendingRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository)
+                            AdvisorPendingRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository, currentUser.id)
                         }
                         val pendingViewModel: AdvisorPendingRecordsViewModel = viewModel(factory = pendingFactory)
 
                         AdvisorPendingRecordsScreen(
                             viewModel = pendingViewModel,
+                            downloadState = downloadState,
+                            onRefreshRecords = { recordDownloadViewModel.refresh() },
+                            onMoreRecords = { recordDownloadViewModel.loadMore() },
                             onProgramClick = { navController.navigate("advisor_programs") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
@@ -277,12 +300,15 @@ fun AppNavigation() {
 
                     composable("advisor_all_records") {
                         val allRecordsFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository) {
-                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository)
+                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository, currentUser.id)
                         }
                         val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
 
                         AdvisorAllRecordsScreen(
                             viewModel = allRecordsViewModel,
+                            downloadState = downloadState,
+                            onRefreshRecords = { recordDownloadViewModel.refresh() },
+                            onMoreRecords = { recordDownloadViewModel.loadMore() },
                             onProgramClick = { navController.navigate("advisor_programs") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
@@ -356,6 +382,9 @@ fun AppNavigation() {
                             FarmerHomeScreen(
                                 user = currentUser,
                                 viewModel = homeViewModel,
+                                downloadState = downloadState,
+                                onRefreshRecords = { recordDownloadViewModel.refresh() },
+                                onMoreRecords = { recordDownloadViewModel.loadMore() },
                                 contextState = contextState,
                                 onLogoutClick = { sessionViewModel.logout() },
                                 onFarmSelected = { farmerContext.selectFarm(it) },
@@ -396,6 +425,9 @@ fun AppNavigation() {
 
                             FarmerHistoryScreen(
                                 viewModel = historyViewModel,
+                                downloadState = downloadState,
+                                onRefreshRecords = { recordDownloadViewModel.refresh() },
+                                onMoreRecords = { recordDownloadViewModel.loadMore() },
                                 contextState = contextState,
                                 onRecordClick = onRecordClick,
                                 onHomeClick = {

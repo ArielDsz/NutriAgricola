@@ -13,7 +13,8 @@ class AdvisorPendingRecordsViewModelFactory(
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
     private val userRepository: UserRepository,
-    private val recordReviewRepository: RecordReviewRepository
+    private val recordReviewRepository: RecordReviewRepository,
+    private val userId: String
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -25,7 +26,8 @@ class AdvisorPendingRecordsViewModelFactory(
             farmRepository,
             cropRepository,
             userRepository,
-            recordReviewRepository
+            recordReviewRepository,
+            userId
         ) as T
     }
 }

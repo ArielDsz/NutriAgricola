@@ -3,6 +3,20 @@ package com.nutriagricola.app.data.local.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+// Existing records remain local. Only a successful download creates a sync marker.
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS record_sync (
+                recordId TEXT NOT NULL PRIMARY KEY,
+                dirty INTEGER NOT NULL,
+                remotePhotoCount INTEGER NOT NULL,
+                FOREIGN KEY(recordId) REFERENCES records(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+    }
+}
+
 // Keep existing farms and records. Remote assignments are downloaded per account.
 val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {

@@ -21,6 +21,7 @@ data class RecordDetailUiState(
     val record: Record? = null,
     val crop: Crop? = null,
     val isLoading: Boolean = true,
+    val remotePhotoCount: Int = 0,
     val error: String? = null
 )
 
@@ -55,7 +56,8 @@ class RecordDetailViewModel(
 
                     _uiState.value = if (record != null && crop != null && crop.farmId == farm.id) {
                         RecordDetailUiState(
-                            farmId = farm.id, record = record, crop = crop, isLoading = false
+                            farmId = farm.id, record = record, crop = crop, isLoading = false,
+                            remotePhotoCount = recordRepository.getSyncState(record.id)?.remotePhotoCount ?: 0
                         )
                     } else {
                         RecordDetailUiState(

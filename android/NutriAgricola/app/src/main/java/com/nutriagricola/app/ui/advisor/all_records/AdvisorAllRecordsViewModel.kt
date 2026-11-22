@@ -37,7 +37,8 @@ class AdvisorAllRecordsViewModel(
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
     private val userRepository: UserRepository,
-    private val recordReviewRepository: RecordReviewRepository
+    private val recordReviewRepository: RecordReviewRepository,
+    private val userId: String
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdvisorAllRecordsUiState())
@@ -47,9 +48,9 @@ class AdvisorAllRecordsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val records = recordRepository.getAll()
+                val records = recordRepository.getByAssignedUser(userId)
                 val reviews = recordReviewRepository.getLatestReviews()
-                val farms = farmRepository.getAll()
+                val farms = farmRepository.getByUser(userId)
                 val crops = farms.flatMap { cropRepository.getByFarmId(it.id) }.associateBy { it.id }
                 val users = userRepository.getAll().associateBy { it.id }
                 val farmsMap = farms.associateBy { it.id }
@@ -58,7 +59,7 @@ class AdvisorAllRecordsViewModel(
                     val crop = crops[record.cropId]
                     val farmName = crop?.let { farmsMap[it.farmId]?.name } ?: "Predio"
                     val cropName = crop?.name ?: "Cultivo"
-                    val farmerName = users[record.userId]?.let { "${it.firstName} ${it.lastName}" } ?: "Agricultor"
+                    val farmerName = users[record.userId]?.let { "${it.firstName} ${it.lastName}".trim() }?.takeIf { it.isNotBlank() } ?: "Agricultor"
                     AdvisorRecordItem(
                         record = record,
                         farmName = farmName,

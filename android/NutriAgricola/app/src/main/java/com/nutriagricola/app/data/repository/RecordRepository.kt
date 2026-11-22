@@ -4,6 +4,10 @@ import androidx.room.withTransaction
 import com.nutriagricola.app.data.local.database.AppDatabase
 import com.nutriagricola.app.data.local.entity.FoliarPhotoEntity
 import com.nutriagricola.app.data.local.entity.RecordEntity
+import com.nutriagricola.app.data.local.entity.RecordSyncEntity
+import com.nutriagricola.app.data.local.entity.UserEntity
+import com.nutriagricola.app.data.local.entity.RecordReviewEntity
+import com.nutriagricola.app.data.remote.dto.RecordDetailDto
 import com.nutriagricola.app.data.mapper.toDomain
 import com.nutriagricola.app.data.mapper.toEntity
 import com.nutriagricola.app.domain.model.record.FoliarData
@@ -26,6 +30,48 @@ class RecordRepository(
     private val waterDataDao = database.waterDataDao()
     private val foliarDataDao = database.foliarDataDao()
     private val foliarPhotoDao = database.foliarPhotoDao()
+
+    suspend fun getByAssignedUser(userId: String): List<Record> =
+        recordDao.getByAssignedUser(userId).mapNotNull { getCompleteRecord(it) }
+
+    suspend fun getSyncState(id: String) = database.recordSyncDao().getById(id)
+
+    suspend fun cacheRemoteRecord(detail: RecordDetailDto): Boolean {
+        val record = detail.toDomain()
+        return database.withTransaction {
+            val existing = recordDao.getById(record.id)
+            val sync = database.recordSyncDao().getById(record.id)
+            if (existing != null && (sync == null || sync.dirty)) return@withTransaction false
+            if (existing != null) {
+                require(existing.cropId == record.cropId && existing.userId == record.userId && existing.type == record.type.name)
+            }
+            ensureReferenceUser(record.userId, "FARMER")
+            recordDao.upsert(record.toEntity())
+            when (val data = record.data) {
+                is SoilData -> soilDataDao.upsert(data.toEntity(record.id))
+                is WaterData -> waterDataDao.upsert(data.toEntity(record.id))
+                is FoliarData -> foliarDataDao.upsert(data.toEntity(record.id))
+            }
+            detail.reviews.forEach { review ->
+                ensureReferenceUser(review.advisorId, "ADVISOR")
+                database.recordReviewDao().upsert(RecordReviewEntity(
+                    review.id, record.id, review.advisorId, review.advisorName,
+                    review.date, review.result, review.comment
+                ))
+            }
+            database.recordSyncDao().upsert(RecordSyncEntity(
+                record.id, false, detail.foliarPhotos.count { it.uploaded }
+            ))
+            true
+        }
+    }
+
+    private suspend fun ensureReferenceUser(id: String, role: String) {
+        if (database.userDao().getById(id) == null) {
+            // Only the UUID is available. Do not invent names, emails or an active account.
+            database.userDao().insert(UserEntity(id, "", "", "", role, false))
+        }
+    }
 
     suspend fun getAll(): List<Record> {
         return recordDao.getAll().mapNotNull {
@@ -98,6 +144,8 @@ class RecordRepository(
 
     suspend fun update(record: Record) {
         database.withTransaction {
+
+            database.recordSyncDao().markDirty(record.id)
 
             recordDao.update(record.toEntity())
 

@@ -1,5 +1,7 @@
 package com.nutriagricola.app.data.local.dao
 
+import androidx.room.Upsert
+
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -10,6 +12,15 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RecordDao {
+
+    @Query("""SELECT r.* FROM records r
+        JOIN crops c ON c.id = r.cropId
+        JOIN farm_users fu ON fu.farmId = c.farmId
+        WHERE fu.userId = :userId ORDER BY r.date DESC, r.id DESC""")
+    suspend fun getByAssignedUser(userId: String): List<RecordEntity>
+
+    @Upsert
+    suspend fun upsert(record: RecordEntity)
 
     @Insert
     suspend fun insert(record: RecordEntity)
