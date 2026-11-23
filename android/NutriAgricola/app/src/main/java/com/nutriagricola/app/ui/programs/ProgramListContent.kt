@@ -82,17 +82,33 @@ fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifi
 
 @Composable
 private fun ProgramHistoryCard(program: NutritionalProgram, onClick: () -> Unit) {
+    val cropImage = when (program.species?.trim()) {
+        "Uva de mesa", "Uva vinífera" -> R.drawable.crop_grape
+        "Palto (Avocado)" -> R.drawable.crop_avocado
+        "Limones" -> R.drawable.crop_lemon
+        "Clementinas / Mandarinos" -> R.drawable.crop_mandarin
+        "Naranjos" -> R.drawable.crop_orange
+        else -> null
+    }
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(56.dp)) {
-                Image(painterResource(R.drawable.default_crop), null, contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)))
-                Surface(Modifier.size(28.dp).align(Alignment.BottomEnd), shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-                    Icon(painterResource(R.drawable.ic_program), null, Modifier.padding(5.dp), tint = MaterialTheme.colorScheme.primary)
+                if (cropImage != null) {
+                    Image(painterResource(cropImage), null, contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)))
+                    Surface(Modifier.size(28.dp).align(Alignment.BottomEnd), shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
+                        Icon(painterResource(R.drawable.ic_program), null, Modifier.padding(5.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                } else {
+                    Surface(Modifier.size(52.dp), shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer) {
+                        Icon(painterResource(R.drawable.ic_program), null, Modifier.padding(12.dp),
+                            tint = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
