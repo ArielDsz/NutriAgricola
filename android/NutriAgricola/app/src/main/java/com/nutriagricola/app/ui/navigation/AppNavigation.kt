@@ -46,6 +46,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nutriagricola.app.ui.advisor.home.AdvisorHomeScreen
+import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModel
+import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModelFactory
 import com.nutriagricola.app.ui.advisor.programs.AdvisorProgramsScreen
 import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsScreen
 import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModel
@@ -267,8 +269,13 @@ fun AppNavigation() {
                     }
                 } else if (currentUser.role == UserRole.ADVISOR) {
                     composable("advisor_home") {
+                        val advisorHomeFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
+                            AdvisorHomeViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        }
+                        val advisorHomeViewModel: AdvisorHomeViewModel = viewModel(factory = advisorHomeFactory)
                         AdvisorHomeScreen(
                             user = currentUser,
+                            viewModel = advisorHomeViewModel,
                             onLogoutClick = { sessionViewModel.logout() },
                             onPendingClick = { navController.navigate("advisor_pending") {
                                 popUpTo("advisor_home") { inclusive = false }
@@ -281,7 +288,10 @@ fun AppNavigation() {
                             onProgramClick = { navController.navigate("advisor_programs") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
-                            } }
+                            } },
+                            onRecordClick = { recordId ->
+                                navController.navigate("advisor_detail/$recordId")
+                            }
                         )
                     }
 
