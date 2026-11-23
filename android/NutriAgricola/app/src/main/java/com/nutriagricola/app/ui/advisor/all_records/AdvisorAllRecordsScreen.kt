@@ -28,7 +28,7 @@ fun AdvisorAllRecordsScreen(
     onAccountClick: () -> Unit,
     viewModel: AdvisorAllRecordsViewModel, downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit, onMoreRecords: () -> Unit, onUploadRecords: () -> Unit,
-    onBackClick: () -> Unit, onHomeClick: () -> Unit, onPendingClick: () -> Unit,
+    onBackClick: () -> Unit, onHomeClick: () -> Unit,
     onProgramClick: () -> Unit, onRecordClick: (String) -> Unit,
     headerInitials: String = "", onLogoutClick: () -> Unit = {}
 ) {

@@ -23,7 +23,6 @@ fun AdvisorProgramsScreen(
     viewModel: ProgramsViewModel,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
-    onPendingClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
     headerInitials: String = "", onLogoutClick: () -> Unit = {}
 ) {

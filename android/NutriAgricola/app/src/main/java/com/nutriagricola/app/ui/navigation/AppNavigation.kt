@@ -41,6 +41,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -49,9 +51,6 @@ import com.nutriagricola.app.ui.advisor.home.AdvisorHomeScreen
 import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModel
 import com.nutriagricola.app.ui.advisor.home.AdvisorHomeViewModelFactory
 import com.nutriagricola.app.ui.advisor.programs.AdvisorProgramsScreen
-import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsScreen
-import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModel
-import com.nutriagricola.app.ui.advisor.pending.AdvisorPendingRecordsViewModelFactory
 import com.nutriagricola.app.ui.advisor.detail.AdvisorRecordDetailScreen
 import com.nutriagricola.app.ui.advisor.detail.AdvisorRecordDetailViewModel
 import com.nutriagricola.app.ui.advisor.detail.AdvisorRecordDetailViewModelFactory
@@ -316,7 +315,7 @@ fun AppNavigation() {
                             viewModel = advisorHomeViewModel,
                             refreshVersion = downloadState.completedRefresh,
                             onLogoutClick = { sessionViewModel.logout() },
-                            onPendingClick = { navController.navigate("advisor_pending") {
+                            onPendingClick = { navController.navigate("advisor_all_records?pending=true") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true
                             } },
@@ -334,40 +333,14 @@ fun AppNavigation() {
                         )
                     }
 
-                    composable("advisor_pending") {
-                        val pendingFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository) {
-                            AdvisorPendingRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository, currentUser.id)
-                        }
-                        val pendingViewModel: AdvisorPendingRecordsViewModel = viewModel(factory = pendingFactory)
-
-                        AdvisorPendingRecordsScreen(
-                            onAccountClick = onAccountClick,
-                            viewModel = pendingViewModel,
-                            downloadState = downloadState,
-                            onRefreshRecords = { recordDownloadViewModel.refresh() },
-                            onMoreRecords = { recordDownloadViewModel.loadMore() },
-                            onUploadRecords = { recordDownloadViewModel.uploadPending() },
-                            onProgramClick = { navController.navigate("advisor_programs") {
-                                popUpTo("advisor_home") { inclusive = false }
-                                launchSingleTop = true
-                            } },
-                            onBackClick = { navController.popBackStack() },
-                            onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
-                            onAllRecordsClick = {
-                                navController.navigate("advisor_all_records") {
-                                    popUpTo("advisor_home") { inclusive = false }
-                                    launchSingleTop = true
-                                }
-                            },
-                            onRecordClick = { recordId ->
-                                navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
-                            }
-                        )
-                    }
-
-                    composable("advisor_all_records") {
-                        val allRecordsFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository) {
-                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository, currentUser.id)
+                    composable(
+                        route = "advisor_all_records?pending={pending}",
+                        arguments = listOf(navArgument("pending") { type = NavType.BoolType; defaultValue = false })
+                    ) { backStackEntry ->
+                        val pendingOnly = backStackEntry.arguments?.getBoolean("pending") == true
+                        val allRecordsFactory = remember(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository, pendingOnly) {
+                            AdvisorAllRecordsViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, recordReviewRepository, currentUser.id,
+                                initialStatusFilter = if (pendingOnly) com.nutriagricola.app.domain.model.record.RecordStatus.PENDING else null)
                         }
                         val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
 
@@ -386,12 +359,6 @@ fun AppNavigation() {
                             } },
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
-                            onPendingClick = {
-                                navController.navigate("advisor_pending") {
-                                    popUpTo("advisor_home") { inclusive = false }
-                                    launchSingleTop = true
-                                }
-                            },
                             onRecordClick = { recordId ->
                                 navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
                             }
@@ -410,10 +377,6 @@ fun AppNavigation() {
                             viewModel = programsViewModel,
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
-                            onPendingClick = { navController.navigate("advisor_pending") {
-                                popUpTo("advisor_home") { inclusive = false }
-                                launchSingleTop = true
-                            } },
                             onAllRecordsClick = { navController.navigate("advisor_all_records") {
                                 popUpTo("advisor_home") { inclusive = false }
                                 launchSingleTop = true

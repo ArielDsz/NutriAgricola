@@ -38,10 +38,11 @@ class AdvisorAllRecordsViewModel(
     private val cropRepository: CropRepository,
     private val userRepository: UserRepository,
     private val recordReviewRepository: RecordReviewRepository,
-    private val userId: String
+    private val userId: String,
+    initialStatusFilter: RecordStatus? = null
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AdvisorAllRecordsUiState())
+    private val _uiState = MutableStateFlow(AdvisorAllRecordsUiState(selectedStatusFilter = initialStatusFilter))
     val uiState: StateFlow<AdvisorAllRecordsUiState> = _uiState.asStateFlow()
 
     fun loadData() {
