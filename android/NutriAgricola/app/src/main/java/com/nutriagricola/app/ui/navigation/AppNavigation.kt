@@ -269,13 +269,14 @@ fun AppNavigation() {
                     }
                 } else if (currentUser.role == UserRole.ADVISOR) {
                     composable("advisor_home") {
-                        val advisorHomeFactory = remember(recordRepository, farmRepository, cropRepository, userRepository) {
-                            AdvisorHomeViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository)
+                        val advisorHomeFactory = remember(currentUser.id, recordRepository, farmRepository, cropRepository, userRepository) {
+                            AdvisorHomeViewModelFactory(recordRepository, farmRepository, cropRepository, userRepository, currentUser.id)
                         }
                         val advisorHomeViewModel: AdvisorHomeViewModel = viewModel(factory = advisorHomeFactory)
                         AdvisorHomeScreen(
                             user = currentUser,
                             viewModel = advisorHomeViewModel,
+                            refreshVersion = downloadState.completedRefresh,
                             onLogoutClick = { sessionViewModel.logout() },
                             onPendingClick = { navController.navigate("advisor_pending") {
                                 popUpTo("advisor_home") { inclusive = false }
@@ -290,7 +291,7 @@ fun AppNavigation() {
                                 launchSingleTop = true
                             } },
                             onRecordClick = { recordId ->
-                                navController.navigate("advisor_detail/$recordId")
+                                navController.navigate("advisor_record_detail/${Uri.encode(recordId)}")
                             }
                         )
                     }

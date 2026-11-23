@@ -28,7 +28,8 @@ class AdvisorHomeViewModel(
     private val recordRepository: RecordRepository,
     private val farmRepository: FarmRepository,
     private val cropRepository: CropRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userId: String
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdvisorHomeUiState())
@@ -38,11 +39,11 @@ class AdvisorHomeViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val allRecords = recordRepository.getAll().filter {
+                val allRecords = recordRepository.getByAssignedUser(userId).filter {
                     it.status != RecordStatus.DELETED && it.status != RecordStatus.DRAFT
                 }
                 val pendingRecords = allRecords.filter { it.status == RecordStatus.PENDING }
-                val farms = farmRepository.getAll()
+                val farms = farmRepository.getByUser(userId)
                 val crops = farms.flatMap { cropRepository.getByFarmId(it.id) }.associateBy { it.id }
                 val users = userRepository.getAll().associateBy { it.id }
                 val farmsMap = farms.associateBy { it.id }
@@ -57,7 +58,8 @@ class AdvisorHomeViewModel(
                         farmName = farmName,
                         cropName = cropName,
                         farmerName = farmerName,
-                        farmId = crop?.farmId
+                        farmId = crop?.farmId,
+                        cropImagePath = crop?.imagePath
                     )
                 }
 

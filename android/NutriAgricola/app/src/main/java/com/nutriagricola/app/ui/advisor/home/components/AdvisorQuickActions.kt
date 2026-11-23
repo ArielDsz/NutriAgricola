@@ -1,107 +1,37 @@
 package com.nutriagricola.app.ui.advisor.home.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
 
 @Composable
-fun AdvisorQuickActions(
-    pendingCount: Int,
-    onPendingClick: () -> Unit,
-    onProgramClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Button(
-            onClick = onPendingClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Unspecified),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary, 0.3f),
-                                MaterialTheme.colorScheme.primary
-                            )
-                        )
-                    )
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_add_circle),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = if (pendingCount > 0) "Atender solicitudes ($pendingCount pendientes)" else "Revisar solicitudes",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+fun AdvisorQuickActions(pendingCount: Int, onPendingClick: () -> Unit,
+                        onProgramClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Button(onClick = onPendingClick, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+            shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(painterResource(R.drawable.ic_history), null, Modifier.size(22.dp))
+                Text("Atender solicitudes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                if (pendingCount > 0) Badge(containerColor = MaterialTheme.colorScheme.onPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary) {
+                    Text(pendingCount.toString(), style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                }
             }
         }
-
-        Button(
-            onClick = onProgramClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_program),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Crear Programa NutriXpert",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+        OutlinedButton(onClick = onProgramClick, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+            shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
+            Icon(painterResource(R.drawable.ic_program), null, Modifier.size(22.dp))
+            Spacer(Modifier.width(10.dp))
+            Text("Programas", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

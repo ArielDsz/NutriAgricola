@@ -43,7 +43,6 @@ import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
 import com.nutriagricola.app.ui.advisor.home.components.AdvisorKpiSection
 import com.nutriagricola.app.ui.advisor.home.components.AdvisorQuickActions
 import com.nutriagricola.app.ui.farmer.home.components.HomeHeader
-import com.nutriagricola.app.ui.farmer.home.components.SyncStatus
 import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
 
 @Composable
@@ -54,7 +53,8 @@ fun AdvisorHomeScreen(
     onPendingClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
     onProgramClick: () -> Unit,
-    onRecordClick: (String) -> Unit = {}
+    onRecordClick: (String) -> Unit = {},
+    refreshVersion: Int = 0
 ) {
     val initials = remember(user.firstName, user.lastName) {
         listOf(user.firstName, user.lastName)
@@ -65,7 +65,7 @@ fun AdvisorHomeScreen(
 
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(refreshVersion) {
         viewModel.loadData()
     }
 
@@ -136,11 +136,7 @@ fun AdvisorHomeScreen(
                 }
             }
 
-            SyncStatus(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
-            )
+
 
             AdvisorKpiSection(
                 pendingCount = state.pendingCount,
@@ -224,7 +220,8 @@ fun AdvisorHomeScreen(
                                 cropName = "${item.cropName} • ${item.farmName}",
                                 onClick = { onRecordClick(item.record.id) },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
-                                showCropThumbnail = true
+                                showCropThumbnail = true,
+                                  cropImagePath = item.cropImagePath
                             )
                         }
                     }
