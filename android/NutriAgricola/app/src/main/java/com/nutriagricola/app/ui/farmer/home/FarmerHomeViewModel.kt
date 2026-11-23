@@ -4,12 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nutriagricola.app.data.repository.CropRepository
 import com.nutriagricola.app.data.repository.RecordRepository
+import com.nutriagricola.app.data.repository.WeatherRepository
 import com.nutriagricola.app.domain.model.farm.Crop
 import com.nutriagricola.app.domain.model.farm.Farm
 import com.nutriagricola.app.domain.model.record.Record
+import com.nutriagricola.app.ui.farmer.home.components.WeatherUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -17,6 +22,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class FarmerHomeUiState(
     val farmId: String? = null,
@@ -31,8 +37,28 @@ class FarmerHomeViewModel(
     userId: String,
     selectedFarm: Flow<Farm?>,
     cropRepository: CropRepository,
-    recordRepository: RecordRepository
+    recordRepository: RecordRepository,
+    private val weatherRepository: WeatherRepository = WeatherRepository()
 ) : ViewModel() {
+
+    private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
+    val weatherState: StateFlow<WeatherUiState> = _weatherState.asStateFlow()
+
+    init {
+        loadWeather()
+    }
+
+    fun loadWeather(lat: Double = -33.45, lon: Double = -70.66) {
+        viewModelScope.launch {
+            _weatherState.value = WeatherUiState.Loading
+            val result = weatherRepository.getWeather(lat, lon)
+            _weatherState.value = result.fold(
+                onSuccess = { WeatherUiState.Success(it) },
+                onFailure = { WeatherUiState.Error(it.message ?: "Error al obtener datos climáticos") }
+            )
+        }
+    }
+
     val uiState = selectedFarm.distinctUntilChangedBy { it?.id }.flatMapLatest { farm ->
         if (farm == null) {
             flowOf(FarmerHomeUiState())
