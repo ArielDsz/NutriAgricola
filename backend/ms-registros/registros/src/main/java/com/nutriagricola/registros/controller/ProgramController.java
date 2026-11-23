@@ -16,13 +16,12 @@ public class ProgramController {
     @GetMapping
     public ProgramPageResponse list(@RequestParam(required = false) String cropId,
                                     @RequestParam(defaultValue = "0") int page,
-                                    @RequestParam(defaultValue = "20") int size,
-                                    @AuthenticationPrincipal UserClientResponse user) {
-        return programs.findAll(cropId, page, size, user);
+                                    @RequestParam(defaultValue = "20") int size) {
+        return programs.findAll(cropId, page, size);
     }
     @GetMapping("/{id}")
-    public ProgramResponse get(@PathVariable String id, @AuthenticationPrincipal UserClientResponse user) {
-        return programs.findById(id, user);
+    public ProgramResponse get(@PathVariable String id) {
+        return programs.findById(id);
     }
     @PostMapping
     public ResponseEntity<ProgramResponse> create(@Valid @RequestBody ProgramRequest request,

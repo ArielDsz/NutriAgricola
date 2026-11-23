@@ -1,6 +1,7 @@
 package com.nutriagricola.registros.service;
 
 import com.nutriagricola.registros.client.UserClientResponse;
+import java.util.Objects;
 import com.nutriagricola.registros.dto.*;
 import com.nutriagricola.registros.exception.*;
 import com.nutriagricola.registros.mapper.ProgramMapper;
@@ -17,41 +18,33 @@ public class ProgramService {
     private final ProgramRepository programs;
     private final ProgramFertilizerRepository fertilizers;
     private final ProgramStageRepository stages;
-    private final CropRepository crops;
-    private final FarmUserRepository assignments;
     private final ProgramMapper mapper;
     private final EntityManager entityManager;
 
     public ProgramService(ProgramRepository programs, ProgramFertilizerRepository fertilizers,
-                          ProgramStageRepository stages, CropRepository crops, FarmUserRepository assignments,
+                          ProgramStageRepository stages,
                           ProgramMapper mapper, EntityManager entityManager) {
         this.programs = programs;
         this.fertilizers = fertilizers;
         this.stages = stages;
-        this.crops = crops;
-        this.assignments = assignments;
         this.mapper = mapper;
         this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
-    public ProgramPageResponse findAll(String cropId, int page, int size, UserClientResponse user) {
+    public ProgramPageResponse findAll(String cropId, int page, int size) {
         if (page < 0 || size < 1 || size > 100) {
             throw new InvalidRecordException("page debe ser mayor o igual a 0 y size debe estar entre 1 y 100");
         }
-        if (cropId != null) {
-            Crop crop = crops.findById(cropId).orElseThrow(() -> new ResourceNotFoundException("Cultivo no encontrado"));
-            requireAssignment(crop.getFarm().getId(), user);
-        }
-        var result = programs.findAssigned(user.id(), cropId,
+        var result = programs.findPrograms(cropId,
                 PageRequest.of(page, size, Sort.by(Sort.Order.desc("startDate"), Sort.Order.asc("id"))));
         return new ProgramPageResponse(result.getContent().stream().map(mapper::toSummary).toList(),
                 page, size, result.getTotalElements(), result.getTotalPages());
     }
 
     @Transactional(readOnly = true)
-    public ProgramResponse findById(String id, UserClientResponse user) {
-        return response(findAssigned(id, user));
+    public ProgramResponse findById(String id) {
+        return response(findProgram(id));
     }
 
     @Transactional
@@ -62,19 +55,16 @@ public class ProgramService {
         if (existing != null) {
             requireAuthor(existing, user);
             ProgramResponse saved = response(existing);
-            if (!request.cropId().equals(saved.cropId()) || !request.content().equals(saved.content())) {
+            if (!Objects.equals(request.species(), saved.species())
+                    || !Objects.equals(request.plot(), saved.plot()) || !request.content().equals(saved.content())) {
                 throw new ResourceConflictException("El programa ya existe con datos diferentes");
             }
             return new ProgramCreationResult(saved, false);
         }
-        Crop crop = crops.findById(request.cropId()).orElseThrow(() -> new ResourceNotFoundException("Cultivo no encontrado"));
-        requireAssignment(crop.getFarm().getId(), user);
-        if (!Boolean.TRUE.equals(crop.getActive()) || !Boolean.TRUE.equals(crop.getFarm().getActive())) {
-            throw new ResourceConflictException("El cultivo y el predio deben estar activos");
-        }
         Program program = new Program();
         program.setId(request.id());
-        program.setCrop(crop);
+        program.setSpecies(request.species());
+        program.setPlot(request.plot());
         program.setAdvisorId(user.id());
         program.setAdvisorName(user.firstName() + " " + user.lastName());
         mapper.updateContent(request.content(), program);
@@ -86,15 +76,18 @@ public class ProgramService {
     @Transactional
     public ProgramResponse update(String id, ProgramRequest request, UserClientResponse user) {
         requireAdvisor(user);
-        Program program = findAssigned(id, user);
+        Program program = findProgram(id);
         requireAuthor(program, user);
-        if (!id.equals(request.id()) || !program.getCrop().getId().equals(request.cropId())) {
-            throw new ResourceConflictException("No puedes cambiar el identificador ni el cultivo del programa");
+        if (!id.equals(request.id())) {
+            throw new ResourceConflictException("No puedes cambiar el identificador del programa");
         }
         validate(request.content());
-        if (request.content().equals(response(program).content())) {
+        if (Objects.equals(request.species(), program.getSpecies())
+                && Objects.equals(request.plot(), program.getPlot()) && request.content().equals(response(program).content())) {
             return response(program);
         }
+        program.setSpecies(request.species());
+        program.setPlot(request.plot());
         mapper.updateContent(request.content(), program);
         fertilizers.deleteItems(id);
         stages.deleteItems(id);
@@ -106,22 +99,14 @@ public class ProgramService {
     @Transactional
     public void deactivate(String id, UserClientResponse user) {
         requireAdvisor(user);
-        Program program = findAssigned(id, user);
+        Program program = findProgram(id);
         requireAuthor(program, user);
         program.setActive(false);
         programs.save(program);
     }
 
-    private Program findAssigned(String id, UserClientResponse user) {
-        Program program = programs.findById(id).orElseThrow(() -> new ResourceNotFoundException("Programa no encontrado"));
-        requireAssignment(program.getCrop().getFarm().getId(), user);
-        return program;
-    }
-
-    private void requireAssignment(String farmId, UserClientResponse user) {
-        if (!assignments.existsByFarm_IdAndUserId(farmId, user.id())) {
-            throw new AccessDeniedException("No estás asignado a este predio");
-        }
+    private Program findProgram(String id) {
+        return programs.findById(id).orElseThrow(() -> new ResourceNotFoundException("Programa no encontrado"));
     }
 
     private void requireAdvisor(UserClientResponse user) {
@@ -131,7 +116,6 @@ public class ProgramService {
     }
 
     private void requireAuthor(Program program, UserClientResponse user) {
-        requireAssignment(program.getCrop().getFarm().getId(), user);
         if (!program.getAdvisorId().equals(user.id())) {
             throw new AccessDeniedException("Solo el asesor autor puede modificar o reenviar este programa");
         }

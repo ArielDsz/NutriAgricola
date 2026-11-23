@@ -23,8 +23,9 @@ public class ProgramMapper {
     }
 
     public ProgramSummaryResponse toSummary(Program p) {
-        return new ProgramSummaryResponse(p.getId(), p.getCrop().getId(), p.getAdvisorId(),
-                p.getName(), p.getSeason(), p.getStartDate(), p.getEndDate(), p.getActive());
+        return new ProgramSummaryResponse(p.getId(), p.getCrop() == null ? null : p.getCrop().getId(), p.getAdvisorId(),
+                p.getName(), p.getSeason(), p.getStartDate(), p.getEndDate(), p.getActive(),
+                p.getSpecies(), p.getPlot());
     }
 
     public ProgramResponse toResponse(Program p, List<ProgramFertilizer> fertilizers, List<ProgramStage> stages) {
@@ -37,7 +38,7 @@ public class ProgramMapper {
         var content = new ProgramContent(p.getName(), p.getSeason(), p.getStartDate(), p.getEndDate(),
                 p.getTargetYieldTonHa(), p.getIrrigationEfficiencyPercent(), nutrients, p.getIrrigationNotes(),
                 fertilizerItems, stageItems);
-        return new ProgramResponse(p.getId(), p.getCrop().getId(), p.getAdvisorId(), p.getAdvisorName(),
-                content, p.getActive(), p.getCreatedAt());
+        return new ProgramResponse(p.getId(), p.getCrop() == null ? null : p.getCrop().getId(), p.getAdvisorId(), p.getAdvisorName(),
+                content, p.getActive(), p.getCreatedAt(), p.getSpecies(), p.getPlot());
     }
 }

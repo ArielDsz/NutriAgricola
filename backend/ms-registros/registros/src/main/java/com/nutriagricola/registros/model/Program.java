@@ -14,9 +14,15 @@ public class Program {
     @Id @Column(length = 36)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "crop_id", nullable = false)
+    // Solo se conserva para programas anteriores; los nuevos no dependen de Crop.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "crop_id")
     private Crop crop;
+
+    @Column(length = 150)
+    private String species;
+    @Column(length = 150)
+    private String plot;
 
     @Column(name = "advisor_id", nullable = false, length = 36)
     private String advisorId;
