@@ -37,7 +37,7 @@ public class ProgramMapper {
                                 f.getPhosphorusOxide(), f.getPotassiumOxide(), f.getCalciumOxide(),
                                 f.getMagnesiumOxide(), f.getSulfur()))).toList();
         var stageItems = stages.stream()
-                .map(s -> new ProgramContent.Stage(s.getName(), s.getWeeks(), s.getIrrigationsPerWeek(), s.getInstructions())).toList();
+                .map(s -> new ProgramContent.Stage(s.getName(), s.getWeeks(), s.getIrrigationsPerWeek(), s.getInstructions(), s.getAllocationPercent())).toList();
         var content = new ProgramContent(p.getName(), p.getSeason(), p.getStartDate(), p.getEndDate(),
                 p.getTargetYieldTonHa(), p.getIrrigationEfficiencyPercent(), nutrients, p.getIrrigationNotes(),
                 fertilizerItems, stageItems);

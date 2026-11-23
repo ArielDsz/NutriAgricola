@@ -12,24 +12,26 @@ data class NutrientAmounts(
     fun values() = listOf(nitrogen, phosphorusOxide, potassiumOxide, calciumOxide, magnesiumOxide, sulfur)
 }
 
-data class FertilizerMaterial(val id: String, val name: String, val percentages: NutrientAmounts)
+data class FertilizerMaterial(val id: String, val name: String, val percentages: NutrientAmounts,
+                              val solubilityGramsL: Double? = null, val solutionPh: Double? = null,
+                              val conductivityDsM: Double? = null, val tankGroup: String? = null)
 data class FertilizerDose(val material: FertilizerMaterial, val kgHa: Double)
 
-/** Catálogo de referencia de https://nutrixpert.netlify.app/, revisado el 22-11-2026.
+/** Catálogo de referencia de https://nutrixpert.netlify.app/, revisado el 23-11-2026.
  * Reproduce sus composiciones; no certifica la idoneidad agronómica de una mezcla.
  */
 object FertilizerCatalog {
     val materials = listOf(
-        FertilizerMaterial("map", "Fosfato monoamónico (MAP)", NutrientAmounts(12.0, 60.0)),
-        FertilizerMaterial("calcium_nitrate", "Nitrato de calcio", NutrientAmounts(nitrogen = 16.0, calciumOxide = 27.0)),
-        FertilizerMaterial("magnesium_sulfate", "Sulfato de magnesio heptahidratado", NutrientAmounts(magnesiumOxide = 16.0, sulfur = 13.0)),
-        FertilizerMaterial("potassium_nitrate", "Nitrato de potasio", NutrientAmounts(nitrogen = 13.0, potassiumOxide = 45.0)),
-        FertilizerMaterial("smartblue", "SmartBlue + N2 Stabil", NutrientAmounts(nitrogen = 46.0)),
-        FertilizerMaterial("phosphoric_acid", "Ácido fosfórico 85%", NutrientAmounts(phosphorusOxide = 52.0)),
-        FertilizerMaterial("potassium_sulfate", "Sulfato de potasio", NutrientAmounts(potassiumOxide = 51.0, sulfur = 17.0)),
-        FertilizerMaterial("ammonium_nitrate", "Nitrato de amonio", NutrientAmounts(nitrogen = 34.0)),
-        FertilizerMaterial("ammonium_sulfate", "Sulfato de amonio", NutrientAmounts(nitrogen = 21.0, sulfur = 22.0)),
-        FertilizerMaterial("magnesium_nitrate", "Nitrato de magnesio", NutrientAmounts(nitrogen = 12.0, magnesiumOxide = 15.0))
+        FertilizerMaterial("map", "Fosfato monoamónico", NutrientAmounts(12.0, 60.0), 370.0, 4.5, 0.80, "B"),
+        FertilizerMaterial("calcium_nitrate", "Nitrato de calcio", NutrientAmounts(nitrogen = 16.0, calciumOxide = 27.0), 1200.0, 6.0, 1.20, "A"),
+        FertilizerMaterial("magnesium_sulfate", "Sulfato de Magnesio Heptahidratado", NutrientAmounts(magnesiumOxide = 16.0, sulfur = 13.0), 710.0, 6.0, 0.70, "B"),
+        FertilizerMaterial("potassium_nitrate", "Nitrato de potasio", NutrientAmounts(nitrogen = 13.0, potassiumOxide = 45.0), 315.0, 7.0, 1.30, "A / B"),
+        FertilizerMaterial("smartblue", "SmartBlue + N2 Stabil", NutrientAmounts(nitrogen = 46.0), 1000.0, 7.0, 0.05, "A / B"),
+        FertilizerMaterial("phosphoric_acid", "Ácido fosfórico (85%)", NutrientAmounts(phosphorusOxide = 52.0), 1000.0, 1.5, 0.35, "B"),
+        FertilizerMaterial("potassium_sulfate", "Sulfato de potasio", NutrientAmounts(potassiumOxide = 51.0, sulfur = 17.0), 120.0, 4.5, 1.50, "B"),
+        FertilizerMaterial("ammonium_nitrate", "Nitrato de amonio", NutrientAmounts(nitrogen = 34.0), 1900.0, 5.5, 1.10, "A / B"),
+        FertilizerMaterial("ammonium_sulfate", "Sulfato de Amonio", NutrientAmounts(nitrogen = 21.0, sulfur = 22.0), 750.0, 5.0, 1.40, "B"),
+        FertilizerMaterial("magnesium_nitrate", "Nitrato de magnesio", NutrientAmounts(nitrogen = 12.0, magnesiumOxide = 15.0), 700.0, 6.0, 0.90, "A / B")
     )
 }
 

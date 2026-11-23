@@ -18,7 +18,7 @@ fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
                           onHome: () -> Unit, onHistory: () -> Unit,
                           headerInitials: String = "", onLogoutClick: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
-    val fullHeader = state.mode == ProgramMode.LIST || state.mode == ProgramMode.DETAIL
+    val fullHeader = state.mode == ProgramMode.LIST || state.mode == ProgramMode.DETAIL || state.mode == ProgramMode.CREATE
     Scaffold(topBar = {
         if (!fullHeader) TopAppBar(title = { Text("Programas") }, navigationIcon = {
             IconButton(onClick = { if (!viewModel.back()) onBack() }) {

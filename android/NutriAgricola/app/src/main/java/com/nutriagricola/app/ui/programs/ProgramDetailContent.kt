@@ -66,14 +66,27 @@ fun ProgramDetailContent(viewModel: ProgramsViewModel, onBack: () -> Unit, onArc
             if (program.stages.isNotEmpty()) {
                 Text("Etapas", style = MaterialTheme.typography.bodyLarge)
                 program.stages.forEach { stage ->
+                    var showDistribution by remember(program.id, stage.name) { mutableStateOf(false) }
                     ProgramInfoCard(stage.name, R.drawable.ic_calendar) {
                         stage.weeks?.let { Text("$it semanas", style = MaterialTheme.typography.bodyMedium) }
                         stage.irrigationsPerWeek?.let { Text("$it riegos por semana", style = MaterialTheme.typography.bodyMedium) }
+                        stage.allocationPercent?.let { percent ->
+                            Text("${programNumber(percent)}% del programa", style = MaterialTheme.typography.bodyMedium)
+                            TextButton(onClick = { showDistribution = !showDistribution }) {
+                                Text(if (showDistribution) "Ocultar distribución" else "Ver distribución")
+                            }
+                            if (showDistribution) program.fertilizers.forEach { fertilizer ->
+                                Text("${fertilizer.name}: ${programNumber(fertilizer.doseKgHa * (percent / 100))} kg/ha",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                         stage.instructions?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                     }
                 }
             }
             val extra = listOfNotNull(
+                program.targetYieldTonHa?.let { "Rendimiento: ${programNumber(it)} t/ha" },
+                program.irrigationEfficiencyPercent?.let { "Eficiencia de riego: ${programNumber(it)}%" },
                 program.endDate?.let { "Fin: ${programDate(it)}" },
                 program.season?.takeIf { it.isNotBlank() }?.let { "Temporada: $it" },
                 program.plot?.takeIf { it.isNotBlank() }?.let { "Cuartel: $it" },
