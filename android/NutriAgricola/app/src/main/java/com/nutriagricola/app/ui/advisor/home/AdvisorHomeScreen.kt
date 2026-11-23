@@ -43,7 +43,6 @@ fun AdvisorHomeScreen(
             AdvisorBottomBar(
                 selectedItem = AdvisorBottomItem.HOME,
                 onHomeClick = {},
-                onPendingClick = onPendingClick,
                 onAllRecordsClick = onAllRecordsClick,
                 onProgramClick = onProgramClick
             )
@@ -93,32 +92,21 @@ fun AdvisorHomeScreen(
 
             SyncStatus(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp))
 
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("Tu espacio de asesoría", style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold)
-                Text("Selecciona el módulo en el que quieres trabajar.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
             BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 // Stack the cards on narrow screens or when larger text needs more space.
                 if (maxWidth < 320.dp || LocalDensity.current.fontScale > 1.3f) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        AdvisorModuleCard("Registros", "Consulta análisis y revisa muestras pendientes.",
+                        AdvisorModuleCard("Registros",
                             R.drawable.ic_history, onAllRecordsClick, Modifier.fillMaxWidth())
-                        AdvisorModuleCard("Programas", "Organiza los programas nutricionales de los cultivos.",
+                        AdvisorModuleCard("Programas",
                             R.drawable.ic_program, onProgramClick, Modifier.fillMaxWidth())
                     }
                 } else {
                     Row(modifier = Modifier.height(IntrinsicSize.Min),
                         horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        AdvisorModuleCard("Registros", "Consulta análisis y revisa muestras pendientes.",
+                        AdvisorModuleCard("Registros",
                             R.drawable.ic_history, onAllRecordsClick, Modifier.weight(1f).fillMaxHeight())
-                        AdvisorModuleCard("Programas", "Organiza los programas nutricionales de los cultivos.",
+                        AdvisorModuleCard("Programas",
                             R.drawable.ic_program, onProgramClick, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
@@ -130,22 +118,22 @@ fun AdvisorHomeScreen(
 @Composable
 private fun AdvisorModuleCard(
     title: String,
-    description: String,
     iconRes: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 200.dp),
+        modifier = modifier.heightIn(min = 168.dp),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Box(
                 modifier = Modifier.size(54.dp).clip(RoundedCornerShape(16.dp))
@@ -156,11 +144,6 @@ private fun AdvisorModuleCard(
                     tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
             }
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(description, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.align(Alignment.End).size(22.dp))
         }
     }
 }

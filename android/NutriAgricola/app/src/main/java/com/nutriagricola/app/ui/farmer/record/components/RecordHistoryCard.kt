@@ -41,7 +41,9 @@ fun RecordHistoryCard(
     contentPadding: PaddingValues = PaddingValues(10.dp),
     cropImagePath: String? = null,
     showCropThumbnail: Boolean = false,
-    cropThumbnailScale: Float = 1f
+    cropThumbnailScale: Float = 1f,
+    extraLabel: String? = null,
+    statusLabel: String? = null
 ) {
     val analysisImage = painterResource(when (record.type) {
         RecordType.SOIL -> R.drawable.analysis_soil
@@ -105,6 +107,8 @@ fun RecordHistoryCard(
                 )
                 Text(cropName, style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                extraLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Icon(painterResource(R.drawable.ic_calendar), null,
@@ -132,7 +136,7 @@ fun RecordHistoryCard(
                                 else R.drawable.ic_check), null, modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.primary)
                         }
-                        Text(record.status.historyLabel(), style = MaterialTheme.typography.bodySmall,
+                        Text(statusLabel ?: record.status.historyLabel(), style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
                     }
                 }

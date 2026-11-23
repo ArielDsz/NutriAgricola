@@ -110,7 +110,7 @@ fun RecordDetailScreen(
 }
 
 @Composable
-private fun RecordDetailHeader(record: Record?, crop: Crop?, onBackClick: () -> Unit) {
+internal fun RecordDetailHeader(record: Record?, crop: Crop?, onBackClick: () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth()) {
         val fallback = painterResource(R.drawable.default_crop)
         AsyncImage(
@@ -194,7 +194,7 @@ private fun RecordDateAndStatus(record: Record) {
 }
 
 @Composable
-private fun RecordMeasurements(data: RecordData) {
+internal fun RecordMeasurements(data: RecordData) {
     val measurements = when (data) {
         is SoilData -> listOf(
             Triple("pH", data.ph, R.drawable.ic_ph),
@@ -264,7 +264,7 @@ private fun RecordMeasurementCard(label: String, value: String, @DrawableRes ico
 }
 
 @Composable
-private fun RecordTextBlock(label: String, value: String, @DrawableRes icon: Int) {
+internal fun RecordTextBlock(label: String, value: String, @DrawableRes icon: Int) {
     Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

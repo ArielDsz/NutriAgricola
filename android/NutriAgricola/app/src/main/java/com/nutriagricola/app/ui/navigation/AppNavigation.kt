@@ -322,6 +322,8 @@ fun AppNavigation() {
                         val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
 
                         AdvisorAllRecordsScreen(
+                            headerInitials = userInitials(currentUser),
+                            onLogoutClick = { sessionViewModel.logout() },
                             viewModel = allRecordsViewModel,
                             downloadState = downloadState,
                             onRefreshRecords = { recordDownloadViewModel.refresh() },
@@ -351,6 +353,8 @@ fun AppNavigation() {
                         }
                         val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
                         AdvisorProgramsScreen(
+                            headerInitials = userInitials(currentUser),
+                            onLogoutClick = { sessionViewModel.logout() },
                             viewModel = programsViewModel,
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },

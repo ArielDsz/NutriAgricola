@@ -10,6 +10,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
+import com.nutriagricola.app.ui.components.HeaderActions
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomBar
 import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
 
@@ -20,7 +21,8 @@ fun AdvisorProgramsScreen(
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onPendingClick: () -> Unit,
-    onAllRecordsClick: () -> Unit
+    onAllRecordsClick: () -> Unit,
+    headerInitials: String = "", onLogoutClick: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val fullHeader = state.mode == ProgramMode.LIST || state.mode == ProgramMode.DETAIL
@@ -40,7 +42,6 @@ fun AdvisorProgramsScreen(
             if (state.mode == ProgramMode.LIST) AdvisorBottomBar(
                 selectedItem = AdvisorBottomItem.PROGRAM,
                 onHomeClick = onHomeClick,
-                onPendingClick = onPendingClick,
                 onAllRecordsClick = onAllRecordsClick,
                 onProgramClick = {}
             )
@@ -48,6 +49,7 @@ fun AdvisorProgramsScreen(
     ) { padding ->
         ProgramsContent(viewModel, if (fullHeader)
             Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())
-            else Modifier.fillMaxSize().padding(padding), onBack = { if (!viewModel.back()) onBackClick() })
+            else Modifier.fillMaxSize().padding(padding), onBack = { if (!viewModel.back()) onBackClick() },
+            headerActions = { HeaderActions(headerInitials, onLogoutClick) })
     }
 }

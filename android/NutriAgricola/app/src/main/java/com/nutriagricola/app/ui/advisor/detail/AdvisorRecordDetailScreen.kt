@@ -15,6 +15,9 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nutriagricola.app.ui.farmer.record.detail.RecordDetailHeader
+import com.nutriagricola.app.ui.farmer.record.detail.RecordMeasurements
+import com.nutriagricola.app.ui.farmer.record.detail.RecordTextBlock
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.record.*
 import com.nutriagricola.app.ui.farmer.record.components.FoliarPhotoGallery
@@ -42,363 +45,149 @@ fun AdvisorRecordDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Revisión de Asesoría", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_chevron_right),
-                            contentDescription = "Volver",
-                            modifier = Modifier.size(24.dp).rotate(180f)
-                        )
+    val record = state.record
+    Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding()).verticalScroll(rememberScrollState())) {
+            RecordDetailHeader(record, state.crop, onBackClick)
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                when {
+                    state.isLoading -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    state.loadError != null -> {
+                        Text(state.loadError ?: "Registro no disponible", color = MaterialTheme.colorScheme.error)
+                        TextButton(onClick = viewModel::loadDetail) { Text("Reintentar") }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (state.loadError != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = state.loadError ?: "Error", color = MaterialTheme.colorScheme.error)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadDetail() }) {
-                        Text("Reintentar")
-                    }
-                }
-            }
-        } else {
-            val record = state.record
-            val crop = state.crop
-            val farm = state.farm
-            val farmer = state.farmerUser
-
-            if (record != null) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (state.remotePhotoCount > 0) {
-                        Text("Fotos disponibles en el servidor: " + state.remotePhotoCount,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = viewModel::downloadPhotos, enabled = !state.isDownloadingPhotos) {
-                            Text(if (state.isDownloadingPhotos) "Descargando fotos…" else "Descargar fotos")
+                    else -> if (record != null) {
+                        val identity = listOfNotNull(state.farm?.name,
+                            state.farmerUser?.let { "${it.firstName} ${it.lastName}".trim().takeIf(String::isNotBlank) }).joinToString("\n")
+                        if (identity.isNotBlank()) RecordTextBlock("Predio y agricultor", identity, R.drawable.ic_farms)
+                        Text("Datos del análisis", style = MaterialTheme.typography.bodyLarge)
+                        RecordMeasurements(record.data)
+                        (record.data as? WaterData)?.waterSource?.takeIf(String::isNotBlank)?.let {
+                            RecordTextBlock("Fuente de agua", it, R.drawable.ic_water_source)
                         }
-                        state.photoError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    }
-                    // Header Card
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Image(
-                                painter = painterResource(
-                                    when (record.type) {
-                                        RecordType.SOIL -> R.drawable.analysis_soil
-                                        RecordType.WATER -> R.drawable.analysis_water
-                                        RecordType.FOLIAR -> R.drawable.analysis_foliar
-                                    }
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "${farm?.name ?: "Predio"} — ${crop?.name ?: "Cultivo"}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Agricultor: " + listOfNotNull(farmer?.firstName, farmer?.lastName)
-                                        .joinToString(" ").trim().ifBlank { "Nombre no disponible" },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "Fecha muestra: ${record.date}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                        (record.data as? FoliarData)?.symptoms?.takeIf(String::isNotBlank)?.let {
+                            RecordTextBlock("Síntomas", it, R.drawable.ic_symptoms)
+                        }
+                        record.observations?.takeIf(String::isNotBlank)?.let {
+                            RecordTextBlock("Observaciones", it, R.drawable.ic_observations)
+                        }
+                        if (state.remotePhotoCount > 0) {
+                            TextButton(onClick = viewModel::downloadPhotos, enabled = !state.isDownloadingPhotos) {
+                                Text(if (state.isDownloadingPhotos) "Descargando fotos…" else "Descargar fotos")
+                            }
+                            state.photoError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                        }
+                        (record.data as? FoliarData)?.let { FoliarPhotoGallery(photos = it.photos) }
+                        // Existing Review Section
+                        var showPreviousReviews by remember(record.id) { mutableStateOf(false) }
+                        if (state.reviews.size > 1) {
+                            TextButton(onClick = { showPreviousReviews = !showPreviousReviews }) {
+                                Text(if (showPreviousReviews) "Ocultar revisiones anteriores" else "Ver revisiones anteriores (${state.reviews.size - 1})")
                             }
                         }
-                    }
-
-                    // Original Measurement Data
-                    Text(
-                        text = "Mediciones del Análisis",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    RecordMeasurementsView(record.data)
-                    val additionalData = when (val data = record.data) {
-                        is WaterData -> data.waterSource?.takeIf { it.isNotBlank() }?.let { "Fuente de agua" to it }
-                        is FoliarData -> data.symptoms?.takeIf { it.isNotBlank() }?.let { "Síntomas" to it }
-                        else -> null
-                    }
-                    additionalData?.let { (label, value) ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text(label, style = MaterialTheme.typography.labelMedium)
-                                Text(value, style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
-                    }
-
-                    // Farmer Observations
-                    if (!record.observations.isNullOrBlank()) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                        ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text(
-                                    text = "Observaciones del Agricultor",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        val visibleReviews = if (showPreviousReviews) state.reviews else state.reviews.take(1)
+                        visibleReviews.forEachIndexed { index, review ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (review.result == ReviewResult.VALIDATED) LeafGreen.copy(alpha = 0.1f) else OfflineBackground
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = record.observations,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
-
-                    // Foliar Photos
-                    (record.data as? FoliarData)?.let { foliarData ->
-                        if (foliarData.photos.isNotEmpty()) {
-                            Text(
-                                text = "Fotografías del Cultivo",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            FoliarPhotoGallery(photos = foliarData.photos)
-                        }
-                    }
-
-                    // Existing Review Section
-                    var showPreviousReviews by remember(record.id) { mutableStateOf(false) }
-                    if (state.reviews.size > 1) {
-                        TextButton(onClick = { showPreviousReviews = !showPreviousReviews }) {
-                            Text(if (showPreviousReviews) "Ocultar revisiones anteriores" else "Ver revisiones anteriores (${state.reviews.size - 1})")
-                        }
-                    }
-                    val visibleReviews = if (showPreviousReviews) state.reviews else state.reviews.take(1)
-                    visibleReviews.forEachIndexed { index, review ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (review.result == ReviewResult.VALIDATED) LeafGreen.copy(alpha = 0.1f) else OfflineBackground
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = if (index == 0) "Última revisión" else "Revisión anterior",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ForestGreen
-                                    )
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = if (review.result == ReviewResult.VALIDATED) ForestGreen else OfflineBackground
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = if (review.result == ReviewResult.VALIDATED) "VALIDADO" else "OBSERVADO",
-                                            style = MaterialTheme.typography.labelSmall,
+                                            text = if (index == 0) "Última revisión" else "Revisión anterior",
+                                            style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (review.result == ReviewResult.VALIDATED) MaterialTheme.colorScheme.onPrimary else ForestGreen,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                            color = ForestGreen
                                         )
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (review.result == ReviewResult.VALIDATED) ForestGreen else OfflineBackground
+                                        ) {
+                                            Text(
+                                                text = if (review.result == ReviewResult.VALIDATED) "VALIDADO" else "OBSERVADO",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (review.result == ReviewResult.VALIDATED) MaterialTheme.colorScheme.onPrimary else ForestGreen,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                            )
+                                        }
                                     }
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Asesor: ${review.advisorName} · ${review.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = review.comment,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
-                    // Advisor Action / Form Section
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 24.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Emitir Dictamen de Asesoría",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(if (state.canReview) "La revisión se confirma con conexión al servidor."
-                                else "Este análisis no está disponible para enviar una revisión.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            OutlinedTextField(
-                                value = state.commentInput,
-                                onValueChange = { viewModel.onCommentChange(it) },
-                                label = { Text("Comentarios u observaciones del asesor") },
-                                placeholder = { Text("Escribe aquí tus recomendaciones técnicas...") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 96.dp),
-                                maxLines = 4,
-                                enabled = !state.isSaving && state.canReview
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { viewModel.submitReview(ReviewResult.OBSERVED) },
-                                    enabled = !state.isSaving && state.canReview,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Observar")
-                                }
-                                Button(
-                                    onClick = { viewModel.submitReview(ReviewResult.VALIDATED) },
-                                    enabled = !state.isSaving && state.canReview,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Validar")
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Asesor: ${review.advisorName} · ${review.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = review.comment,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun RecordMeasurementsView(data: RecordData) {
-    val measurements = when (data) {
-        is SoilData -> listOf(
-            "pH" to data.ph,
-            "Conductividad eléctrica (CE)" to data.electricalConductivity,
-            "Nitrógeno (N)" to data.nitrogen,
-            "Fósforo (P)" to data.phosphorus,
-            "Potasio (K)" to data.potassium,
-            "Calcio (Ca)" to data.calcium,
-            "Magnesio (Mg)" to data.magnesium,
-            "Materia orgánica" to data.organicMatter
-        )
-        is WaterData -> listOf(
-            "pH" to data.ph,
-            "Conductividad eléctrica (CE)" to data.electricalConductivity,
-            "Nitrógeno (N)" to data.nitrogen,
-            "Fósforo (P)" to data.phosphorus,
-            "Potasio (K)" to data.potassium,
-            "Calcio (Ca)" to data.calcium,
-            "Magnesio (Mg)" to data.magnesium
-        )
-        is FoliarData -> listOf(
-            "Nitrógeno (N)" to data.nitrogen,
-            "Fósforo (P)" to data.phosphorus,
-            "Potasio (K)" to data.potassium,
-            "Calcio (Ca)" to data.calcium,
-            "Magnesio (Mg)" to data.magnesium
-        )
-    }.filter { it.second != null }
-
-    if (measurements.isEmpty()) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Sin mediciones registradas en esta muestra",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(16.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    } else {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            measurements.chunked(2).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { (label, value) ->
+                        // Advisor Action / Form Section
                         Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 24.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = value.toString(),
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = "Revisión",
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold
                                 )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(if (state.canReview) "Requiere conexión"
+                                    else "Este análisis no está disponible para enviar una revisión.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                OutlinedTextField(
+                                    value = state.commentInput,
+                                    onValueChange = { viewModel.onCommentChange(it) },
+                                    label = { Text("Comentario del asesor") },
+                                    placeholder = { Text("Comentario") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 96.dp),
+                                    maxLines = 4,
+                                    enabled = !state.isSaving && state.canReview
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = { viewModel.submitReview(ReviewResult.OBSERVED) },
+                                        enabled = !state.isSaving && state.canReview,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Observar")
+                                    }
+                                    Button(
+                                        onClick = { viewModel.submitReview(ReviewResult.VALIDATED) },
+                                        enabled = !state.isSaving && state.canReview,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Validar")
+                                    }
+                                }
                             }
                         }
-                    }
-                    if (row.size < 2) {
-                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

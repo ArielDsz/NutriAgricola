@@ -9,5 +9,6 @@ data class AdvisorRecordItem(
     val cropName: String,
     val farmerName: String,
     val farmId: String? = null,
-    val reviewResult: ReviewResult? = null
+    val reviewResult: ReviewResult? = null,
+    val cropImagePath: String? = null
 )

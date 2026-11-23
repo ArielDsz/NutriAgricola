@@ -17,18 +17,18 @@ import com.nutriagricola.app.R
 
 enum class AdvisorBottomItem {
     HOME,
-    PENDING,
     ALL_RECORDS,
-    PROGRAM
+    PROGRAM,
+    FARMS
 }
 
 @Composable
 fun AdvisorBottomBar(
     selectedItem: AdvisorBottomItem,
     onHomeClick: () -> Unit,
-    onPendingClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
-    onProgramClick: () -> Unit
+    onProgramClick: () -> Unit,
+    onFarmsClick: () -> Unit = {}
 ) {
     val itemColors = NavigationBarItemDefaults.colors(
         indicatorColor = MaterialTheme.colorScheme.primaryContainer,
@@ -49,27 +49,11 @@ fun AdvisorBottomBar(
                     Icon(
                         painter = painterResource(R.drawable.ic_home),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 },
                 label = {
                     Text("Inicio", style = MaterialTheme.typography.bodySmall)
-                }
-            )
-
-            NavigationBarItem(
-                selected = selectedItem == AdvisorBottomItem.PENDING,
-                onClick = onPendingClick,
-                colors = itemColors,
-                icon = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_history),
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                label = {
-                    Text("Pendientes", style = MaterialTheme.typography.bodySmall)
                 }
             )
 
@@ -81,7 +65,7 @@ fun AdvisorBottomBar(
                     Icon(
                         painter = painterResource(R.drawable.ic_calendar),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 },
                 label = {
@@ -97,12 +81,18 @@ fun AdvisorBottomBar(
                     Icon(
                         painter = painterResource(R.drawable.ic_program),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 },
                 label = {
                     Text("Programas", style = MaterialTheme.typography.bodySmall)
                 }
+            )
+            NavigationBarItem(
+                selected = selectedItem == AdvisorBottomItem.FARMS,
+                onClick = onFarmsClick, colors = itemColors,
+                icon = { Icon(painterResource(R.drawable.ic_farms), null, Modifier.size(32.dp)) },
+                label = { Text("Predios", style = MaterialTheme.typography.bodySmall) }
             )
         }
     }

@@ -1,303 +1,117 @@
 package com.nutriagricola.app.ui.advisor.all_records
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.LaunchedEffect
-import com.nutriagricola.app.ui.records.RecordDownloadUiState
-import com.nutriagricola.app.ui.records.RecordDownloadStatus
-import androidx.compose.runtime.Composable
-import com.nutriagricola.app.ui.advisor.components.AdvisorRefreshOnResume
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
-import com.nutriagricola.app.domain.model.record.RecordStatus
 import com.nutriagricola.app.domain.model.advisor.ReviewResult
-import com.nutriagricola.app.domain.model.record.RecordType
-import com.nutriagricola.app.ui.advisor.components.AdvisorBottomBar
-import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
-import com.nutriagricola.app.ui.advisor.model.AdvisorRecordItem
-import com.nutriagricola.app.ui.theme.ForestGreen
-import com.nutriagricola.app.ui.theme.LeafGreen
-import com.nutriagricola.app.ui.theme.OfflineBackground
+import com.nutriagricola.app.domain.model.record.RecordStatus
+import com.nutriagricola.app.ui.advisor.components.*
+import com.nutriagricola.app.ui.components.HeaderActions
+import com.nutriagricola.app.ui.components.SectionHeader
+import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
+import com.nutriagricola.app.ui.records.RecordDownloadStatus
+import com.nutriagricola.app.ui.records.RecordDownloadUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdvisorAllRecordsScreen(
-    viewModel: AdvisorAllRecordsViewModel,
-    downloadState: RecordDownloadUiState,
-    onRefreshRecords: () -> Unit,
-    onMoreRecords: () -> Unit,
-    onUploadRecords: () -> Unit,
-    onBackClick: () -> Unit,
-    onHomeClick: () -> Unit,
-    onPendingClick: () -> Unit,
-    onProgramClick: () -> Unit,
-    onRecordClick: (String) -> Unit
+    viewModel: AdvisorAllRecordsViewModel, downloadState: RecordDownloadUiState,
+    onRefreshRecords: () -> Unit, onMoreRecords: () -> Unit, onUploadRecords: () -> Unit,
+    onBackClick: () -> Unit, onHomeClick: () -> Unit, onPendingClick: () -> Unit,
+    onProgramClick: () -> Unit, onRecordClick: (String) -> Unit,
+    headerInitials: String = "", onLogoutClick: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showFarms by remember { mutableStateOf(false) }
     LaunchedEffect(downloadState.completedRefresh) {
         if (downloadState.completedRefresh > 0) viewModel.loadData()
     }
-
-    AdvisorRefreshOnResume {
-        viewModel.loadData()
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Registros", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_chevron_right),
-                            contentDescription = "Volver",
-                            modifier = Modifier.size(24.dp).rotate(180f)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        bottomBar = {
-            AdvisorBottomBar(
-                selectedItem = AdvisorBottomItem.ALL_RECORDS,
-                onHomeClick = onHomeClick,
-                onPendingClick = onPendingClick,
-                onAllRecordsClick = {},
-                onProgramClick = onProgramClick
-            )
-        }
-    ) { paddingValues ->
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+    AdvisorRefreshOnResume { viewModel.loadData() }
+    Scaffold(bottomBar = {
+        AdvisorBottomBar(AdvisorBottomItem.ALL_RECORDS, onHomeClick, {}, onProgramClick)
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding()),
+            contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { SectionHeader("Registros") { HeaderActions(headerInitials, onLogoutClick) } }
+            item { RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords) }
+            item {
+                OutlinedTextField(state.searchQuery, viewModel::setSearchQuery, placeholder = { Text("Buscar") },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_search), null, Modifier.size(22.dp)) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), singleLine = true,
+                    shape = RoundedCornerShape(14.dp), colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant))
             }
-        } else if (state.error != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = state.error ?: "Error", color = MaterialTheme.colorScheme.error)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadData() }) {
-                        Text("Reintentar")
-                    }
+            item {
+                val colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surface,
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(state.selectedStatusFilter == null && !state.observedOnly, { viewModel.setStatusFilter(null) },
+                        label = { Text("Todos", style = MaterialTheme.typography.bodyMedium) },
+                        colors = colors, shape = RoundedCornerShape(20.dp), modifier = Modifier.heightIn(min = 48.dp))
+                    FilterChip(state.selectedStatusFilter == RecordStatus.PENDING, { viewModel.setStatusFilter(RecordStatus.PENDING) },
+                        label = { Text("Pendientes", style = MaterialTheme.typography.bodyMedium) },
+                        colors = colors, shape = RoundedCornerShape(20.dp), modifier = Modifier.heightIn(min = 48.dp))
+                    FilterChip(state.observedOnly, viewModel::setObservedFilter,
+                        label = { Text("Observados", style = MaterialTheme.typography.bodyMedium) },
+                        colors = colors, shape = RoundedCornerShape(20.dp), modifier = Modifier.heightIn(min = 48.dp))
+                    FilterChip(state.selectedStatusFilter == RecordStatus.VALIDATED, { viewModel.setStatusFilter(RecordStatus.VALIDATED) },
+                        label = { Text("Validados", style = MaterialTheme.typography.bodyMedium) },
+                        colors = colors, shape = RoundedCornerShape(20.dp), modifier = Modifier.heightIn(min = 48.dp))
                 }
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp)
-            ) {
-                RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords)
-                // Search Input
-                OutlinedTextField(
-                    value = state.searchQuery,
-                    onValueChange = { viewModel.setSearchQuery(it) },
-                    placeholder = { Text("Buscar por predio, cultivo o agricultor...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-
-                // Status Filter Chips
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(bottom = 6.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            selected = state.selectedStatusFilter == null && !state.observedOnly,
-                            onClick = { viewModel.setStatusFilter(null) },
-                            label = { Text("Todos (${state.allRecords.size})") }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = state.selectedStatusFilter == RecordStatus.PENDING,
-                            onClick = { viewModel.setStatusFilter(RecordStatus.PENDING) },
-                            label = { Text("Pendientes") }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = state.observedOnly,
-                            onClick = { viewModel.setObservedFilter() },
-                            label = { Text("Observados") }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = state.selectedStatusFilter == RecordStatus.VALIDATED,
-                            onClick = { viewModel.setStatusFilter(RecordStatus.VALIDATED) },
-                            label = { Text("Validados") }
-                        )
-                    }
-                }
-
-                // Farm Filter Chips
-                if (state.farms.isNotEmpty()) {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        item {
-                            FilterChip(
-                                selected = state.selectedFarmId == null,
-                                onClick = { viewModel.setFarmFilter(null) },
-                                label = { Text("Todos los Predios") }
-                            )
+            if (state.farms.isNotEmpty()) item {
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Predio", style = MaterialTheme.typography.bodyLarge)
+                    Box {
+                        Card(onClick = { showFarms = true }, shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically) {
+                                Icon(painterResource(R.drawable.ic_farms), null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
+                                Text(state.farms.find { it.id == state.selectedFarmId }?.name ?: "Todos los predios",
+                                    style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                                Icon(painterResource(R.drawable.ic_expand_more), "Seleccionar predio", Modifier.size(24.dp))
+                            }
                         }
-                        items(state.farms) { farm ->
-                            FilterChip(
-                                selected = state.selectedFarmId == farm.id,
-                                onClick = { viewModel.setFarmFilter(farm.id) },
-                                label = { Text(farm.name) }
-                            )
-                        }
-                    }
-                }
-
-                // List
-                if (state.filteredRecords.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No se encontraron análisis en este predio/filtro",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        items(state.filteredRecords) { item ->
-                            AllRecordsItemCard(
-                                item = item,
-                                onClick = { onRecordClick(item.record.id) }
-                            )
+                        DropdownMenu(showFarms, { showFarms = false }) {
+                            DropdownMenuItem(text = { Text("Todos los predios") }, onClick = { viewModel.setFarmFilter(null); showFarms = false })
+                            state.farms.forEach { farm -> DropdownMenuItem(text = { Text(farm.name) },
+                                onClick = { viewModel.setFarmFilter(farm.id); showFarms = false }) }
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun AllRecordsItemCard(
-    item: AdvisorRecordItem,
-    onClick: () -> Unit
-) {
-    val typeName = when (item.record.type) {
-        RecordType.SOIL -> "Suelo"
-        RecordType.WATER -> "Agua"
-        RecordType.FOLIAR -> "Foliar"
-    }
-
-    val (statusLabel, statusBgColor, statusTextColor) = when (item.record.status) {
-        RecordStatus.PENDING -> if (item.reviewResult == ReviewResult.OBSERVED)
-            Triple("Con observaciones", OfflineBackground, ForestGreen)
-        else Triple("Pendiente", MaterialTheme.colorScheme.primaryContainer, ForestGreen)
-        RecordStatus.VIEWED -> Triple("Visto", MaterialTheme.colorScheme.surfaceVariant, ForestGreen)
-        RecordStatus.VALIDATED -> Triple("Validado", LeafGreen.copy(alpha = 0.2f), ForestGreen)
-        else -> Triple(item.record.status.name, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = LeafGreen.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = typeName,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = ForestGreen,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = statusBgColor
-                ) {
-                    Text(
-                        text = statusLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = statusTextColor,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
+            if (state.isLoading) item { Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+            state.error?.let { error -> item { Text(error, Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error) } }
+            if (!state.isLoading && state.filteredRecords.isEmpty()) item {
+                Text("No hay registros", Modifier.padding(24.dp), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            items(state.filteredRecords, key = { it.record.id }) { item ->
+                Box(Modifier.padding(horizontal = 16.dp)) {
+                    RecordHistoryCard(item.record, item.cropName, { onRecordClick(item.record.id) },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
+                        cropImagePath = item.cropImagePath, showCropThumbnail = true,
+                        extraLabel = item.farmerName,
+                        statusLabel = if (item.record.status == RecordStatus.PENDING && item.reviewResult == ReviewResult.OBSERVED) "Observado" else null)
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "${item.farmName} — ${item.cropName}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Agricultor: ${item.farmerName}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                text = "Fecha muestra: ${item.record.date}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

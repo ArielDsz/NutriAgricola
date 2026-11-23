@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.nutriagricola.app.ui.components.SectionHeader
 import com.nutriagricola.app.R
 import com.nutriagricola.app.domain.model.program.NutritionalProgram
 import com.nutriagricola.app.domain.model.user.UserRole
@@ -27,21 +28,11 @@ fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifi
     var filtersExpanded by remember { mutableStateOf(false) }
     LazyColumn(modifier, contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Box(Modifier.fillMaxWidth().heightIn(min = 160.dp)
-                .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))) {
-                Image(painterResource(R.drawable.header_background), null,
-                    contentScale = ContentScale.Crop, alignment = Alignment.TopCenter,
-                    modifier = Modifier.matchParentSize())
-                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Text("Programas", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
-                    if (viewModel.role == UserRole.ADVISOR) {
-                        IconButton(onClick = viewModel::newProgram) {
-                            Icon(painterResource(R.drawable.ic_add_circle), "Nuevo programa", tint = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                    headerActions()
+            SectionHeader("Programas") {
+                if (viewModel.role == UserRole.ADVISOR) IconButton(onClick = viewModel::newProgram) {
+                    Icon(painterResource(R.drawable.ic_add_circle), "Nuevo programa", tint = MaterialTheme.colorScheme.primary)
                 }
+                headerActions()
             }
         }
         item {

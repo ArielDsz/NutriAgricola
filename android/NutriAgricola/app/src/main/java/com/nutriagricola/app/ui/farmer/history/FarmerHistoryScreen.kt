@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.nutriagricola.app.R
+import com.nutriagricola.app.ui.components.SectionHeader
 import com.nutriagricola.app.ui.components.HeaderActions
 import com.nutriagricola.app.domain.model.farm.Farm
 import com.nutriagricola.app.domain.model.record.RecordType
@@ -83,7 +84,7 @@ fun FarmerHistoryScreen(
             contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item { HistoryHeader(headerInitials, onLogoutClick) }
+            item { SectionHeader("Historial") { HeaderActions(headerInitials, onLogoutClick) } }
             item { RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords) }
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -178,22 +179,6 @@ fun FarmerHistoryScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun HistoryHeader(initials: String, onLogout: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp)
-        .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))) {
-        Image(painterResource(R.drawable.header_background), null,
-            contentScale = ContentScale.Crop, alignment = Alignment.TopCenter,
-            modifier = Modifier.matchParentSize())
-        Row(modifier = Modifier.fillMaxWidth().statusBarsPadding()
-            .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Text("Historial", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
-            HeaderActions(initials, onLogout)
         }
     }
 }
