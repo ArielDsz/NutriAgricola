@@ -129,7 +129,7 @@ fun FarmerHomeScreen(
                 HomeHeader(
                     initials = initials,
                     onLogoutClick = onLogoutClick,
-                    onWeatherClick = { showWeather = true },
+                    onWeatherClick = { showWeather = true; viewModel.loadWeather() },
                     modifier = Modifier.fillMaxWidth().height(164.dp)
                 )
                 Column(modifier = Modifier.fillMaxWidth().padding(top = 116.dp)) {
@@ -200,9 +200,6 @@ fun FarmerHomeScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextButton(onClick = onRefreshFarms, enabled = !contextState.isRefreshing && !contextState.isRefreshingCrops) {
-                    Text(if (contextState.isRefreshing || contextState.isRefreshingCrops) "Actualizando predios y cultivos…" else "Actualizar predios y cultivos")
-                }
                 contextState.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 contextState.cropError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }

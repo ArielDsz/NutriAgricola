@@ -40,9 +40,6 @@ fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifi
                             Icon(painterResource(R.drawable.ic_add_circle), "Nuevo programa", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
-                    IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                        Icon(painterResource(R.drawable.ic_sync), "Actualizar programas", tint = MaterialTheme.colorScheme.primary)
-                    }
                 }
             }
         }

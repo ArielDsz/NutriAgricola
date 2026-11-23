@@ -15,13 +15,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.painterResource
-import com.nutriagricola.app.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,13 +57,7 @@ fun WeatherCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                IconButton(onClick = onRetry) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sync),
-                        contentDescription = "Actualizar clima",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+
             }
 
             Spacer(modifier = Modifier.height(8.dp))

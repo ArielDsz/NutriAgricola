@@ -23,9 +23,10 @@ fun AdvisorProgramsScreen(
     onAllRecordsClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val fullHeader = state.mode == ProgramMode.LIST || state.mode == ProgramMode.DETAIL
     Scaffold(
         topBar = {
-            if (state.mode != ProgramMode.LIST) TopAppBar(
+            if (!fullHeader) TopAppBar(
                 title = { Text("Programas", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { if (!viewModel.back()) onBackClick() }) {
@@ -45,8 +46,8 @@ fun AdvisorProgramsScreen(
             )
         }
     ) { padding ->
-        ProgramsContent(viewModel, if (state.mode == ProgramMode.LIST)
+        ProgramsContent(viewModel, if (fullHeader)
             Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())
-            else Modifier.fillMaxSize().padding(padding))
+            else Modifier.fillMaxSize().padding(padding), onBack = { if (!viewModel.back()) onBackClick() })
     }
 }

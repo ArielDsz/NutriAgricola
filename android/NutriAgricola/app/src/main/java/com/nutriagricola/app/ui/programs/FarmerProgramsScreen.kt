@@ -16,8 +16,9 @@ import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
                           onHome: () -> Unit, onHistory: () -> Unit) {
     val state by viewModel.state.collectAsState()
+    val fullHeader = state.mode == ProgramMode.LIST || state.mode == ProgramMode.DETAIL
     Scaffold(topBar = {
-        if (state.mode != ProgramMode.LIST) TopAppBar(title = { Text("Programas") }, navigationIcon = {
+        if (!fullHeader) TopAppBar(title = { Text("Programas") }, navigationIcon = {
             IconButton(onClick = { if (!viewModel.back()) onBack() }) {
                 Icon(painterResource(R.drawable.ic_chevron_right), "Volver", Modifier.size(24.dp).rotate(180f))
             }
@@ -26,8 +27,8 @@ fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
         if (state.mode == ProgramMode.LIST) FarmerBottomBar(FarmerBottomItem.PROGRAM,
             onHomeClick = onHome, onHistoryClick = onHistory, onProgramClick = {}, onFarmsClick = {})
     }) { padding ->
-        ProgramsContent(viewModel, if (state.mode == ProgramMode.LIST)
+        ProgramsContent(viewModel, if (fullHeader)
             Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())
-            else Modifier.fillMaxSize().padding(padding))
+            else Modifier.fillMaxSize().padding(padding), onBack = { if (!viewModel.back()) onBack() })
     }
 }
