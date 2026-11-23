@@ -79,6 +79,47 @@ class ProgramRepositoryTest {
         assertNull(repository.observePrograms().first().single().contributions())
     }
 
+    @Test fun `editing and archiving cache only the confirmed server results`() = runBlocking {
+        respond(json.encodeToString(detail))
+        val request = repository.loadForEditing("advisor", "program")
+        assertEquals(content, request.content)
+        val changed = content.copy(name = "Editado", fertilizers = content.fertilizers.map { it.copy(doseKgHa = 150.0) })
+        val updated = detail.copy(content = changed)
+        respond(json.encodeToString(updated))
+        repository.update("advisor", request.copy(content = changed))
+        assertEquals(150.0, repository.observePrograms().first().single().fertilizers.single().doseKgHa, 0.0)
+        server.takeRequest()
+        val put = server.takeRequest()
+        assertEquals("PUT", put.method)
+        assertEquals("/api/v1/programs/program", put.path)
+        assertEquals(composition, json.decodeFromString<ProgramRequestDto>(put.body.readUtf8()).content.fertilizers.single().composition)
+        respond("", 204)
+        respond(json.encodeToString(updated.copy(active = false)))
+        repository.archive("advisor", "program")
+        assertEquals("DELETE", server.takeRequest().method)
+        assertEquals("GET", server.takeRequest().method)
+        assertFalse(repository.observePrograms().first().single().active)
+        assertEquals("Editado", repository.observePrograms().first().single().name)
+    }
+
+    @Test fun `rejected updates and archives preserve the downloaded program`() = runBlocking {
+        respond(json.encodeToString(detail))
+        repository.downloadDetail("farmer", "program")
+        respond("{}", 403)
+        try {
+            repository.update("farmer", ProgramRequestDto("program", null, null, content.copy(name = "No autorizado")))
+            fail("Escritura no autorizada")
+        } catch (expected: HttpException) { assertEquals(403, expected.code()) }
+        respond("{}", 403)
+        try {
+            repository.archive("farmer", "program")
+            fail("Archivo no autorizado")
+        } catch (expected: HttpException) { assertEquals(403, expected.code()) }
+        val cached = repository.observePrograms().first().single()
+        assertTrue(cached.active)
+        assertEquals("Prueba", cached.name)
+    }
+
     private class MemoryProgramDao : ProgramDao {
         private val rows = MutableStateFlow<List<ProgramEntity>>(emptyList())
         override fun observeAll() = rows

@@ -25,7 +25,7 @@ public class ProgramMapper {
     public ProgramSummaryResponse toSummary(Program p) {
         return new ProgramSummaryResponse(p.getId(), p.getCrop() == null ? null : p.getCrop().getId(), p.getAdvisorId(),
                 p.getName(), p.getSeason(), p.getStartDate(), p.getEndDate(), p.getActive(),
-                p.getSpecies(), p.getPlot());
+                p.getSpecies(), p.getPlot(), p.getAdvisorName());
     }
 
     public ProgramResponse toResponse(Program p, List<ProgramFertilizer> fertilizers, List<ProgramStage> stages) {

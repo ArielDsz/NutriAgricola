@@ -11,4 +11,11 @@ interface ProgramApi {
     suspend fun get(@Header("Authorization") authorization: String, @Path("id") id: String): ProgramResponseDto
     @POST("api/v1/programs")
     suspend fun create(@Header("Authorization") authorization: String, @Body request: ProgramRequestDto): ProgramResponseDto
+
+    @PUT("api/v1/programs/{id}")
+    suspend fun update(@Header("Authorization") authorization: String, @Path("id") id: String,
+                       @Body request: ProgramRequestDto): ProgramResponseDto
+
+    @DELETE("api/v1/programs/{id}")
+    suspend fun archive(@Header("Authorization") authorization: String, @Path("id") id: String)
 }

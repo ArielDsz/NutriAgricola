@@ -46,6 +46,27 @@ class ProgramRepository(
         cache(result)
     }
 
+    suspend fun loadForEditing(userId: String, id: String): ProgramRequestDto {
+        val result = api.get(authorization(userId), id)
+        check(result.id == id && result.advisorId == userId) { "Solo el asesor autor puede modificar el programa" }
+        authorization(userId)
+        cache(result)
+        return ProgramRequestDto(result.id, result.species, result.plot, result.content)
+    }
+
+    suspend fun update(userId: String, request: ProgramRequestDto) {
+        val result = api.update(authorization(userId), request.id, request)
+        check(result.id == request.id && result.advisorId == userId) { "No se pudo confirmar la modificación" }
+        authorization(userId)
+        cache(result)
+    }
+
+    suspend fun archive(userId: String, id: String) {
+        api.archive(authorization(userId), id)
+        // Confirmar el estado remoto antes de reemplazar el detalle local.
+        downloadDetail(userId, id)
+    }
+
     private suspend fun cache(detail: ProgramResponseDto) {
         dao.cacheDetail(ProgramEntity(detail.id, detail.content.startDate,
             json.encodeToString(detail.toSummary()), json.encodeToString(detail)))

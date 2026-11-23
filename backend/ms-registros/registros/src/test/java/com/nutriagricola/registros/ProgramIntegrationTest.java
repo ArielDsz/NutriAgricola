@@ -39,6 +39,7 @@ class ProgramIntegrationTest {
         mvc.perform(get("/api/v1/programs").param("size", "1").header("Authorization", "Bearer demo"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("Manual de prueba"))
+                .andExpect(jsonPath("$.content[0].advisorName").value("Usuario Prueba"))
                 .andExpect(jsonPath("$.content[0].fertilizers").doesNotExist());
         mvc.perform(put("/api/v1/programs/" + id).header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON)
                 .content(body.replace("Manual de prueba", "Actualizado").replace("\"doseKgHa\":10", "\"doseKgHa\":15")))

@@ -27,7 +27,8 @@ data class ProgramRequestDto(val id: String, val species: String?, val plot: Str
 @Serializable
 data class ProgramSummaryDto(
     val id: String, val advisorId: String, val name: String, val startDate: String, val active: Boolean,
-    val season: String? = null, val endDate: String? = null, val species: String? = null, val plot: String? = null
+    val season: String? = null, val endDate: String? = null, val species: String? = null, val plot: String? = null,
+    val advisorName: String? = null
 )
 @Serializable
 data class ProgramResponseDto(

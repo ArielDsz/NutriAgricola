@@ -13,12 +13,16 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-enum class ProgramMode { LIST, CREATE, DETAIL }
+enum class ProgramMode { LIST, CREATE, DETAIL, EDIT }
 data class ProgramsState(
     val programs: List<NutritionalProgram> = emptyList(), val mode: ProgramMode = ProgramMode.LIST,
     val selectedId: String? = null, val draftId: String? = null, val loading: Boolean = false, val saving: Boolean = false,
-    val hasMore: Boolean = false, val error: String? = null
-)
+    val hasMore: Boolean = false, val error: String? = null,
+    val query: String = "", val statusFilter: ProgramStatusFilter = ProgramStatusFilter.ALL,
+    val editDraft: ProgramEditDraft? = null
+) {
+    val visiblePrograms get() = filterPrograms(programs, query, statusFilter)
+}
 
 class ProgramsViewModel(private val userId: String, val role: UserRole, private val repository: ProgramRepository) : ViewModel() {
     private val mutableState = MutableStateFlow(ProgramsState())
@@ -31,6 +35,9 @@ class ProgramsViewModel(private val userId: String, val role: UserRole, private 
     }
 
     fun refresh() = download(0)
+    fun setQuery(value: String) { mutableState.update { it.copy(query = value) } }
+    fun setStatusFilter(value: ProgramStatusFilter) { mutableState.update { it.copy(statusFilter = value) } }
+    fun canManage(program: NutritionalProgram) = role == UserRole.ADVISOR && program.advisorId == userId
     fun loadMore() { if (state.value.hasMore) download(nextPage) }
     private fun download(page: Int) {
         if (state.value.loading) return
@@ -66,24 +73,68 @@ class ProgramsViewModel(private val userId: String, val role: UserRole, private 
         if (role == UserRole.ADVISOR) mutableState.update { it.copy(mode = ProgramMode.CREATE, selectedId = null,
             draftId = java.util.UUID.randomUUID().toString(), error = null) }
     }
+
+    fun edit() {
+        val program = state.value.programs.find { it.id == state.value.selectedId } ?: return
+        if (!canManage(program) || state.value.loading || state.value.saving) return
+        mutableState.update { it.copy(loading = true, error = null) }
+        viewModelScope.launch {
+            try {
+                val request = repository.loadForEditing(userId, program.id)
+                if (state.value.mode == ProgramMode.DETAIL && state.value.selectedId == program.id) {
+                    mutableState.update { it.copy(mode = ProgramMode.EDIT, editDraft = ProgramEditDraft(request)) }
+                }
+            } catch (error: CancellationException) { throw error
+            } catch (error: Exception) { showError(error)
+            } finally { mutableState.update { it.copy(loading = false) } }
+        }
+    }
+
+    fun changeDraft(change: (ProgramEditDraft) -> ProgramEditDraft) {
+        if (state.value.saving || hasPendingSave()) return
+        mutableState.update { it.copy(editDraft = it.editDraft?.let(change), error = null) }
+    }
+
+    fun saveEdit() {
+        val draft = state.value.editDraft ?: return
+        try { save(draft.buildRequest())
+        } catch (error: IllegalArgumentException) { showError(error) }
+    }
+
+    fun archive() {
+        val program = state.value.programs.find { it.id == state.value.selectedId } ?: return
+        if (!canManage(program) || !program.active || state.value.saving || state.value.loading) return
+        mutableState.update { it.copy(saving = true, error = null) }
+        viewModelScope.launch {
+            try { repository.archive(userId, program.id)
+            } catch (error: CancellationException) { throw error
+            } catch (error: Exception) { showError(error)
+            } finally { mutableState.update { it.copy(saving = false) } }
+        }
+    }
+
     fun back(): Boolean {
         if (state.value.saving) return true
         if (state.value.mode == ProgramMode.LIST) return false
         retryRequest = null
-        mutableState.update { it.copy(mode = ProgramMode.LIST, selectedId = null, error = null) }
+        mutableState.update { if (it.mode == ProgramMode.EDIT) it.copy(mode = ProgramMode.DETAIL, editDraft = null, error = null)
+            else it.copy(mode = ProgramMode.LIST, selectedId = null, error = null) }
         return true
     }
 
     // Un reintento conserva UUID y contenido: una respuesta perdida no crea un duplicado.
     fun save(request: ProgramRequestDto) {
         if (role != UserRole.ADVISOR || state.value.saving) return
+        val editing = state.value.mode == ProgramMode.EDIT
+        if (!editing && state.value.mode != ProgramMode.CREATE) return
+        if (request.id != if (editing) state.value.selectedId else state.value.draftId) return
         val pending = retryRequest ?: request.also { retryRequest = it }
         mutableState.update { it.copy(saving = true, error = null) }
         viewModelScope.launch {
             try {
-                repository.create(userId, pending)
+                if (editing) repository.update(userId, pending) else repository.create(userId, pending)
                 retryRequest = null
-                mutableState.update { it.copy(mode = ProgramMode.DETAIL, selectedId = pending.id) }
+                mutableState.update { it.copy(mode = ProgramMode.DETAIL, selectedId = pending.id, editDraft = null) }
             } catch (error: CancellationException) { throw error
             } catch (error: Exception) {
                 // Una respuesta 4xx (salvo timeout) confirma rechazo: permite corregir entradas.

@@ -12,10 +12,10 @@ fun ProgramNutrientsDto.toAmountsOrNull(): NutrientAmounts? {
 fun NutrientAmounts.toDto() = ProgramNutrientsDto(nitrogen, phosphorusOxide, potassiumOxide, calciumOxide, magnesiumOxide, sulfur)
 
 fun ProgramResponseDto.toSummary() = ProgramSummaryDto(id, advisorId, content.name, content.startDate,
-    active, content.season, content.endDate, species, plot)
+    active, content.season, content.endDate, species, plot, advisorName)
 
 fun ProgramSummaryDto.toDomain(detail: ProgramResponseDto? = null) = NutritionalProgram(
-    id = id, name = name, advisorId = advisorId, advisorName = detail?.advisorName,
+    id = id, name = name, advisorId = advisorId, advisorName = advisorName ?: detail?.advisorName,
     species = species, plot = plot, season = season, startDate = startDate, endDate = endDate,
     active = active, detailAvailable = detail != null,
     requirements = detail?.content?.nutrients?.toValues().orEmpty(),

@@ -22,6 +22,14 @@ import java.util.Locale
 @Composable
 fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsState()
+    var showArchiveConfirmation by remember(state.selectedId, state.mode) { mutableStateOf(false) }
+    if (showArchiveConfirmation) AlertDialog(
+        onDismissRequest = { showArchiveConfirmation = false },
+        title = { Text("¿Archivar programa?") },
+        text = { Text("El programa seguirá disponible para consulta y aparecerá como archivado.") },
+        confirmButton = { TextButton(onClick = { showArchiveConfirmation = false; viewModel.archive() }) { Text("Archivar") } },
+        dismissButton = { TextButton(onClick = { showArchiveConfirmation = false }) { Text("Cancelar") } }
+    )
     BackHandler(enabled = state.mode != ProgramMode.LIST) { viewModel.back() }
     when (state.mode) {
         ProgramMode.LIST -> LazyColumn(modifier, contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -32,14 +40,26 @@ fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier)
                     Button(onClick = viewModel::newProgram, modifier = Modifier.fillMaxWidth()) { Text("Nuevo programa") }
                 }
                 OutlinedButton(onClick = viewModel::refresh, enabled = !state.loading) { Text("Actualizar") }
+                OutlinedTextField(state.query, viewModel::setQuery,
+                    label = { Text("Buscar por nombre, especie o asesor") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProgramStatusFilter.entries.forEach { filter ->
+                        FilterChip(selected = state.statusFilter == filter,
+                            onClick = { viewModel.setStatusFilter(filter) }, label = { Text(filter.label) })
+                    }
+                }
+                Text("Los filtros se aplican a los programas descargados. Usa Cargar más para ampliar la lista.",
+                    style = MaterialTheme.typography.bodySmall)
             }
             item { ProgramStatus(state) }
             if (state.programs.isEmpty() && !state.loading) item { Text("Aún no hay programas descargados.") }
-            items(state.programs, key = { it.id }) { program ->
+            if (state.programs.isNotEmpty() && state.visiblePrograms.isEmpty()) item { Text("No hay programas que coincidan con estos filtros.") }
+            items(state.visiblePrograms, key = { it.id }) { program ->
                 ElevatedCard(onClick = { viewModel.open(program.id) }, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(program.name, style = MaterialTheme.typography.titleMedium)
                         program.species?.takeIf { it.isNotBlank() }?.let { Text(it) }
+                        program.advisorName?.takeIf { it.isNotBlank() }?.let { Text("Asesor: $it", style = MaterialTheme.typography.bodySmall) }
                         Text("Inicio: ${program.startDate}", style = MaterialTheme.typography.bodySmall)
                         if (!program.active) Text("Archivado", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(if (program.detailAvailable) "Detalle disponible sin conexión" else "Conecta para descargar el detalle",
@@ -52,12 +72,22 @@ fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier)
             }
         }
         ProgramMode.DETAIL -> Column(modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = viewModel::refreshDetail, enabled = !state.loading) { Text("Actualizar detalle") }
+            OutlinedButton(onClick = viewModel::refreshDetail, enabled = !state.loading && !state.saving) { Text("Actualizar detalle") }
             ProgramStatus(state)
             val program = state.programs.find { it.id == state.selectedId }
-            if (program != null) ProgramDetail(program)
+            if (program != null) {
+                if (viewModel.canManage(program)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = viewModel::edit, enabled = !state.loading && !state.saving) { Text("Editar") }
+                        if (program.active) OutlinedButton(onClick = { showArchiveConfirmation = true },
+                            enabled = !state.loading && !state.saving) { Text("Archivar") }
+                    }
+                }
+                ProgramDetail(program)
+            }
             else if (!state.loading) Text("El programa todavía no está disponible en este dispositivo.")
         }
+        ProgramMode.EDIT -> ProgramEditForm(viewModel, modifier)
         ProgramMode.CREATE -> {
             val draftId = state.draftId ?: return
             val calculator: ProgramCalculatorViewModel = viewModel(key = "calculator-$draftId")
@@ -87,7 +117,7 @@ fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier)
 }
 
 @Composable
-private fun ProgramStatus(state: ProgramsState) {
+internal fun ProgramStatus(state: ProgramsState) {
     if (state.loading || state.saving) LinearProgressIndicator(Modifier.fillMaxWidth())
     state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 }
