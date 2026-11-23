@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.nutriagricola.app.ui.programs.*
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
@@ -39,12 +41,22 @@ fun AdvisorProgramsScreen(
             )
         },
         bottomBar = {
-            if (state.mode == ProgramMode.LIST) AdvisorBottomBar(
-                selectedItem = AdvisorBottomItem.PROGRAM,
-                onHomeClick = onHomeClick,
-                onAllRecordsClick = onAllRecordsClick,
-                onProgramClick = {}
-            )
+            if (state.mode == ProgramMode.LIST) Column {
+                Box(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
+                    Button(onClick = viewModel::newProgram, shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                        Icon(painterResource(R.drawable.ic_add_circle), null, Modifier.size(22.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Nuevo programa", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                AdvisorBottomBar(
+                    selectedItem = AdvisorBottomItem.PROGRAM,
+                    onHomeClick = onHomeClick,
+                    onAllRecordsClick = onAllRecordsClick,
+                    onProgramClick = {}
+                )
+            }
         }
     ) { padding ->
         ProgramsContent(viewModel, if (fullHeader)

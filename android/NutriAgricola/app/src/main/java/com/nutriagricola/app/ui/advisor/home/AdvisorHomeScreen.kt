@@ -131,9 +131,9 @@ private fun AdvisorModuleCard(
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 168.dp).padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
         ) {
             Box(
                 modifier = Modifier.size(54.dp).clip(RoundedCornerShape(16.dp))

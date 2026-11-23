@@ -50,7 +50,6 @@ fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier,
                     modifier = Modifier.fillMaxWidth(), onClick = {
                         calculator.buildRequest(draftId, name, species, plot, date)?.let(viewModel::save)
                     }) { Text(if (state.saving) "Guardando…" else if (viewModel.hasPendingSave()) "Reintentar guardado" else "Guardar programa") }
-                Text("Necesitas conexión para guardar. Será visible para todos los usuarios.", style = MaterialTheme.typography.bodySmall)
             })
         }
     }

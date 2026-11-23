@@ -24,7 +24,6 @@ fun ProgramCalculatorForm(modifier: Modifier = Modifier, calculator: ProgramCalc
     Column(modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Armar programa", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         header()
-        Text("Ingresa los requerimientos netos en kg/ha. No necesitas un registro de análisis.", style = MaterialTheme.typography.bodyMedium)
         Text("1. Requerimientos nutricionales", style = MaterialTheme.typography.titleMedium)
         state.requirements.forEachIndexed { index, value ->
             ProgramNumberField(value, "${labels[index]} (kg/ha)", { calculator.setRequirement(index, it) }, state.error != null, enabled)
@@ -33,7 +32,6 @@ fun ProgramCalculatorForm(modifier: Modifier = Modifier, calculator: ProgramCalc
         Button(onClick = calculator::calculate, enabled = enabled, modifier = Modifier.fillMaxWidth()) { Text("Calcular dosis sugeridas") }
         if (state.doses.isNotEmpty()) {
             Text("2. Ajustar dosis de fertilizantes", style = MaterialTheme.typography.titleMedium)
-            Text("Receta de cinco productos de NutriXpert. Puedes editar las cantidades; no es una mezcla optimizada ni una validación agronómica.", style = MaterialTheme.typography.bodySmall)
             state.doses.forEachIndexed { index, value ->
                 ProgramNumberField(value, "${FertilizerCatalog.materials[index].name} (kg/ha)", { calculator.setDose(index, it) }, enabled = enabled)
             }
@@ -59,7 +57,6 @@ fun ProgramCalculatorForm(modifier: Modifier = Modifier, calculator: ProgramCalc
                 Text("Revisa las dosis: usa números finitos mayores o iguales a cero.", color = MaterialTheme.colorScheme.error)
             }
         }
-        Text("Referencia: catálogo y receta de NutriXpert (22/11/2026). Las dosis se calculan sin redondeos intermedios; el resumen muestra dos decimales.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         footer(state)
     }
 }

@@ -28,7 +28,9 @@ fun FarmerBottomBar(
     onHomeClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onProgramClick: () -> Unit,
-    onFarmsClick: () -> Unit
+    onFarmsClick: () -> Unit,
+    historyLabel: String = "Historial",
+    programLabel: String = "Programa"
 ) {
     val itemColors = NavigationBarItemDefaults.colors(
         indicatorColor = MaterialTheme.colorScheme.primaryContainer,
@@ -69,7 +71,7 @@ fun FarmerBottomBar(
                     )
                 },
                 label = {
-                    Text("Historial", style = MaterialTheme.typography.bodySmall)
+                    Text(historyLabel, style = MaterialTheme.typography.bodySmall)
                 }
             )
 
@@ -85,7 +87,7 @@ fun FarmerBottomBar(
                     )
                 },
                 label = {
-                    Text("Programa", style = MaterialTheme.typography.bodySmall)
+                    Text(programLabel, style = MaterialTheme.typography.bodySmall)
                 }
             )
 

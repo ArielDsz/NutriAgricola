@@ -29,9 +29,6 @@ fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifi
     LazyColumn(modifier, contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             SectionHeader("Programas") {
-                if (viewModel.role == UserRole.ADVISOR) IconButton(onClick = viewModel::newProgram) {
-                    Icon(painterResource(R.drawable.ic_add_circle), "Nuevo programa", tint = MaterialTheme.colorScheme.primary)
-                }
                 headerActions()
             }
         }
