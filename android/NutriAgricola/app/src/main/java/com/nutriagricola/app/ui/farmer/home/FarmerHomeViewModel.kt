@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 data class FarmerHomeUiState(
     val farmId: String? = null,
@@ -43,15 +44,17 @@ class FarmerHomeViewModel(
 
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val weatherState: StateFlow<WeatherUiState> = _weatherState.asStateFlow()
+    private var weatherJob: Job? = null
 
     init {
         loadWeather()
     }
 
-    fun loadWeather(lat: Double = -33.45, lon: Double = -70.66) {
-        viewModelScope.launch {
+    fun loadWeather() {
+        weatherJob?.cancel()
+        weatherJob = viewModelScope.launch {
             _weatherState.value = WeatherUiState.Loading
-            val result = weatherRepository.getWeather(lat, lon)
+            val result = weatherRepository.getWeather()
             _weatherState.value = result.fold(
                 onSuccess = { WeatherUiState.Success(it) },
                 onFailure = { WeatherUiState.Error(it.message ?: "Error al obtener datos climáticos") }
