@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.advisor.home.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,10 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Agriculture
-import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.HourglassTop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -27,10 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nutriagricola.app.R
 
 @Composable
 fun AdvisorKpiSection(
@@ -48,7 +46,7 @@ fun AdvisorKpiSection(
         KpiCard(
             count = pendingCount.toString(),
             label = "Por Revisar",
-            icon = Icons.Outlined.HourglassTop,
+            iconRes = R.drawable.ic_history,
             containerColor = Color(0xFFFFF3CD),
             contentColor = Color(0xFF856404),
             onClick = onPendingClick,
@@ -59,7 +57,7 @@ fun AdvisorKpiSection(
         KpiCard(
             count = totalRecordsCount.toString(),
             label = "Total Análisis",
-            icon = Icons.Outlined.Assignment,
+            iconRes = R.drawable.ic_program,
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             onClick = onAllRecordsClick,
@@ -69,7 +67,7 @@ fun AdvisorKpiSection(
         KpiCard(
             count = totalFarmsCount.toString(),
             label = "Predios",
-            icon = Icons.Outlined.Agriculture,
+            iconRes = R.drawable.ic_farms,
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             onClick = {},
@@ -82,7 +80,7 @@ fun AdvisorKpiSection(
 private fun KpiCard(
     count: String,
     label: String,
-    icon: ImageVector,
+    @DrawableRes iconRes: Int,
     containerColor: Color,
     contentColor: Color,
     onClick: () -> Unit,
@@ -112,7 +110,7 @@ private fun KpiCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = icon,
+                        painter = painterResource(iconRes),
                         contentDescription = label,
                         tint = contentColor,
                         modifier = Modifier.size(20.dp)
