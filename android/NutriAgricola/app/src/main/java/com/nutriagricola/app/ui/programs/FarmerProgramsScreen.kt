@@ -17,7 +17,7 @@ fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
                           onHome: () -> Unit, onHistory: () -> Unit) {
     val state by viewModel.state.collectAsState()
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Programas nutricionales") }, navigationIcon = {
+        if (state.mode != ProgramMode.LIST) TopAppBar(title = { Text("Programas") }, navigationIcon = {
             IconButton(onClick = { if (!viewModel.back()) onBack() }) {
                 Icon(painterResource(R.drawable.ic_chevron_right), "Volver", Modifier.size(24.dp).rotate(180f))
             }
@@ -25,5 +25,9 @@ fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
     }, bottomBar = {
         if (state.mode == ProgramMode.LIST) FarmerBottomBar(FarmerBottomItem.PROGRAM,
             onHomeClick = onHome, onHistoryClick = onHistory, onProgramClick = {}, onFarmsClick = {})
-    }) { padding -> ProgramsContent(viewModel, Modifier.fillMaxSize().padding(padding)) }
+    }) { padding ->
+        ProgramsContent(viewModel, if (state.mode == ProgramMode.LIST)
+            Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())
+            else Modifier.fillMaxSize().padding(padding))
+    }
 }

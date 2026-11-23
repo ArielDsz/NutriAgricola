@@ -16,6 +16,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,13 +29,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import com.nutriagricola.app.R
 
 @Composable
 fun HomeHeader(
     initials: String,
     onLogoutClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onWeatherClick: (() -> Unit)? = null
 ) {
     var accountMenuExpanded by remember { mutableStateOf(false) }
     Box(
@@ -67,20 +71,33 @@ fun HomeHeader(
                         modifier = Modifier.size(48.dp)
                     )
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "NutriAgrícola",
                             style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "Cultivos hoy, suelos mañana",
                             style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
 
+                if (onWeatherClick != null) {
+                    IconButton(onClick = onWeatherClick, modifier = Modifier.size(48.dp)) {
+                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                            modifier = Modifier.size(40.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(painterResource(R.drawable.ic_weather), "Ver clima",
+                                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                            }
+                        }
+                    }
+                }
                 Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                     Surface(
                         onClick = { accountMenuExpanded = true },

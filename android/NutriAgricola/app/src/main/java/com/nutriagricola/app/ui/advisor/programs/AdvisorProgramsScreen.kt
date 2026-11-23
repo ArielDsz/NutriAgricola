@@ -25,8 +25,8 @@ fun AdvisorProgramsScreen(
     val state by viewModel.state.collectAsState()
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Programas nutricionales", fontWeight = FontWeight.Bold) },
+            if (state.mode != ProgramMode.LIST) TopAppBar(
+                title = { Text("Programas", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { if (!viewModel.back()) onBackClick() }) {
                         Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = "Volver",
@@ -45,6 +45,8 @@ fun AdvisorProgramsScreen(
             )
         }
     ) { padding ->
-        ProgramsContent(viewModel, Modifier.fillMaxSize().padding(padding))
+        ProgramsContent(viewModel, if (state.mode == ProgramMode.LIST)
+            Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())
+            else Modifier.fillMaxSize().padding(padding))
     }
 }

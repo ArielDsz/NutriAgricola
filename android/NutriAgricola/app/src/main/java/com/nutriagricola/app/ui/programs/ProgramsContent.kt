@@ -2,8 +2,6 @@ package com.nutriagricola.app.ui.programs
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -32,45 +30,7 @@ fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier)
     )
     BackHandler(enabled = state.mode != ProgramMode.LIST) { viewModel.back() }
     when (state.mode) {
-        ProgramMode.LIST -> LazyColumn(modifier, contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item {
-                Text("Programas compartidos", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Todos pueden consultarlos. Los detalles que abras quedarán disponibles sin conexión.")
-                if (viewModel.role == UserRole.ADVISOR) {
-                    Button(onClick = viewModel::newProgram, modifier = Modifier.fillMaxWidth()) { Text("Nuevo programa") }
-                }
-                OutlinedButton(onClick = viewModel::refresh, enabled = !state.loading) { Text("Actualizar") }
-                OutlinedTextField(state.query, viewModel::setQuery,
-                    label = { Text("Buscar por nombre, especie o asesor") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProgramStatusFilter.entries.forEach { filter ->
-                        FilterChip(selected = state.statusFilter == filter,
-                            onClick = { viewModel.setStatusFilter(filter) }, label = { Text(filter.label) })
-                    }
-                }
-                Text("Los filtros se aplican a los programas descargados. Usa Cargar más para ampliar la lista.",
-                    style = MaterialTheme.typography.bodySmall)
-            }
-            item { ProgramStatus(state) }
-            if (state.programs.isEmpty() && !state.loading) item { Text("Aún no hay programas descargados.") }
-            if (state.programs.isNotEmpty() && state.visiblePrograms.isEmpty()) item { Text("No hay programas que coincidan con estos filtros.") }
-            items(state.visiblePrograms, key = { it.id }) { program ->
-                ElevatedCard(onClick = { viewModel.open(program.id) }, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(program.name, style = MaterialTheme.typography.titleMedium)
-                        program.species?.takeIf { it.isNotBlank() }?.let { Text(it) }
-                        program.advisorName?.takeIf { it.isNotBlank() }?.let { Text("Asesor: $it", style = MaterialTheme.typography.bodySmall) }
-                        Text("Inicio: ${program.startDate}", style = MaterialTheme.typography.bodySmall)
-                        if (!program.active) Text("Archivado", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(if (program.detailAvailable) "Detalle disponible sin conexión" else "Conecta para descargar el detalle",
-                            style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-            if (state.hasMore) item {
-                OutlinedButton(onClick = viewModel::loadMore, enabled = !state.loading) { Text("Cargar más") }
-            }
-        }
+        ProgramMode.LIST -> ProgramListContent(viewModel, modifier)
         ProgramMode.DETAIL -> Column(modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = viewModel::refreshDetail, enabled = !state.loading && !state.saving) { Text("Actualizar detalle") }
             ProgramStatus(state)
