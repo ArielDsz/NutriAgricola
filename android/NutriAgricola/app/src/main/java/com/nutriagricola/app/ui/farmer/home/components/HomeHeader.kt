@@ -89,13 +89,8 @@ fun HomeHeader(
 
                 if (onWeatherClick != null) {
                     IconButton(onClick = onWeatherClick, modifier = Modifier.size(48.dp)) {
-                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-                            modifier = Modifier.size(40.dp)) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(painterResource(R.drawable.ic_weather), "Ver clima",
-                                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                            }
-                        }
+                        Image(painterResource(R.drawable.weather_sun_cloud), "Ver clima", Modifier.size(44.dp),
+                            contentScale = ContentScale.Fit)
                     }
                 }
                 Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
