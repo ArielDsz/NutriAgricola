@@ -14,3 +14,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firmas privadas y archivos de instalación generados.
+*.jks
+*.keystore
+keystore.properties
+*.apk
+/app/release/

@@ -19,12 +19,17 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "DEVICE_API_BASE_URL", "\"http://127.0.0.1:8080/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
+            // Permite conservar instalada la versión de pruebas con su almacenamiento local.
+            applicationIdSuffix = ".release"
+            // Dirección del PC en la zona Wi-Fi del teléfono usada para la presentación.
+            buildConfigField("String", "DEVICE_API_BASE_URL", "\"http://10.233.59.242:8080/\"")
             optimization {
                 enable = false
             }
@@ -35,6 +40,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }

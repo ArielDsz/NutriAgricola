@@ -1,6 +1,7 @@
 package com.nutriagricola.app.data.remote
 
 import android.os.Build
+import com.nutriagricola.app.BuildConfig
 
 import com.nutriagricola.app.data.remote.api.AuthApi
 import com.nutriagricola.app.data.remote.api.FarmApi
@@ -22,8 +23,8 @@ class ApiClient(baseUrl: String = defaultBaseUrl()) {
                 // Android Studio emulator: direct access to the development computer.
                 "http://10.0.2.2:8080/"
             } else {
-                // Physical phone over USB: adb reverse tcp:8080 tcp:8080.
-                "http://127.0.0.1:8080/"
+                // Debug usa USB; release apunta al PC de la presentación.
+                BuildConfig.DEVICE_API_BASE_URL
             }
     }
 
