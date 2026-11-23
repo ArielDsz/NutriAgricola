@@ -32,6 +32,7 @@ import com.nutriagricola.app.ui.theme.LeafGreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdvisorPendingRecordsScreen(
+    onAccountClick: () -> Unit,
     viewModel: AdvisorPendingRecordsViewModel,
     downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit,
@@ -75,7 +76,8 @@ fun AdvisorPendingRecordsScreen(
                 selectedItem = AdvisorBottomItem.ALL_RECORDS,
                 onHomeClick = onHomeClick,
                 onAllRecordsClick = onAllRecordsClick,
-                onProgramClick = onProgramClick
+                onProgramClick = onProgramClick,
+                onAccountClick = onAccountClick
             )
         }
     ) { paddingValues ->

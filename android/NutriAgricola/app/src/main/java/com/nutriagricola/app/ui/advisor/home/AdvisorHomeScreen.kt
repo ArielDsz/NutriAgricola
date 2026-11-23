@@ -47,6 +47,7 @@ import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
 
 @Composable
 fun AdvisorHomeScreen(
+    onAccountClick: () -> Unit,
     user: User,
     viewModel: AdvisorHomeViewModel,
     onLogoutClick: () -> Unit,
@@ -75,7 +76,8 @@ fun AdvisorHomeScreen(
                 selectedItem = AdvisorBottomItem.HOME,
                 onHomeClick = {},
                 onAllRecordsClick = onAllRecordsClick,
-                onProgramClick = onProgramClick
+                onProgramClick = onProgramClick,
+                onAccountClick = onAccountClick
             )
         }
     ) { innerPadding ->

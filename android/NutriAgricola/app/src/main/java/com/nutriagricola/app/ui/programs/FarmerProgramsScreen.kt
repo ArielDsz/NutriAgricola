@@ -14,7 +14,9 @@ import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
+fun FarmerProgramsScreen(
+    onAccountClick: () -> Unit,
+                          viewModel: ProgramsViewModel, onBack: () -> Unit,
                           onHome: () -> Unit, onHistory: () -> Unit,
                           headerInitials: String = "", onLogoutClick: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
@@ -27,7 +29,7 @@ fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
         })
     }, bottomBar = {
         if (state.mode == ProgramMode.LIST) FarmerBottomBar(FarmerBottomItem.PROGRAM,
-            onHomeClick = onHome, onHistoryClick = onHistory, onProgramClick = {}, onFarmsClick = {})
+            onHomeClick = onHome, onHistoryClick = onHistory, onProgramClick = {}, onAccountClick = onAccountClick)
     }) { padding ->
         ProgramsContent(viewModel, if (fullHeader)
             Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())

@@ -86,6 +86,9 @@ import com.nutriagricola.app.ui.login.LoginScreen
 import com.nutriagricola.app.ui.login.LoginViewModel
 import com.nutriagricola.app.ui.login.LoginViewModelFactory
 import com.nutriagricola.app.data.local.database.AppDatabase
+import com.nutriagricola.app.ui.account.AccountScreen
+import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
+import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 import com.nutriagricola.app.data.local.cleanupLegacySamples
 import com.nutriagricola.app.data.local.FoliarPhotoStorage
 import com.nutriagricola.app.data.repository.AuthRepository
@@ -234,6 +237,13 @@ fun AppNavigation() {
         // A different session gets a fresh controller, discarding the previous back stack.
         key(currentUser?.id) {
             val navController = rememberNavController()
+            val homeRoute = if (currentUser?.role == UserRole.ADVISOR) "advisor_home" else "farmer_home"
+            val onAccountClick: () -> Unit = {
+                navController.navigate("account") {
+                    popUpTo(homeRoute) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
             val onRecordClick: (String) -> Unit = { recordId ->
                 navController.navigate("record_detail/${Uri.encode(recordId)}") {
                     launchSingleTop = true
@@ -259,6 +269,33 @@ fun AppNavigation() {
                 predictivePopEnterTransition = { _ -> fadeIn(tween(180)) },
                 predictivePopExitTransition = { _ -> fadeOut(tween(180)) }
             ) {
+                if (currentUser != null) {
+                    composable("account") {
+                        val isAdvisor = currentUser.role == UserRole.ADVISOR
+                        AccountScreen(user = currentUser, onLogoutClick = { sessionViewModel.logout() },
+                            bottomBar = {
+                                FarmerBottomBar(
+                                    selectedItem = FarmerBottomItem.ACCOUNT,
+                                    onHomeClick = { navController.popBackStack(homeRoute, false) },
+                                    onHistoryClick = {
+                                        navController.navigate(if (isAdvisor) "advisor_all_records" else "farmer_history") {
+                                            popUpTo(homeRoute) { inclusive = false }
+                                            launchSingleTop = true
+                                        }
+                                    },
+                                    onProgramClick = {
+                                        navController.navigate(if (isAdvisor) "advisor_programs" else "farmer_programs") {
+                                            popUpTo(homeRoute) { inclusive = false }
+                                            launchSingleTop = true
+                                        }
+                                    },
+                                    onAccountClick = {},
+                                    historyLabel = if (isAdvisor) "Registros" else "Historial",
+                                    programLabel = if (isAdvisor) "Programas" else "Programa"
+                                )
+                            })
+                    }
+                }
                 if (currentUser == null) {
                     composable("login") {
                         val loginViewModel: LoginViewModel = viewModel(factory = loginFactory)
@@ -274,6 +311,7 @@ fun AppNavigation() {
                         }
                         val advisorHomeViewModel: AdvisorHomeViewModel = viewModel(factory = advisorHomeFactory)
                         AdvisorHomeScreen(
+                            onAccountClick = onAccountClick,
                             user = currentUser,
                             viewModel = advisorHomeViewModel,
                             refreshVersion = downloadState.completedRefresh,
@@ -303,6 +341,7 @@ fun AppNavigation() {
                         val pendingViewModel: AdvisorPendingRecordsViewModel = viewModel(factory = pendingFactory)
 
                         AdvisorPendingRecordsScreen(
+                            onAccountClick = onAccountClick,
                             viewModel = pendingViewModel,
                             downloadState = downloadState,
                             onRefreshRecords = { recordDownloadViewModel.refresh() },
@@ -333,6 +372,7 @@ fun AppNavigation() {
                         val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
 
                         AdvisorAllRecordsScreen(
+                            onAccountClick = onAccountClick,
                             headerInitials = userInitials(currentUser),
                             onLogoutClick = { sessionViewModel.logout() },
                             viewModel = allRecordsViewModel,
@@ -364,6 +404,7 @@ fun AppNavigation() {
                         }
                         val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
                         AdvisorProgramsScreen(
+                            onAccountClick = onAccountClick,
                             headerInitials = userInitials(currentUser),
                             onLogoutClick = { sessionViewModel.logout() },
                             viewModel = programsViewModel,
@@ -420,6 +461,7 @@ fun AppNavigation() {
                             val homeViewModel: FarmerHomeViewModel = viewModel(factory = homeFactory)
 
                             FarmerHomeScreen(
+                                onAccountClick = onAccountClick,
                                 user = currentUser,
                                 viewModel = homeViewModel,
                                 downloadState = downloadState,
@@ -466,6 +508,7 @@ fun AppNavigation() {
                             val historyViewModel: FarmerHistoryViewModel = viewModel(factory = historyFactory)
 
                             FarmerHistoryScreen(
+                                onAccountClick = onAccountClick,
                                 headerInitials = userInitials(currentUser),
                                 onLogoutClick = { sessionViewModel.logout() },
                                 viewModel = historyViewModel,
@@ -487,7 +530,9 @@ fun AppNavigation() {
                                 ProgramsViewModelFactory(currentUser.id, currentUser.role, programRepository)
                             }
                             val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
-                            FarmerProgramsScreen(programsViewModel,
+                            FarmerProgramsScreen(
+                                onAccountClick = onAccountClick,
+                                viewModel = programsViewModel,
                                 headerInitials = userInitials(currentUser),
                                 onLogoutClick = { sessionViewModel.logout() },
                                 onBack = { navController.popBackStack() },

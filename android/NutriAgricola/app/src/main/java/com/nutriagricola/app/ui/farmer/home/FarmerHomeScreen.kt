@@ -56,6 +56,7 @@ import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
 
 @Composable
 fun FarmerHomeScreen(
+    onAccountClick: () -> Unit,
     user: User,
     downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit,
@@ -104,7 +105,7 @@ fun FarmerHomeScreen(
                 onHomeClick = {},
                 onHistoryClick = onHistoryClick,
                 onProgramClick = onProgramClick,
-                onFarmsClick = {}
+                onAccountClick = onAccountClick
             )
         }
     ) { innerPadding ->

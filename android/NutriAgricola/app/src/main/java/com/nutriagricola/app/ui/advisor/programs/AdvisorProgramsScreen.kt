@@ -19,6 +19,7 @@ import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdvisorProgramsScreen(
+    onAccountClick: () -> Unit,
     viewModel: ProgramsViewModel,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
@@ -54,7 +55,8 @@ fun AdvisorProgramsScreen(
                     selectedItem = AdvisorBottomItem.PROGRAM,
                     onHomeClick = onHomeClick,
                     onAllRecordsClick = onAllRecordsClick,
-                    onProgramClick = {}
+                    onProgramClick = {},
+                    onAccountClick = onAccountClick
                 )
             }
         }

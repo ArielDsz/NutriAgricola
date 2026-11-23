@@ -25,6 +25,7 @@ import com.nutriagricola.app.ui.records.RecordDownloadUiState
 
 @Composable
 fun AdvisorAllRecordsScreen(
+    onAccountClick: () -> Unit,
     viewModel: AdvisorAllRecordsViewModel, downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit, onMoreRecords: () -> Unit, onUploadRecords: () -> Unit,
     onBackClick: () -> Unit, onHomeClick: () -> Unit, onPendingClick: () -> Unit,
@@ -38,7 +39,7 @@ fun AdvisorAllRecordsScreen(
     }
     AdvisorRefreshOnResume { viewModel.loadData() }
     Scaffold(bottomBar = {
-        AdvisorBottomBar(AdvisorBottomItem.ALL_RECORDS, onHomeClick, {}, onProgramClick)
+        AdvisorBottomBar(AdvisorBottomItem.ALL_RECORDS, onHomeClick, {}, onProgramClick, onAccountClick)
     }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding()),
             contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

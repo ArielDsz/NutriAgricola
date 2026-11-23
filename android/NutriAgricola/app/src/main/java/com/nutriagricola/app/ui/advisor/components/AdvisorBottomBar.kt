@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 
-enum class AdvisorBottomItem { HOME, ALL_RECORDS, PROGRAM, FARMS }
+enum class AdvisorBottomItem { HOME, ALL_RECORDS, PROGRAM, ACCOUNT }
 
 @Composable
 fun AdvisorBottomBar(
@@ -12,17 +12,17 @@ fun AdvisorBottomBar(
     onHomeClick: () -> Unit,
     onAllRecordsClick: () -> Unit,
     onProgramClick: () -> Unit,
-    onFarmsClick: () -> Unit = {}
+    onAccountClick: () -> Unit = {}
 ) {
     FarmerBottomBar(
         selectedItem = when (selectedItem) {
             AdvisorBottomItem.HOME -> FarmerBottomItem.HOME
             AdvisorBottomItem.ALL_RECORDS -> FarmerBottomItem.HISTORY
             AdvisorBottomItem.PROGRAM -> FarmerBottomItem.PROGRAM
-            AdvisorBottomItem.FARMS -> FarmerBottomItem.FARMS
+            AdvisorBottomItem.ACCOUNT -> FarmerBottomItem.ACCOUNT
         },
         onHomeClick = onHomeClick, onHistoryClick = onAllRecordsClick,
-        onProgramClick = onProgramClick, onFarmsClick = onFarmsClick,
+        onProgramClick = onProgramClick, onAccountClick = onAccountClick,
         historyLabel = "Registros", programLabel = "Programas"
     )
 }

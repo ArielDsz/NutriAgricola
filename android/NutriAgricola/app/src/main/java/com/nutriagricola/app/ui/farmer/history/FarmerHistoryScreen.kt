@@ -33,6 +33,7 @@ import com.nutriagricola.app.ui.farmer.record.components.historyLabel
 
 @Composable
 fun FarmerHistoryScreen(
+    onAccountClick: () -> Unit,
     viewModel: FarmerHistoryViewModel,
     downloadState: RecordDownloadUiState,
     onRefreshRecords: () -> Unit,
@@ -76,7 +77,7 @@ fun FarmerHistoryScreen(
                 onHomeClick = onHomeClick,
                 onHistoryClick = {},
                 onProgramClick = onProgramClick,
-                onFarmsClick = {}
+                onAccountClick = onAccountClick
             )
         }
     ) { innerPadding ->

@@ -19,7 +19,7 @@ enum class FarmerBottomItem {
     HOME,
     HISTORY,
     PROGRAM,
-    FARMS
+    ACCOUNT
 }
 
 @Composable
@@ -28,7 +28,7 @@ fun FarmerBottomBar(
     onHomeClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onProgramClick: () -> Unit,
-    onFarmsClick: () -> Unit,
+    onAccountClick: () -> Unit,
     historyLabel: String = "Historial",
     programLabel: String = "Programa"
 ) {
@@ -92,18 +92,18 @@ fun FarmerBottomBar(
             )
 
             NavigationBarItem(
-                selected = selectedItem == FarmerBottomItem.FARMS,
-                onClick = onFarmsClick,
+                selected = selectedItem == FarmerBottomItem.ACCOUNT,
+                onClick = onAccountClick,
                 colors = itemColors,
                 icon = {
                     Icon(
-                        painter = painterResource(R.drawable.ic_farms),
+                        painter = painterResource(R.drawable.ic_account),
                         contentDescription = null,
                         modifier = Modifier.size(32.dp)
                     )
                 },
                 label = {
-                    Text("Predios", style = MaterialTheme.typography.bodySmall)
+                    Text("Cuenta", style = MaterialTheme.typography.bodySmall)
                 }
             )
         }
