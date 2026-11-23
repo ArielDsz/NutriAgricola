@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.List;
 
-// Todos los valores son ingresados manualmente; este prototipo no calcula recomendaciones.
+// El backend conserva las entradas y dosis; el cálculo se realiza en Android.
 public record ProgramContent(
         @NotBlank @Size(max = 150) String name,
         @Size(max = 30) String season,
@@ -22,7 +22,8 @@ public record ProgramContent(
                              @PositiveOrZero Double potassiumOxide, @PositiveOrZero Double calciumOxide,
                              @PositiveOrZero Double magnesiumOxide, @PositiveOrZero Double sulfur) { }
     public record Fertilizer(@NotBlank @Size(max = 150) String name,
-                              @NotNull @PositiveOrZero Double doseKgHa, String notes) { }
+                              @NotNull @PositiveOrZero Double doseKgHa, String notes,
+                              @Valid Nutrients composition) { }
     public record Stage(@NotBlank @Size(max = 100) String name, @Positive Integer weeks,
                          @PositiveOrZero Integer irrigationsPerWeek, String instructions) { }
 }

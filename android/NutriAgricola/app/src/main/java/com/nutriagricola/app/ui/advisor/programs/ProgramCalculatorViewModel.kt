@@ -2,6 +2,8 @@ package com.nutriagricola.app.ui.advisor.programs
 
 import androidx.lifecycle.ViewModel
 import com.nutriagricola.app.domain.model.program.*
+import com.nutriagricola.app.data.mapper.toDto
+import com.nutriagricola.app.data.remote.dto.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -56,5 +58,17 @@ class ProgramCalculatorViewModel : ViewModel() {
             onSuccess = { doses -> mutableState.update { it.copy(doses = doses.map { dose -> dose.kgHa.toString() }, error = null) } },
             onFailure = { mutableState.update { it.copy(error = "Los valores ingresados son demasiado grandes.") } }
         )
+    }
+
+    fun buildRequest(id: String, name: String, species: String, plot: String, date: String): ProgramRequestDto? {
+        val current = state.value
+        val target = current.target() ?: return null
+        if (name.isBlank() || name.trim().length > 150 || current.contributions() == null) return null
+        val items = current.doses.mapIndexed { index, dose ->
+            ProgramFertilizerDto(FertilizerCatalog.materials[index].name, parseProgramNumber(dose)!!,
+                composition = FertilizerCatalog.materials[index].percentages.toDto())
+        }
+        return ProgramRequestDto(id, species.trim().ifBlank { null }, plot.trim().ifBlank { null },
+            ProgramContentDto(name.trim(), date, target.toDto(), items, emptyList()))
     }
 }

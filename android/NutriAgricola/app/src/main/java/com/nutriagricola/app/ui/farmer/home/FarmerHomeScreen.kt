@@ -69,7 +69,8 @@ fun FarmerHomeScreen(
     onHistoryClick: () -> Unit,
     onRecordClick: (String) -> Unit,
     onCropClick: (String) -> Unit,
-    onNewRecordClick: (String, String) -> Unit
+    onNewRecordClick: (String, String) -> Unit,
+    onProgramClick: () -> Unit = {}
 ) {
     val initials = remember(user.firstName, user.lastName) {
         listOf(user.firstName, user.lastName)
@@ -102,7 +103,7 @@ fun FarmerHomeScreen(
                 selectedItem = FarmerBottomItem.HOME,
                 onHomeClick = {},
                 onHistoryClick = onHistoryClick,
-                onProgramClick = {},
+                onProgramClick = onProgramClick,
                 onFarmsClick = {}
             )
         }

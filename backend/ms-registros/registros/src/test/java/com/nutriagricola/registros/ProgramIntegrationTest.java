@@ -97,6 +97,25 @@ class ProgramIntegrationTest {
     private void auth(String id, String role) {
         when(usersClient.getCurrentUser("Bearer demo")).thenReturn(new UserClientResponse(id, role, true, "Usuario", "Prueba"));
     }
+
+    @Test
+    void savesCompositionSnapshotAndRejectsInvalidPercentages() throws Exception {
+        auth(UUID.randomUUID().toString(), "ADVISOR");
+        String id = UUID.randomUUID().toString();
+        String body = body(id).replace("\"notes\":\"Dosis manual\"", """
+                "notes":"Dosis manual","composition":{"nitrogen":12,"phosphorusOxide":60,
+                "potassiumOxide":0,"calciumOxide":0,"magnesiumOxide":0,"sulfur":0}
+                """.strip());
+        mvc.perform(post("/api/v1/programs").header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.content.fertilizers[0].composition.nitrogen").value(12.0));
+        mvc.perform(get("/api/v1/programs/" + id).header("Authorization", "Bearer demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.fertilizers[0].composition.phosphorusOxide").value(60.0));
+        mvc.perform(post("/api/v1/programs").header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/v1/programs").header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON)
+                .content(body.replace(id, UUID.randomUUID().toString()).replace("\"nitrogen\":12", "\"nitrogen\":101")))
+                .andExpect(status().isBadRequest());
+    }
     private String body(String id) {
         return """
                 {"id":"%s","species":"Uva de mesa","plot":"Cuartel 1","content":{"name":"Manual de prueba","season":"2026",

@@ -135,6 +135,15 @@ public class ProgramService {
             fertilizer.setName(item.name());
             fertilizer.setDoseKgHa(item.doseKgHa());
             fertilizer.setNotes(item.notes());
+            if (item.composition() != null) {
+                var c = item.composition();
+                fertilizer.setNitrogen(c.nitrogen());
+                fertilizer.setPhosphorusOxide(c.phosphorusOxide());
+                fertilizer.setPotassiumOxide(c.potassiumOxide());
+                fertilizer.setCalciumOxide(c.calciumOxide());
+                fertilizer.setMagnesiumOxide(c.magnesiumOxide());
+                fertilizer.setSulfur(c.sulfur());
+            }
             fertilizers.save(fertilizer);
         }
         for (int index = 0; index < content.stages().size(); index++) {
@@ -165,6 +174,15 @@ public class ProgramService {
         for (var fertilizer : content.fertilizers()) {
             if (!Double.isFinite(fertilizer.doseKgHa())) {
                 throw new InvalidRecordException("Las dosis deben ser números finitos");
+            }
+            var c = fertilizer.composition();
+            if (c != null) {
+                for (Double value : new Double[]{c.nitrogen(), c.phosphorusOxide(), c.potassiumOxide(),
+                        c.calciumOxide(), c.magnesiumOxide(), c.sulfur()}) {
+                    if (value == null || !Double.isFinite(value) || value < 0 || value > 100) {
+                        throw new InvalidRecordException("La composición debe incluir seis porcentajes entre 0 y 100");
+                    }
+                }
             }
         }
     }

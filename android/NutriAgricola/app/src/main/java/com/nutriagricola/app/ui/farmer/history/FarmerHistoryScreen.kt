@@ -37,7 +37,8 @@ fun FarmerHistoryScreen(
     onUploadRecords: () -> Unit,
     contextState: FarmerContextUiState,
     onHomeClick: () -> Unit,
-    onRecordClick: (String) -> Unit
+    onRecordClick: (String) -> Unit,
+    onProgramClick: () -> Unit = {}
 ) {
     val loadedState by viewModel.uiState.collectAsState()
     val farm = contextState.selectedFarm
@@ -69,7 +70,7 @@ fun FarmerHistoryScreen(
                 selectedItem = FarmerBottomItem.HISTORY,
                 onHomeClick = onHomeClick,
                 onHistoryClick = {},
-                onProgramClick = {},
+                onProgramClick = onProgramClick,
                 onFarmsClick = {}
             )
         }

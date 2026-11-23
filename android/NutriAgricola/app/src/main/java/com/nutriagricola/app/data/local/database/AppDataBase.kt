@@ -21,9 +21,10 @@ import com.nutriagricola.app.data.local.entity.*
         WaterDataEntity::class,
         FoliarDataEntity::class,
         FoliarPhotoEntity::class,
-        RecordReviewEntity::class
+        RecordReviewEntity::class,
+        ProgramEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun foliarDataDao(): FoliarDataDao
     abstract fun foliarPhotoDao(): FoliarPhotoDao
     abstract fun recordReviewDao(): RecordReviewDao
+    abstract fun programDao(): ProgramDao
 
     companion object {
 
@@ -54,7 +56,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "nutri_agricola_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
 
                 INSTANCE = instance

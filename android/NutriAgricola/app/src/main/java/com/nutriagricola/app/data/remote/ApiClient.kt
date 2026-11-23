@@ -7,6 +7,7 @@ import com.nutriagricola.app.data.remote.api.FarmApi
 import com.nutriagricola.app.data.remote.api.CropApi
 import com.nutriagricola.app.data.remote.api.RecordApi
 import com.nutriagricola.app.data.remote.api.ReviewApi
+import com.nutriagricola.app.data.remote.api.ProgramApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -45,4 +46,5 @@ class ApiClient(baseUrl: String = defaultBaseUrl()) {
     val cropApi: CropApi = retrofit.create(CropApi::class.java)
     val recordApi: RecordApi = retrofit.create(RecordApi::class.java)
     val reviewApi: ReviewApi = retrofit.create(ReviewApi::class.java)
+    val programApi: ProgramApi = retrofit.create(ProgramApi::class.java)
 }

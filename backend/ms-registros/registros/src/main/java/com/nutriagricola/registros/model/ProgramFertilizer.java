@@ -21,4 +21,14 @@ public class ProgramFertilizer {
     private Double doseKgHa;
     @Column(columnDefinition = "TEXT")
     private String notes;
+    private Double nitrogen;
+    @Column(name = "phosphorus_oxide")
+    private Double phosphorusOxide;
+    @Column(name = "potassium_oxide")
+    private Double potassiumOxide;
+    @Column(name = "calcium_oxide")
+    private Double calciumOxide;
+    @Column(name = "magnesium_oxide")
+    private Double magnesiumOxide;
+    private Double sulfur;
 }

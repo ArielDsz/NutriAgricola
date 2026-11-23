@@ -16,23 +16,26 @@ import java.util.Locale
 import kotlin.math.abs
 
 @Composable
-fun ProgramCalculatorForm(modifier: Modifier = Modifier, calculator: ProgramCalculatorViewModel = viewModel()) {
+fun ProgramCalculatorForm(modifier: Modifier = Modifier, calculator: ProgramCalculatorViewModel = viewModel(),
+                          enabled: Boolean = true, header: @Composable () -> Unit = {},
+                          footer: @Composable (ProgramCalculatorState) -> Unit = {}) {
     val state by calculator.state.collectAsState()
     val labels = listOf("N", "P₂O₅", "K₂O", "CaO", "MgO", "S")
     Column(modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Armar programa", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        header()
         Text("Ingresa los requerimientos netos en kg/ha. No necesitas un registro de análisis.", style = MaterialTheme.typography.bodyMedium)
         Text("1. Requerimientos nutricionales", style = MaterialTheme.typography.titleMedium)
         state.requirements.forEachIndexed { index, value ->
-            ProgramNumberField(value, "${labels[index]} (kg/ha)", { calculator.setRequirement(index, it) }, state.error != null)
+            ProgramNumberField(value, "${labels[index]} (kg/ha)", { calculator.setRequirement(index, it) }, state.error != null, enabled)
         }
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Button(onClick = calculator::calculate, modifier = Modifier.fillMaxWidth()) { Text("Calcular dosis sugeridas") }
+        Button(onClick = calculator::calculate, enabled = enabled, modifier = Modifier.fillMaxWidth()) { Text("Calcular dosis sugeridas") }
         if (state.doses.isNotEmpty()) {
             Text("2. Ajustar dosis de fertilizantes", style = MaterialTheme.typography.titleMedium)
             Text("Receta de cinco productos de NutriXpert. Puedes editar las cantidades; no es una mezcla optimizada ni una validación agronómica.", style = MaterialTheme.typography.bodySmall)
             state.doses.forEachIndexed { index, value ->
-                ProgramNumberField(value, "${FertilizerCatalog.materials[index].name} (kg/ha)", { calculator.setDose(index, it) })
+                ProgramNumberField(value, "${FertilizerCatalog.materials[index].name} (kg/ha)", { calculator.setDose(index, it) }, enabled = enabled)
             }
             val totals = state.contributions()
             val target = state.target()
@@ -57,14 +60,15 @@ fun ProgramCalculatorForm(modifier: Modifier = Modifier, calculator: ProgramCalc
             }
         }
         Text("Referencia: catálogo y receta de NutriXpert (22/11/2026). Las dosis se calculan sin redondeos intermedios; el resumen muestra dos decimales.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        footer(state)
     }
 }
 
 @Composable
-private fun ProgramNumberField(value: String, label: String, onChange: (String) -> Unit, requiredError: Boolean = false) {
+private fun ProgramNumberField(value: String, label: String, onChange: (String) -> Unit, requiredError: Boolean = false, enabled: Boolean = true) {
     val invalid = (value.isNotBlank() || requiredError) && parseProgramNumber(value) == null
     OutlinedTextField(
-        value = value, onValueChange = onChange, label = { Text(label) },
+        value = value, onValueChange = onChange, label = { Text(label) }, enabled = enabled,
         modifier = Modifier.fillMaxWidth(), singleLine = true, isError = invalid,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         supportingText = if (invalid) ({ Text("Ingresa un número mayor o igual a cero") }) else null

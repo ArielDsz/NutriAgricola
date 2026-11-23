@@ -10,6 +10,7 @@ import com.nutriagricola.app.data.local.database.MIGRATION_2_3
 import com.nutriagricola.app.data.local.database.MIGRATION_3_4
 import com.nutriagricola.app.data.local.database.MIGRATION_4_5
 import com.nutriagricola.app.data.local.database.MIGRATION_5_6
+import com.nutriagricola.app.data.local.database.MIGRATION_6_7
 import com.nutriagricola.app.data.remote.dto.RecordDetailDto
 import com.nutriagricola.app.data.remote.dto.SoilDataDto
 import com.nutriagricola.app.data.remote.dto.FoliarDataDto
@@ -62,8 +63,24 @@ class AdvisorPersistenceTest {
 
     private fun openMigratedDatabase(): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .build().also { database = it }
+    }
+
+    @Test
+    fun programCacheMigrationPreservesRecordsAndKeepsDetailsAfterReopen() = runBlocking {
+        createFarmerVersion1()
+        val db = openMigratedDatabase()
+        val row = com.nutriagricola.app.data.local.entity.ProgramEntity("program", "2026-11-22", "resumen", "detalle")
+        db.programDao().cacheDetail(row)
+        db.programDao().cacheSummaries(listOf(row.copy(summaryJson = "resumen actualizado", detailJson = null)))
+        db.close()
+        val reopened = openMigratedDatabase()
+        val cached = reopened.programDao().observeAll().first().single()
+        assertEquals("resumen actualizado", cached.summaryJson)
+        assertEquals("detalle", cached.detailJson)
+        assertEquals("Nota original", RecordRepository(reopened).getById("record")!!.observations)
+        assertEquals(1, reopened.foliarPhotoDao().getByRecordId("record").size)
     }
 
     @Test

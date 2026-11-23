@@ -2,7 +2,8 @@ package com.nutriagricola.app.ui.advisor.programs
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import com.nutriagricola.app.ui.programs.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
@@ -15,17 +16,19 @@ import com.nutriagricola.app.ui.advisor.components.AdvisorBottomItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdvisorProgramsScreen(
+    viewModel: ProgramsViewModel,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onPendingClick: () -> Unit,
     onAllRecordsClick: () -> Unit
 ) {
+    val state by viewModel.state.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Programas nutricionales", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = { if (!viewModel.back()) onBackClick() }) {
                         Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = "Volver",
                             modifier = Modifier.size(24.dp).rotate(180f))
                     }
@@ -33,7 +36,7 @@ fun AdvisorProgramsScreen(
             )
         },
         bottomBar = {
-            AdvisorBottomBar(
+            if (state.mode == ProgramMode.LIST) AdvisorBottomBar(
                 selectedItem = AdvisorBottomItem.PROGRAM,
                 onHomeClick = onHomeClick,
                 onPendingClick = onPendingClick,
@@ -42,6 +45,6 @@ fun AdvisorProgramsScreen(
             )
         }
     ) { padding ->
-        ProgramCalculatorForm(Modifier.fillMaxSize().padding(padding))
+        ProgramsContent(viewModel, Modifier.fillMaxSize().padding(padding))
     }
 }

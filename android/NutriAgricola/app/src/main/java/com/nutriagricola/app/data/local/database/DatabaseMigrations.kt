@@ -3,6 +3,17 @@ package com.nutriagricola.app.data.local.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS programs (
+                id TEXT NOT NULL PRIMARY KEY, startDate TEXT NOT NULL,
+                summaryJson TEXT NOT NULL, detailJson TEXT
+            )
+        """.trimIndent())
+    }
+}
+
 val MIGRATION_5_6 = object : Migration(5, 6) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("""

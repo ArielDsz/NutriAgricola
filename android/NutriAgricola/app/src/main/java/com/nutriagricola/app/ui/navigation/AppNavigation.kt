@@ -102,6 +102,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.nutriagricola.app.data.remote.ApiClient
+import com.nutriagricola.app.data.repository.ProgramRepository
+import com.nutriagricola.app.ui.programs.*
 
 @Composable
 fun AppNavigation() {
@@ -165,6 +167,9 @@ fun AppNavigation() {
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val programRepository = remember(database, apiClient, sessionRepository) {
+        ProgramRepository(database.programDao(), apiClient.programApi, sessionRepository)
+    }
     val cropRepository = remember(database, apiClient, sessionRepository) {
         CropRepository(database.cropDao(), apiClient.cropApi, sessionRepository)
     }
@@ -340,7 +345,12 @@ fun AppNavigation() {
                     }
 
                     composable("advisor_programs") {
+                        val programsFactory = remember(currentUser.id, programRepository) {
+                            ProgramsViewModelFactory(currentUser.id, currentUser.role, programRepository)
+                        }
+                        val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
                         AdvisorProgramsScreen(
+                            viewModel = programsViewModel,
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
                             onPendingClick = { navController.navigate("advisor_pending") {
@@ -415,6 +425,7 @@ fun AppNavigation() {
                                         launchSingleTop = true
                                     }
                                 },
+                                onProgramClick = { navController.navigate("farmer_programs") { launchSingleTop = true } },
                                 onNewRecordClick = { farmId, farmName ->
                                     navController.navigate(
                                         "new_record/$farmId/${Uri.encode(farmName)}"
@@ -445,11 +456,26 @@ fun AppNavigation() {
                                 onMoreRecords = { recordDownloadViewModel.loadMore() },
                                 onUploadRecords = { recordDownloadViewModel.uploadPending() },
                                 contextState = contextState,
+                                onProgramClick = { navController.navigate("farmer_programs") { launchSingleTop = true } },
                                 onRecordClick = onRecordClick,
                                 onHomeClick = {
                                     navController.popBackStack("farmer_home", inclusive = false)
                                 }
                             )
+                        }
+
+                        composable("farmer_programs") {
+                            val programsFactory = remember(currentUser.id, programRepository) {
+                                ProgramsViewModelFactory(currentUser.id, currentUser.role, programRepository)
+                            }
+                            val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
+                            FarmerProgramsScreen(programsViewModel,
+                                onBack = { navController.popBackStack() },
+                                onHome = { navController.popBackStack("farmer_home", false) },
+                                onHistory = { navController.navigate("farmer_history") {
+                                    popUpTo("farmer_home") { inclusive = false }
+                                    launchSingleTop = true
+                                } })
                         }
 
                         composable("crop_detail/{cropId}") { backStackEntry ->

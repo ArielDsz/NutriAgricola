@@ -32,7 +32,10 @@ public class ProgramMapper {
         var nutrients = new ProgramContent.Nutrients(p.getNitrogen(), p.getPhosphorusOxide(), p.getPotassiumOxide(),
                 p.getCalciumOxide(), p.getMagnesiumOxide(), p.getSulfur());
         var fertilizerItems = fertilizers.stream()
-                .map(f -> new ProgramContent.Fertilizer(f.getName(), f.getDoseKgHa(), f.getNotes())).toList();
+                .map(f -> new ProgramContent.Fertilizer(f.getName(), f.getDoseKgHa(), f.getNotes(),
+                        f.getNitrogen() == null ? null : new ProgramContent.Nutrients(f.getNitrogen(),
+                                f.getPhosphorusOxide(), f.getPotassiumOxide(), f.getCalciumOxide(),
+                                f.getMagnesiumOxide(), f.getSulfur()))).toList();
         var stageItems = stages.stream()
                 .map(s -> new ProgramContent.Stage(s.getName(), s.getWeeks(), s.getIrrigationsPerWeek(), s.getInstructions())).toList();
         var content = new ProgramContent(p.getName(), p.getSeason(), p.getStartDate(), p.getEndDate(),
