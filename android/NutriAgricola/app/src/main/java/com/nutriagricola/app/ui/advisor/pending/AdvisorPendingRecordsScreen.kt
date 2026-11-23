@@ -72,9 +72,8 @@ fun AdvisorPendingRecordsScreen(
         },
         bottomBar = {
             AdvisorBottomBar(
-                selectedItem = AdvisorBottomItem.PENDING,
+                selectedItem = AdvisorBottomItem.ALL_RECORDS,
                 onHomeClick = onHomeClick,
-                onPendingClick = {},
                 onAllRecordsClick = onAllRecordsClick,
                 onProgramClick = onProgramClick
             )

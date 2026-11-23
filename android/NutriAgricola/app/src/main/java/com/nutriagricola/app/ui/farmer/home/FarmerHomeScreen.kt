@@ -52,7 +52,6 @@ import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 import com.nutriagricola.app.ui.farmer.home.components.HomeHeader
 import com.nutriagricola.app.ui.farmer.home.components.SyncStatus
-import com.nutriagricola.app.ui.farmer.home.components.WeatherCard
 import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
 
 @Composable
@@ -80,7 +79,6 @@ fun FarmerHomeScreen(
             .uppercase()
     }
     val loadedState by viewModel.uiState.collectAsState()
-    val weatherState by viewModel.weatherState.collectAsState()
     val farm = contextState.selectedFarm
     val state = if (loadedState.farmId == farm?.id) loadedState
     else FarmerHomeUiState(farmId = farm?.id, isLoading = true)
@@ -149,12 +147,6 @@ fun FarmerHomeScreen(
 
             RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords)
 
-            WeatherCard(
-                weatherState = weatherState,
-                onRetry = { viewModel.loadWeather() },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
             key(farm?.id) {
                 CropsSection(
                     crops = state.crops.filter { it.active },
@@ -195,9 +187,6 @@ fun FarmerHomeScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextButton(onClick = onRefreshFarms, enabled = !contextState.isRefreshing && !contextState.isRefreshingCrops) {
-                    Text(if (contextState.isRefreshing || contextState.isRefreshingCrops) "Actualizando predios y cultivos…" else "Actualizar predios y cultivos")
-                }
                 contextState.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 contextState.cropError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }

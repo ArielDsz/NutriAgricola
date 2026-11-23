@@ -66,7 +66,8 @@ class AdvisorAllRecordsViewModel(
                         cropName = cropName,
                         farmerName = farmerName,
                         farmId = crop?.farmId,
-                        reviewResult = reviews[record.id]?.result
+                        reviewResult = reviews[record.id]?.result,
+                        cropImagePath = crop?.imagePath
                     )
                 }
 

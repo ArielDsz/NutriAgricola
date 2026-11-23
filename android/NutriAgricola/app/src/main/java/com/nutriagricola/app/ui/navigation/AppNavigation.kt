@@ -104,6 +104,7 @@ import kotlinx.coroutines.withContext
 import com.nutriagricola.app.data.remote.ApiClient
 import com.nutriagricola.app.data.repository.ProgramRepository
 import com.nutriagricola.app.ui.programs.*
+import com.nutriagricola.app.ui.components.userInitials
 
 @Composable
 fun AppNavigation() {
@@ -321,6 +322,8 @@ fun AppNavigation() {
                         val allRecordsViewModel: AdvisorAllRecordsViewModel = viewModel(factory = allRecordsFactory)
 
                         AdvisorAllRecordsScreen(
+                            headerInitials = userInitials(currentUser),
+                            onLogoutClick = { sessionViewModel.logout() },
                             viewModel = allRecordsViewModel,
                             downloadState = downloadState,
                             onRefreshRecords = { recordDownloadViewModel.refresh() },
@@ -350,6 +353,8 @@ fun AppNavigation() {
                         }
                         val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
                         AdvisorProgramsScreen(
+                            headerInitials = userInitials(currentUser),
+                            onLogoutClick = { sessionViewModel.logout() },
                             viewModel = programsViewModel,
                             onBackClick = { navController.popBackStack() },
                             onHomeClick = { navController.popBackStack("advisor_home", inclusive = false) },
@@ -450,6 +455,8 @@ fun AppNavigation() {
                             val historyViewModel: FarmerHistoryViewModel = viewModel(factory = historyFactory)
 
                             FarmerHistoryScreen(
+                                headerInitials = userInitials(currentUser),
+                                onLogoutClick = { sessionViewModel.logout() },
                                 viewModel = historyViewModel,
                                 downloadState = downloadState,
                                 onRefreshRecords = { recordDownloadViewModel.refresh() },
@@ -470,6 +477,8 @@ fun AppNavigation() {
                             }
                             val programsViewModel: ProgramsViewModel = viewModel(factory = programsFactory)
                             FarmerProgramsScreen(programsViewModel,
+                                headerInitials = userInitials(currentUser),
+                                onLogoutClick = { sessionViewModel.logout() },
                                 onBack = { navController.popBackStack() },
                                 onHome = { navController.popBackStack("farmer_home", false) },
                                 onHistory = { navController.navigate("farmer_history") {

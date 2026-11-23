@@ -22,6 +22,8 @@ fun ProgramSummaryDto.toDomain(detail: ProgramResponseDto? = null) = Nutritional
     fertilizers = detail?.content?.fertilizers?.map {
         ProgramFertilizer(it.name, it.doseKgHa, it.composition?.toAmountsOrNull(), it.notes)
     }.orEmpty(),
-    stages = detail?.content?.stages?.map { ProgramStage(it.name, it.weeks, it.irrigationsPerWeek, it.instructions) }.orEmpty(),
-    notes = detail?.content?.irrigationNotes
+    stages = detail?.content?.stages?.map { ProgramStage(it.name, it.weeks, it.irrigationsPerWeek, it.instructions, it.allocationPercent) }.orEmpty(),
+    notes = detail?.content?.irrigationNotes,
+    targetYieldTonHa = detail?.content?.targetYieldTonHa,
+    irrigationEfficiencyPercent = detail?.content?.irrigationEfficiencyPercent
 )

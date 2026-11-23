@@ -6,7 +6,8 @@ data class NutritionalProgram(
     val endDate: String?, val active: Boolean, val detailAvailable: Boolean,
     val requirements: List<Double?> = emptyList(),
     val fertilizers: List<ProgramFertilizer> = emptyList(),
-    val stages: List<ProgramStage> = emptyList(), val notes: String? = null
+    val stages: List<ProgramStage> = emptyList(), val notes: String? = null,
+    val targetYieldTonHa: Double? = null, val irrigationEfficiencyPercent: Double? = null
 ) {
     fun contributions(): NutrientAmounts? {
         if (!detailAvailable || fertilizers.isEmpty() || fertilizers.any { it.composition == null }) return null
@@ -17,4 +18,5 @@ data class NutritionalProgram(
 }
 
 data class ProgramFertilizer(val name: String, val doseKgHa: Double, val composition: NutrientAmounts?, val notes: String?)
-data class ProgramStage(val name: String, val weeks: Int?, val irrigationsPerWeek: Int?, val instructions: String?)
+data class ProgramStage(val name: String, val weeks: Int?, val irrigationsPerWeek: Int?, val instructions: String?,
+                        val allocationPercent: Double? = null)

@@ -14,6 +14,8 @@ fun RecordDownloadStatus(
     onUpload: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (!state.isBusy && state.error == null && state.pendingUploads == 0 && !state.isUploading &&
+        state.uploadMessage == null && !state.hasMore) return
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (state.isBusy) {
@@ -30,9 +32,8 @@ fun RecordDownloadStatus(
         }
         state.uploadMessage?.let { Text(it, color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall) }
-        TextButton(onClick = onRefresh, enabled = !state.isBusy) { Text("Actualizar registros") }
         if (state.hasMore) {
-            TextButton(onClick = onLoadMore, enabled = !state.isBusy) { Text("Descargar más registros") }
+            TextButton(onClick = onLoadMore, enabled = !state.isBusy) { Text("Ver más") }
         }
     }
 }

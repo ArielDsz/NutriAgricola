@@ -14,7 +14,8 @@ data class ProgramFertilizerDto(val name: String, val doseKgHa: Double, val note
                                  val composition: ProgramNutrientsDto? = null)
 @Serializable
 data class ProgramStageDto(val name: String, val weeks: Int? = null,
-                            val irrigationsPerWeek: Int? = null, val instructions: String? = null)
+                            val irrigationsPerWeek: Int? = null, val instructions: String? = null,
+                            val allocationPercent: Double? = null)
 @Serializable
 data class ProgramContentDto(
     val name: String, val startDate: String, val nutrients: ProgramNutrientsDto,

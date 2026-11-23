@@ -121,26 +121,28 @@ fun SyncStatus(
                 color = statusColor,
                 modifier = Modifier.weight(1f)
             )
-            VerticalDivider(
-                modifier = Modifier.height(32.dp),
-                color = statusColor.copy(alpha = 0.25f)
-            )
-            Surface(
-                onClick = { if (!isSyncing) { if (onSync != null) onSync() else updateConnection() } },
-                shape = RoundedCornerShape(10.dp),
-                color = statusColor.copy(alpha = 0.08f),
-                contentColor = statusColor
-            ) {
-                Column(
-                    modifier = Modifier.heightIn(min = 48.dp)
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
+            if (onSync != null) {
+                VerticalDivider(
+                    modifier = Modifier.height(32.dp),
+                    color = statusColor.copy(alpha = 0.25f)
+                )
+                Surface(
+                    onClick = { if (!isSyncing) onSync() },
+                    shape = RoundedCornerShape(10.dp),
+                    color = statusColor.copy(alpha = 0.08f),
+                    contentColor = statusColor
                 ) {
-                    Icon(painterResource(R.drawable.ic_sync), contentDescription = null,
-                        modifier = Modifier.size(20.dp))
-                    Text(if (onSync != null) "Sincronizar" else "Actualizar", style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium)
+                    Column(
+                        modifier = Modifier.heightIn(min = 48.dp)
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        Icon(painterResource(R.drawable.ic_sync), contentDescription = null,
+                            modifier = Modifier.size(20.dp))
+                        Text("Sincronizar", style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium)
+                    }
                 }
             }
         }

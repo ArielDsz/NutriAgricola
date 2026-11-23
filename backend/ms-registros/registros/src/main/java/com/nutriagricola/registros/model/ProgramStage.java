@@ -22,4 +22,6 @@ public class ProgramStage {
     private Integer irrigationsPerWeek;
     @Column(columnDefinition = "TEXT")
     private String instructions;
+    @Column(name = "allocation_percent")
+    private Double allocationPercent;
 }

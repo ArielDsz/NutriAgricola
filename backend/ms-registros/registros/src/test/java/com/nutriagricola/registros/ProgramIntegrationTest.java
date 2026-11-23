@@ -117,6 +117,25 @@ class ProgramIntegrationTest {
                 .content(body.replace(id, UUID.randomUUID().toString()).replace("\"nitrogen\":12", "\"nitrogen\":101")))
                 .andExpect(status().isBadRequest());
     }
+    @Test
+    void preservesStageDistributionAndRejectsIncompleteOrIncorrectTotals() throws Exception {
+        auth(UUID.randomUUID().toString(), "ADVISOR");
+        String id = UUID.randomUUID().toString();
+        String body = body(id).replace("\"instructions\":\"Indicación manual\"", "\"instructions\":\"Indicación manual\",\"allocationPercent\":100");
+        mvc.perform(post("/api/v1/programs").header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.content.stages[0].allocationPercent").value(100.0));
+        mvc.perform(get("/api/v1/programs/" + id).header("Authorization", "Bearer demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.stages[0].allocationPercent").value(100.0));
+        mvc.perform(post("/api/v1/programs").header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+        for (String invalid : java.util.List.of(body.replace("\"allocationPercent\":100", "\"allocationPercent\":99"),
+                body.replace("\"allocationPercent\":100", "\"allocationPercent\":101"),
+                body.replace("\"stages\":[", "\"stages\":[{\"name\":\"Sin distribución\",\"weeks\":1},"))) {
+            mvc.perform(post("/api/v1/programs").header("Authorization", "Bearer demo").contentType(MediaType.APPLICATION_JSON)
+                    .content(invalid.replace(id, UUID.randomUUID().toString()))).andExpect(status().isBadRequest());
+        }
+    }
+
     private String body(String id) {
         return """
                 {"id":"%s","species":"Uva de mesa","plot":"Cuartel 1","content":{"name":"Manual de prueba","season":"2026",

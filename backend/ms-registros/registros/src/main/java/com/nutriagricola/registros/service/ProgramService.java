@@ -155,11 +155,23 @@ public class ProgramService {
             stage.setWeeks(item.weeks());
             stage.setIrrigationsPerWeek(item.irrigationsPerWeek());
             stage.setInstructions(item.instructions());
+            stage.setAllocationPercent(item.allocationPercent());
             stages.save(stage);
         }
     }
 
     private void validate(ProgramContent content) {
+        if (content.stages().stream().anyMatch(stage -> stage.allocationPercent() != null)) {
+            double sum = 0;
+            for (var stage : content.stages()) {
+                Double percent = stage.allocationPercent();
+                if (percent == null || !Double.isFinite(percent) || percent < 0 || percent > 100) {
+                    throw new InvalidRecordException("Revisa los porcentajes de las etapas");
+                }
+                sum += percent;
+            }
+            if (Math.abs(sum - 100) > 0.01) throw new InvalidRecordException("La distribución debe sumar 100%");
+        }
         if (content.endDate() != null && content.endDate().isBefore(content.startDate())) {
             throw new InvalidRecordException("La fecha final no puede ser anterior a la inicial");
         }

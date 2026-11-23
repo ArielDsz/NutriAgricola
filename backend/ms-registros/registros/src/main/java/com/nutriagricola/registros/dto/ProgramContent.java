@@ -25,5 +25,6 @@ public record ProgramContent(
                               @NotNull @PositiveOrZero Double doseKgHa, String notes,
                               @Valid Nutrients composition) { }
     public record Stage(@NotBlank @Size(max = 100) String name, @Positive Integer weeks,
-                         @PositiveOrZero Integer irrigationsPerWeek, String instructions) { }
+                         @PositiveOrZero Integer irrigationsPerWeek, String instructions,
+                         @PositiveOrZero @DecimalMax("100") Double allocationPercent) { }
 }

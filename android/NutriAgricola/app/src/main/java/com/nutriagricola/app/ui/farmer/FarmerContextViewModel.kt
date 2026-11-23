@@ -86,7 +86,7 @@ class FarmerContextViewModel(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: IOException) {
-                _uiState.update { it.copy(error = "Sin conexión al servicio. Se muestran los predios guardados; si aún no descargaste ninguno, conéctate y pulsa Actualizar predios.") }
+                _uiState.update { it.copy(error = "Sin conexión al servicio. Se muestran los predios guardados.") }
             } catch (exception: HttpException) {
                 if (exception.code() == 401 || exception.code() == 403) {
                     onSessionExpired()

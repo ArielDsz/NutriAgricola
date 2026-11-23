@@ -10,7 +10,7 @@ class ProgramEditDraftTest {
         nutrients = ProgramNutrientsDto(nitrogen = 0.0), targetYieldTonHa = 30.0,
         irrigationEfficiencyPercent = 90.0, irrigationNotes = "Conservar indicaciones",
         fertilizers = listOf(ProgramFertilizerDto("Producto manual sin composición", 10.0, "Conservar nota")),
-        stages = listOf(ProgramStageDto("Brotación", 4, 0, "Conservar etapa"))
+        stages = listOf(ProgramStageDto("Brotación", 4, 0, "Conservar etapa", 100.0))
     ))
 
     @Test fun `editing preserves legacy products missing composition and untouched program fields`() {
