@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.history
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -137,7 +138,7 @@ fun FarmerHistoryScreen(
                             } else {
                                 val fallback = painterResource(R.drawable.default_crop)
                                 AsyncImage(
-                                    model = crop.imagePath?.takeIf { it.isNotBlank() },
+                                    model = entityImageModel(crop.imagePath),
                                     contentDescription = "Imagen de ${crop.name}",
                                     placeholder = fallback, fallback = fallback, error = fallback,
                                     contentScale = ContentScale.Crop,

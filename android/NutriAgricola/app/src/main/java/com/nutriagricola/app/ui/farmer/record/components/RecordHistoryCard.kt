@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record.components
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,7 +69,7 @@ fun RecordHistoryCard(
                     scaleY = cropThumbnailScale
                 }) {
                     AsyncImage(
-                        model = cropImagePath?.takeIf { it.isNotBlank() },
+                        model = entityImageModel(cropImagePath),
                         contentDescription = null,
                         placeholder = painterResource(R.drawable.default_crop),
                         error = painterResource(R.drawable.default_crop),

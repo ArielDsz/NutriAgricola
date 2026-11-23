@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -248,7 +249,7 @@ private fun CropSelectionCard(crop: Crop?, onClick: () -> Unit) {
 private fun RecordSelectionImage(imagePath: String?, description: String, modifier: Modifier) {
     val fallback = painterResource(R.drawable.default_crop)
     AsyncImage(
-        model = imagePath?.takeIf { it.isNotBlank() },
+        model = entityImageModel(imagePath),
         contentDescription = description,
         placeholder = fallback, fallback = fallback, error = fallback,
         contentScale = ContentScale.Crop,

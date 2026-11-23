@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.crop.detail
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -177,7 +178,7 @@ private fun CropDetailHeader(crop: Crop, onBackClick: () -> Unit) {
             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val fallback = painterResource(R.drawable.default_crop)
                 AsyncImage(
-                    model = crop.imagePath?.takeIf { it.isNotBlank() },
+                    model = entityImageModel(crop.imagePath),
                     contentDescription = "Imagen de ${crop.name}",
                     placeholder = fallback, fallback = fallback, error = fallback,
                     contentScale = ContentScale.Crop,

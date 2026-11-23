@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record.components
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -90,7 +91,7 @@ fun CropSelectorBottomSheet(
                     RadioButton(selected = selected, onClick = null)
                     val fallback = painterResource(R.drawable.default_crop)
                     AsyncImage(
-                        model = crop.imagePath?.takeIf { it.isNotBlank() },
+                        model = entityImageModel(crop.imagePath),
                         contentDescription = "Imagen de ${crop.name}",
                         placeholder = fallback,
                         fallback = fallback,

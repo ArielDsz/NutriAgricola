@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.home.components
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,7 +49,7 @@ fun CropCard(
 
             val fallback = painterResource(R.drawable.default_crop)
             AsyncImage(
-                model = crop.imagePath?.takeIf { it.isNotBlank() },
+                model = entityImageModel(crop.imagePath),
                 contentDescription = "Imagen de ${crop.name}",
                 placeholder = fallback,
                 fallback = fallback,

@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record.detail
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -114,7 +115,7 @@ internal fun RecordDetailHeader(record: Record?, crop: Crop?, onBackClick: () ->
     Box(modifier = Modifier.fillMaxWidth()) {
         val fallback = painterResource(R.drawable.default_crop)
         AsyncImage(
-            model = crop?.imagePath?.takeIf { it.isNotBlank() },
+            model = entityImageModel(crop?.imagePath),
             contentDescription = crop?.let { "Imagen de ${it.name}" },
             placeholder = fallback, fallback = fallback, error = fallback,
             contentScale = ContentScale.Crop,

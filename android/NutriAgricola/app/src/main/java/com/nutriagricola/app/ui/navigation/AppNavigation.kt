@@ -86,7 +86,7 @@ import com.nutriagricola.app.ui.login.LoginScreen
 import com.nutriagricola.app.ui.login.LoginViewModel
 import com.nutriagricola.app.ui.login.LoginViewModelFactory
 import com.nutriagricola.app.data.local.database.AppDatabase
-import com.nutriagricola.app.data.local.seedDatabase
+import com.nutriagricola.app.data.local.cleanupLegacySamples
 import com.nutriagricola.app.data.local.FoliarPhotoStorage
 import com.nutriagricola.app.data.repository.AuthRepository
 import com.nutriagricola.app.data.repository.CropRepository
@@ -128,7 +128,7 @@ fun AppNavigation() {
     LaunchedEffect(database) {
         try {
             withContext(Dispatchers.IO) {
-                seedDatabase(database, context.applicationContext)
+                cleanupLegacySamples(database, context.applicationContext)
             }
             isDatabaseReady = true
             sessionViewModel.restoreSession()

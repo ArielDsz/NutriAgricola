@@ -1,5 +1,6 @@
 package com.nutriagricola.app.ui.farmer.record.components
 
+import com.nutriagricola.app.ui.components.entityImageModel
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
@@ -90,7 +91,7 @@ fun RecordForm(
                         ) {
                             val fallback = painterResource(R.drawable.default_crop)
                             AsyncImage(
-                                model = crop.imagePath?.takeIf { it.isNotBlank() },
+                                model = entityImageModel(crop.imagePath),
                                 contentDescription = "Imagen de ${crop.name}",
                                 placeholder = fallback, fallback = fallback, error = fallback,
                                 contentScale = ContentScale.Crop,
