@@ -8,13 +8,15 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.nutriagricola.app.R
+import com.nutriagricola.app.ui.components.HeaderActions
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
-                          onHome: () -> Unit, onHistory: () -> Unit) {
+                          onHome: () -> Unit, onHistory: () -> Unit,
+                          headerInitials: String = "", onLogoutClick: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
     val fullHeader = state.mode == ProgramMode.LIST || state.mode == ProgramMode.DETAIL
     Scaffold(topBar = {
@@ -29,6 +31,7 @@ fun FarmerProgramsScreen(viewModel: ProgramsViewModel, onBack: () -> Unit,
     }) { padding ->
         ProgramsContent(viewModel, if (fullHeader)
             Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())
-            else Modifier.fillMaxSize().padding(padding), onBack = { if (!viewModel.back()) onBack() })
+            else Modifier.fillMaxSize().padding(padding), onBack = { if (!viewModel.back()) onBack() },
+            headerActions = { HeaderActions(headerInitials, onLogoutClick) })
     }
 }

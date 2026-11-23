@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.nutriagricola.app.R
+import com.nutriagricola.app.ui.components.HeaderActions
 import com.nutriagricola.app.domain.model.farm.Farm
 import com.nutriagricola.app.domain.model.record.RecordType
 import com.nutriagricola.app.ui.farmer.FarmerContextUiState
@@ -38,7 +39,9 @@ fun FarmerHistoryScreen(
     contextState: FarmerContextUiState,
     onHomeClick: () -> Unit,
     onRecordClick: (String) -> Unit,
-    onProgramClick: () -> Unit = {}
+    onProgramClick: () -> Unit = {},
+    headerInitials: String = "",
+    onLogoutClick: () -> Unit = {}
 ) {
     val loadedState by viewModel.uiState.collectAsState()
     val farm = contextState.selectedFarm
@@ -80,7 +83,7 @@ fun FarmerHistoryScreen(
             contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item { HistoryHeader(farm) }
+            item { HistoryHeader(headerInitials, onLogoutClick) }
             item { RecordDownloadStatus(downloadState, onRefreshRecords, onMoreRecords, onUploadRecords) }
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -180,22 +183,17 @@ fun FarmerHistoryScreen(
 }
 
 @Composable
-private fun HistoryHeader(farm: Farm?) {
+private fun HistoryHeader(initials: String, onLogout: () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp)
         .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))) {
         Image(painterResource(R.drawable.header_background), null,
             contentScale = ContentScale.Crop, alignment = Alignment.TopCenter,
             modifier = Modifier.matchParentSize())
-        Column(modifier = Modifier.fillMaxWidth().statusBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Historial", style = MaterialTheme.typography.headlineLarge)
-            farm?.let {
-                Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)) {
-                    Text(it.name, style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
-                }
-            }
+        Row(modifier = Modifier.fillMaxWidth().statusBarsPadding()
+            .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Text("Historial", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
+            HeaderActions(initials, onLogout)
         }
     }
 }

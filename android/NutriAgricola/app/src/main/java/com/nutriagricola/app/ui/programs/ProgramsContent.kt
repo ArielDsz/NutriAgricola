@@ -12,7 +12,8 @@ import com.nutriagricola.app.ui.advisor.programs.*
 import java.time.LocalDate
 
 @Composable
-fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
+fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier, onBack: () -> Unit = {},
+                    headerActions: @Composable () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
     var showArchiveConfirmation by remember(state.selectedId, state.mode) { mutableStateOf(false) }
     if (showArchiveConfirmation) AlertDialog(
@@ -24,7 +25,7 @@ fun ProgramsContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier,
     )
     BackHandler(enabled = state.mode != ProgramMode.LIST) { viewModel.back() }
     when (state.mode) {
-        ProgramMode.LIST -> ProgramListContent(viewModel, modifier)
+        ProgramMode.LIST -> ProgramListContent(viewModel, modifier, headerActions)
         ProgramMode.DETAIL -> ProgramDetailContent(viewModel, onBack, { showArchiveConfirmation = true }, modifier)
         ProgramMode.EDIT -> ProgramEditForm(viewModel, modifier)
         ProgramMode.CREATE -> {

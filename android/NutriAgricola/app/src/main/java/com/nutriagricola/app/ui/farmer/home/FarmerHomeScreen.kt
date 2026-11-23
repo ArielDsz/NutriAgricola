@@ -23,8 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ExperimentalMaterial3Api
 import com.nutriagricola.app.ui.records.RecordDownloadUiState
 import com.nutriagricola.app.ui.records.RecordDownloadStatus
 import androidx.compose.runtime.Composable
@@ -54,10 +52,8 @@ import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomBar
 import com.nutriagricola.app.ui.farmer.home.components.FarmerBottomItem
 import com.nutriagricola.app.ui.farmer.home.components.HomeHeader
 import com.nutriagricola.app.ui.farmer.home.components.SyncStatus
-import com.nutriagricola.app.ui.farmer.home.components.WeatherCard
 import com.nutriagricola.app.ui.farmer.record.components.RecordHistoryCard
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FarmerHomeScreen(
     user: User,
@@ -83,14 +79,6 @@ fun FarmerHomeScreen(
             .uppercase()
     }
     val loadedState by viewModel.uiState.collectAsState()
-    val weatherState by viewModel.weatherState.collectAsState()
-    var showWeather by rememberSaveable { mutableStateOf(false) }
-    if (showWeather) {
-        ModalBottomSheet(onDismissRequest = { showWeather = false }, containerColor = MaterialTheme.colorScheme.surface) {
-            WeatherCard(weatherState, onRetry = { viewModel.loadWeather() },
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp))
-        }
-    }
     val farm = contextState.selectedFarm
     val state = if (loadedState.farmId == farm?.id) loadedState
     else FarmerHomeUiState(farmId = farm?.id, isLoading = true)
@@ -129,7 +117,6 @@ fun FarmerHomeScreen(
                 HomeHeader(
                     initials = initials,
                     onLogoutClick = onLogoutClick,
-                    onWeatherClick = { showWeather = true; viewModel.loadWeather() },
                     modifier = Modifier.fillMaxWidth().height(164.dp)
                 )
                 Column(modifier = Modifier.fillMaxWidth().padding(top = 116.dp)) {

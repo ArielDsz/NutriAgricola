@@ -22,7 +22,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier) {
+fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifier, headerActions: @Composable () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
     var filtersExpanded by remember { mutableStateOf(false) }
     LazyColumn(modifier, contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -40,6 +40,7 @@ fun ProgramListContent(viewModel: ProgramsViewModel, modifier: Modifier = Modifi
                             Icon(painterResource(R.drawable.ic_add_circle), "Nuevo programa", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
+                    headerActions()
                 }
             }
         }
