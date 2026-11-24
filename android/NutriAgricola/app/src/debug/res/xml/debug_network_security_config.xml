@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <base-config cleartextTrafficPermitted="false" />
+
     <domain-config cleartextTrafficPermitted="true">
-        <!-- Gateway local mediante adb reverse. -->
-        <domain>127.0.0.1</domain>
-        <domain>localhost</domain>
-        <!-- Dirección alternativa del computador desde el emulador. -->
-        <domain>10.0.2.2</domain>
+        <domain includeSubdomains="false">44.198.239.128</domain>
     </domain-config>
 </network-security-config>

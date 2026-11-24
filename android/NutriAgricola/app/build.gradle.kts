@@ -17,9 +17,9 @@ android {
         applicationId = "com.nutriagricola.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
-        buildConfigField("String", "DEVICE_API_BASE_URL", "\"http://127.0.0.1:8080/\"")
+        versionCode = 2
+        versionName = "1.0.1"
+        buildConfigField("String", "DEVICE_API_BASE_URL", "\"http://44.198.239.128:8080/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -28,8 +28,6 @@ android {
         release {
             // Permite conservar instalada la versión de pruebas con su almacenamiento local.
             applicationIdSuffix = ".release"
-            // Dirección del PC en la zona Wi-Fi del teléfono usada para la presentación.
-            buildConfigField("String", "DEVICE_API_BASE_URL", "\"http://10.233.59.242:8080/\"")
             optimization {
                 enable = false
             }

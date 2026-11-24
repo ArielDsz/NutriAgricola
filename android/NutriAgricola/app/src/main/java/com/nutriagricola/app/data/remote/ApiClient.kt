@@ -1,6 +1,5 @@
 package com.nutriagricola.app.data.remote
 
-import android.os.Build
 import com.nutriagricola.app.BuildConfig
 
 import com.nutriagricola.app.data.remote.api.AuthApi
@@ -19,13 +18,7 @@ import java.util.concurrent.TimeUnit
 class ApiClient(baseUrl: String = defaultBaseUrl()) {
     companion object {
         private fun defaultBaseUrl(): String =
-            if (Build.HARDWARE in listOf("ranchu", "goldfish")) {
-                // Android Studio emulator: direct access to the development computer.
-                "http://10.0.2.2:8080/"
-            } else {
-                // Debug usa USB; release apunta al PC de la presentación.
-                BuildConfig.DEVICE_API_BASE_URL
-            }
+            BuildConfig.DEVICE_API_BASE_URL
     }
 
     private val json = Json { ignoreUnknownKeys = true }
